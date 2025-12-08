@@ -1,0 +1,46 @@
+### 1) Basic search without location
+POST http://localhost:3000/api/products/search
+Content-Type: application/json
+
+{
+  "query": "laptop"
+}
+
+### 2) Search with location (country only)
+POST http://localhost:3000/api/products/search
+Content-Type: application/json
+
+{
+  "query": "headphones",
+  "location": {
+    "country": "RO"
+  }
+}
+
+### 3) Search with full location + example filters
+POST http://localhost:3000/api/products/search
+Content-Type: application/json
+
+{
+  "query": "coffee",
+  "filters": {
+    "maxPrice": 250,
+    "fastDelivery": true
+  },
+  "location": {
+    "country": "RO",
+    "region": "Bucharest",
+    "city": "Bucharest"
+  }
+}
+
+### 4) Empty query (should not log saved search)
+POST http://localhost:3000/api/products/search
+Content-Type: application/json
+
+{
+  "query": "",
+  "location": {
+    "country": "RO"
+  }
+}

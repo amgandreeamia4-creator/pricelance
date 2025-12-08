@@ -1,0 +1,98 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #020617;
+  --foreground: #f9fafb;
+  /* PriceLance brand – light theme */
+  --pl-accent: #4f8ccf;
+  --pl-accent-soft: #e6eef9;
+  --pl-accent-strong: #3b6bb3;
+  --pl-text-main: #111827;
+  --pl-text-muted: #6b7280;
+  /* Unified design tokens (light) */
+  --pl-bg: 241 245 249; /* #F1F5F9 */
+  --pl-card: 229 237 248; /* #E5EDF8 */
+  --pl-border: 208 219 237;
+  --pl-primary: 59 130 246; /* #3B82F6 */
+  --pl-primary-soft: 191 219 254;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #020617;
+    --foreground: #f9fafb;
+  }
+}
+
+.dark {
+  --pl-accent: #8fb4ff;
+  --pl-accent-soft: #1f2937;
+  --pl-accent-strong: #638fe0;
+  --pl-text-main: #f9fafb;
+  --pl-text-muted: #9ca3af;
+  /* Unified design tokens (dark) */
+  --pl-bg: 2 6 23; /* #020617 */
+  --pl-card: 15 23 42; /* #0F172A */
+  --pl-border: 30 64 175;
+  --pl-primary: 96 165 250;
+  --pl-primary-soft: 37 99 235;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  margin: 0;
+  padding: 0;
+}
+
+@layer utilities {
+  .pl-bg {
+    @apply bg-[rgb(var(--pl-bg))];
+  }
+
+  .pl-card {
+    @apply bg-[rgb(var(--pl-card))] border border-[rgb(var(--pl-border))]/60 rounded-3xl;
+  }
+
+  .pl-primary-btn {
+    @apply inline-flex items-center justify-center gap-2
+           px-4 py-2 rounded-full font-medium
+           bg-[rgb(var(--pl-primary))]
+           text-white
+           shadow-[0_10px_30px_rgba(59,130,246,0.28)]
+           ring-2 ring-[rgb(var(--pl-primary-soft))]/60
+           transition-all duration-150;
+  }
+
+  .pl-primary-btn:hover {
+    @apply brightness-110 shadow-[0_14px_40px_rgba(59,130,246,0.35)];
+  }
+
+  .pl-primary-btn:active {
+    @apply scale-[0.98] shadow-[0_6px_20px_rgba(59,130,246,0.35)];
+  }
+
+  .pl-chip {
+    @apply inline-flex items-center gap-2 rounded-full px-3 py-1
+           bg-[rgb(var(--pl-card))] text-slate-700 dark:text-slate-100
+           border border-[rgb(var(--pl-border))]/80;
+  }
+
+  .pl-accent-bg {
+    background-color: var(--pl-accent);
+  }
+  .pl-accent-soft {
+    background-color: var(--pl-accent-soft);
+  }
+  .pl-accent-text {
+    color: var(--pl-accent);
+  }
+  .pl-text-main {
+    color: var(--pl-text-main);
+  }
+  .pl-text-muted {
+    color: var(--pl-text-muted);
+  }
+}

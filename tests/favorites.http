@@ -1,0 +1,21 @@
+### 1) Add a favorite (demo-headphones-1)
+POST http://localhost:3000/api/favorites
+Content-Type: application/json
+
+{
+  "productId": "demo-headphones-1"
+}
+
+### 2) List favorites
+GET http://localhost:3000/api/favorites
+
+### 3) Remove the favorite
+DELETE http://localhost:3000/api/favorites
+Content-Type: application/json
+
+{
+  "productId": "demo-headphones-1"
+}
+
+### 4) List favorites again (should be empty)
+GET http://localhost:3000/api/favorites

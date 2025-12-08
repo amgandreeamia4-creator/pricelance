@@ -1,0 +1,222 @@
+[
+  {
+    "id": "static-laptop-1",
+    "name": "Aurora Pro 14\" Ultrabook",
+    "displayName": "Aurora Pro 14 (16GB, 1TB SSD)",
+    "description": "Slim aluminum ultrabook with long battery life and bright 14-inch display.",
+    "category": "Laptops",
+    "brand": "AuroraTech",
+    "imageUrl": "https://example.com/images/aurora-pro-14.jpg",
+    "thumbnailUrl": "https://example.com/images/aurora-pro-14-thumb.jpg",
+    "listings": [
+      {
+        "id": "static-laptop-1-mainstore",
+        "storeName": "MainStore",
+        "url": "https://example.com/products/aurora-pro-14",
+        "imageUrl": "https://example.com/images/aurora-pro-14.jpg",
+        "price": 1299.99,
+        "currency": "USD",
+        "shippingCost": 0,
+        "deliveryTimeDays": 3,
+        "fastDelivery": true,
+        "location": "Online",
+        "inStock": true,
+        "rating": 4.7,
+        "reviewCount": 142
+      },
+      {
+        "id": "static-laptop-1-dealhub",
+        "storeName": "DealHub",
+        "url": "https://example.com/deals/aurora-pro-14",
+        "imageUrl": "https://example.com/images/aurora-pro-14.jpg",
+        "price": 1199.99,
+        "currency": "USD",
+        "shippingCost": 15,
+        "deliveryTimeDays": 5,
+        "fastDelivery": false,
+        "location": "Online",
+        "inStock": true,
+        "rating": 4.5,
+        "reviewCount": 67
+      }
+    ],
+    "priceHistory": [
+      {
+        "month": "2025-01",
+        "averagePrice": 1399.99,
+        "currency": "USD",
+        "storeName": "MainStore"
+      },
+      {
+        "month": "2025-02",
+        "averagePrice": 1299.99,
+        "currency": "USD",
+        "storeName": "MainStore"
+      }
+    ]
+  },
+  {
+    "id": "static-headphones-1",
+    "name": "Nimbus Studio Wireless Headphones",
+    "displayName": "Nimbus Studio Wireless (ANC)",
+    "description": "Over-ear wireless headphones with active noise cancellation and 40h battery life.",
+    "category": "Audio",
+    "brand": "Nimbus",
+    "imageUrl": "https://example.com/images/nimbus-studio.jpg",
+    "thumbnailUrl": "https://example.com/images/nimbus-studio-thumb.jpg",
+    "listings": [
+      {
+        "id": "static-headphones-1-audioworld",
+        "storeName": "AudioWorld",
+        "url": "https://example.com/products/nimbus-studio",
+        "imageUrl": "https://example.com/images/nimbus-studio.jpg",
+        "price": 249.99,
+        "currency": "USD",
+        "shippingCost": 0,
+        "deliveryTimeDays": 4,
+        "fastDelivery": false,
+        "location": "Online",
+        "inStock": true,
+        "rating": 4.8,
+        "reviewCount": 320
+      }
+    ],
+    "priceHistory": [
+      {
+        "month": "2024-12",
+        "averagePrice": 279.99,
+        "currency": "USD",
+        "storeName": "AudioWorld"
+      },
+      {
+        "month": "2025-01",
+        "averagePrice": 259.99,
+        "currency": "USD",
+        "storeName": "AudioWorld"
+      }
+    ]
+  },
+  {
+    "id": "static-coffee-1",
+    "name": "BrewMaster Pro Coffee Machine",
+    "displayName": "BrewMaster Pro (15 Bar, Milk Frother)",
+    "description": "Compact espresso machine with integrated milk frother for home baristas.",
+    "category": "Kitchen",
+    "brand": "BrewMaster",
+    "imageUrl": "https://example.com/images/brewmaster-pro.jpg",
+    "thumbnailUrl": "https://example.com/images/brewmaster-pro-thumb.jpg",
+    "listings": [
+      {
+        "id": "static-coffee-1-homeplus",
+        "storeName": "HomePlus",
+        "url": "https://example.com/products/brewmaster-pro",
+        "imageUrl": "https://example.com/images/brewmaster-pro.jpg",
+        "price": 189.99,
+        "currency": "USD",
+        "shippingCost": 9.99,
+        "deliveryTimeDays": 5,
+        "fastDelivery": false,
+        "location": "Online",
+        "inStock": true,
+        "rating": 4.4,
+        "reviewCount": 96
+      }
+    ],
+    "priceHistory": [
+      {
+        "month": "2024-11",
+        "averagePrice": 209.99,
+        "currency": "USD",
+        "storeName": "HomePlus"
+      },
+      {
+        "month": "2025-01",
+        "averagePrice": 189.99,
+        "currency": "USD",
+        "storeName": "HomePlus"
+      }
+    ]
+  },
+  {
+    "id": "static-phone-1",
+    "name": "Nova X2 5G Smartphone",
+    "displayName": "Nova X2 5G (256GB)",
+    "description": "5G smartphone with OLED display, triple camera, and 256GB storage.",
+    "category": "Phones",
+    "brand": "Nova",
+    "imageUrl": "https://example.com/images/nova-x2.jpg",
+    "thumbnailUrl": "https://example.com/images/nova-x2-thumb.jpg",
+    "listings": [
+      {
+        "id": "static-phone-1-mobilestore",
+        "storeName": "MobileStore",
+        "url": "https://example.com/products/nova-x2",
+        "imageUrl": "https://example.com/images/nova-x2.jpg",
+        "price": 799.99,
+        "currency": "USD",
+        "shippingCost": 0,
+        "deliveryTimeDays": 2,
+        "fastDelivery": true,
+        "location": "Online",
+        "inStock": true,
+        "rating": 4.6,
+        "reviewCount": 210
+      }
+    ],
+    "priceHistory": [
+      {
+        "month": "2024-12",
+        "averagePrice": 849.99,
+        "currency": "USD",
+        "storeName": "MobileStore"
+      },
+      {
+        "month": "2025-02",
+        "averagePrice": 799.99,
+        "currency": "USD",
+        "storeName": "MobileStore"
+      }
+    ]
+  },
+  {
+    "id": "static-shoes-1",
+    "name": "CloudStep Running Shoes",
+    "displayName": "CloudStep Run (Women)",
+    "description": "Lightweight running shoes with responsive cushioning for daily training.",
+    "category": "Shoes",
+    "brand": "CloudStep",
+    "imageUrl": "https://example.com/images/cloudstep-run.jpg",
+    "thumbnailUrl": "https://example.com/images/cloudstep-run-thumb.jpg",
+    "listings": [
+      {
+        "id": "static-shoes-1-sportzone",
+        "storeName": "SportZone",
+        "url": "https://example.com/products/cloudstep-run",
+        "imageUrl": "https://example.com/images/cloudstep-run.jpg",
+        "price": 119.99,
+        "currency": "USD",
+        "shippingCost": 5.99,
+        "deliveryTimeDays": 4,
+        "fastDelivery": false,
+        "location": "Online",
+        "inStock": true,
+        "rating": 4.3,
+        "reviewCount": 58
+      }
+    ],
+    "priceHistory": [
+      {
+        "month": "2024-10",
+        "averagePrice": 129.99,
+        "currency": "USD",
+        "storeName": "SportZone"
+      },
+      {
+        "month": "2025-01",
+        "averagePrice": 119.99,
+        "currency": "USD",
+        "storeName": "SportZone"
+      }
+    ]
+  }
+]

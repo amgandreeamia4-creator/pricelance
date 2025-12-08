@@ -1,0 +1,39 @@
+### 1) Hit the analytics endpoint
+GET http://localhost:3000/api/internal/search-analytics
+
+### 2) Trigger some searches (optional helpers)
+
+# You can run these from here or keep using the UI.
+# They will end up being logged into SavedSearch and show up in analytics.
+
+POST http://localhost:3000/api/products/search
+Content-Type: application/json
+
+{
+  "query": "laptop"
+}
+
+###
+
+POST http://localhost:3000/api/products/search
+Content-Type: application/json
+
+{
+  "query": "headphones",
+  "location": {
+    "country": "RO",
+    "city": "Bucharest"
+  }
+}
+
+###
+
+POST http://localhost:3000/api/products/search
+Content-Type: application/json
+
+{
+  "query": "coffee",
+  "location": {
+    "country": "RO"
+  }
+}

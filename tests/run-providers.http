@@ -1,0 +1,13 @@
+### 1) Run all providers
+GET http://localhost:3000/api/internal/run-providers
+
+### 2) Check stats
+GET http://localhost:3000/api/internal/stats
+
+### 3) Try a search for multiple categories
+POST http://localhost:3000/api/products/search
+Content-Type: application/json
+
+{
+  "query": "pro"
+}

@@ -1,0 +1,90 @@
+// prisma/schema.prisma
+
+datasource db {
+  provider = "sqlite"
+  // DATABASE_URL = "file:./prisma/dev.db" (relative to project root).
+  // DB file lives at <project-root>/prisma/dev.db.
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Product {
+  id           String                @id @default(cuid())
+  name         String
+  displayName  String?
+  description  String?
+  category     String?
+  brand        String?
+  imageUrl     String?
+  thumbnailUrl String?
+  createdAt    DateTime              @default(now())
+  updatedAt    DateTime              @updatedAt
+
+  listings     Listing[]
+  priceHistory ProductPriceHistory[]
+  favorites    Favorite[]
+}
+
+model Listing {
+  id                    String   @id @default(cuid())
+  product               Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId             String
+
+  storeName             String
+  storeLogoUrl          String?
+  url                   String?
+  imageUrl              String?
+  price                 Float
+  priceCents            Int?
+  currency              String   @default("USD")
+  shippingCost          Float?
+  deliveryTimeDays      Int?
+  fastDelivery          Boolean?
+  isFastDelivery        Boolean?
+  estimatedDeliveryDays Int?
+  deliveryDays          Int?
+  location              String?
+  inStock               Boolean  @default(true)
+  rating                Float?
+  reviewCount           Int?
+
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+}
+
+model ProductPriceHistory {
+  id        String   @id @default(cuid())
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId String
+
+  date      DateTime
+  price     Float
+  currency  String   @default("USD")
+  storeName String?
+}
+
+model Favorite {
+  id        String   @id @default(cuid())
+  userId    String
+  product   Product  @relation(fields: [productId], references: [id])
+  productId String
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([productId])
+  @@unique([userId, productId])
+}
+
+model SavedSearch {
+  id        String   @id @default(cuid())
+  userId    String
+  query     String
+  filters   Json?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+}

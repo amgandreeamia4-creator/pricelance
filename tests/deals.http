@@ -1,0 +1,35 @@
+### 1) Get top 10 deals (default)
+GET http://localhost:3000/api/deals
+
+### 2) Get top 5 deals
+GET http://localhost:3000/api/deals?limit=5
+
+### 3) Inspect deals shape
+GET http://localhost:3000/api/deals
+
+# Expect:
+# {
+#   "ok": true,
+#   "count": number,
+#   "deals": [
+#     {
+#       "productId": string,
+#       "productName": string,
+#       "category": string | null,
+#       "brand": string | null,
+#       "provider": "dummyjson" | "demo" | "seed" | "unknown",
+#       "currentPrice": number,
+#       "avgHistoricalPrice": number,
+#       "discountPercent": number,
+#       "bestListing": {
+#         "id": string,
+#         "storeName": string,
+#         "url": string | null,
+#         "price": number,
+#         "currency": string,
+#         "fastDelivery": boolean | null,
+#         "location": string | null
+#       }
+#     }
+#   ]
+# }

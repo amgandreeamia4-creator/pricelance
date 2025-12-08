@@ -1,0 +1,3 @@
+### Cleanup demo/static products from the database
+POST http://localhost:3000/api/internal/cleanup-demo
+x-internal-key: dragon-in-the-price-lake-9e4f28c7

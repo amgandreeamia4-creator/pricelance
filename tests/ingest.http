@@ -1,0 +1,96 @@
+### 1) Ingest a custom laptop
+POST http://localhost:3000/api/internal/ingest
+Content-Type: application/json
+
+[
+  {
+    "id": "custom-laptop-1",
+    "name": "Custom Creator Ultrabook 14\"",
+    "displayName": "Custom Creator Ultrabook 14 (32GB, 1TB SSD)",
+    "description": "Thin-and-light laptop manually ingested via /api/internal/ingest.",
+    "category": "Laptops",
+    "brand": "CustomBrand",
+    "imageUrl": "https://example.com/images/custom-laptop-1.jpg",
+    "thumbnailUrl": "https://example.com/images/custom-laptop-1-thumb.jpg",
+    "listings": [
+      {
+        "id": "custom-laptop-1-mainstore",
+        "storeName": "MainStore",
+        "url": "https://example.com/custom-laptop-1",
+        "imageUrl": "https://example.com/images/custom-laptop-1.jpg",
+        "price": 1499.99,
+        "currency": "USD",
+        "shippingCost": 0,
+        "deliveryTimeDays": 3,
+        "fastDelivery": true,
+        "location": "Online",
+        "inStock": true,
+        "rating": 4.9,
+        "reviewCount": 42
+      }
+    ],
+    "priceHistory": [
+      {
+        "month": "2025-01",
+        "averagePrice": 1599.99,
+        "currency": "USD",
+        "storeName": "MainStore"
+      },
+      {
+        "month": "2025-02",
+        "averagePrice": 1499.99,
+        "currency": "USD",
+        "storeName": "MainStore"
+      }
+    ]
+  }
+]
+
+### 2) Ingest another custom product (template)
+# Duplicate this block and edit "id", "name", etc. for any product you want.
+POST http://localhost:3000/api/internal/ingest
+Content-Type: application/json
+
+[
+  {
+    "id": "custom-product-template",
+    "name": "Custom Product Template",
+    "displayName": "Custom Product Template",
+    "description": "Edit this block to ingest any product you like.",
+    "category": "Other",
+    "brand": "YourBrand",
+    "imageUrl": "https://example.com/images/custom-product.jpg",
+    "thumbnailUrl": "https://example.com/images/custom-product-thumb.jpg",
+    "listings": [
+      {
+        "id": "custom-product-template-listing-1",
+        "storeName": "YourStore",
+        "url": "https://example.com/custom-product",
+        "imageUrl": "https://example.com/images/custom-product.jpg",
+        "price": 99.99,
+        "currency": "USD",
+        "shippingCost": 0,
+        "deliveryTimeDays": 5,
+        "fastDelivery": false,
+        "location": "Online",
+        "inStock": true,
+        "rating": 4.5,
+        "reviewCount": 10
+      }
+    ],
+    "priceHistory": [
+      {
+        "month": "2025-01",
+        "averagePrice": 109.99,
+        "currency": "USD",
+        "storeName": "YourStore"
+      },
+      {
+        "month": "2025-02",
+        "averagePrice": 99.99,
+        "currency": "USD",
+        "storeName": "YourStore"
+      }
+    ]
+  }
+]

@@ -1,0 +1,27 @@
+### 1) Search for laptops
+POST http://localhost:3000/api/products/search
+Content-Type: application/json
+
+{
+  "query": "laptop"
+}
+
+### 2) Search for headphones
+POST http://localhost:3000/api/products/search
+Content-Type: application/json
+
+{
+  "query": "headphones"
+}
+
+### 3) Search for coffee with location
+POST http://localhost:3000/api/products/search
+Content-Type: application/json
+
+{
+  "query": "coffee",
+  "location": {
+    "country": "RO",
+    "city": "Bucharest"
+  }
+}

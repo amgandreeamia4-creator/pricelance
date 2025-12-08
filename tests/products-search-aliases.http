@@ -1,0 +1,23 @@
+### 1) perfume -> should hit fragrances
+POST http://localhost:3000/api/products/search
+Content-Type: application/json
+
+{
+  "query": "perfume"
+}
+
+### 2) phone -> should hit smartphones / phones
+POST http://localhost:3000/api/products/search
+Content-Type: application/json
+
+{
+  "query": "phone"
+}
+
+### 3) skincare -> should hit beauty / skincare
+POST http://localhost:3000/api/products/search
+Content-Type: application/json
+
+{
+  "query": "skincare"
+}

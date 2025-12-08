@@ -1,0 +1,22 @@
+### 1) Create a saved search
+POST http://localhost:3000/api/saved-searches
+Content-Type: application/json
+
+{
+  "query": "laptop",
+  "filters": { "maxPrice": 1000, "fastDelivery": true }
+}
+
+### 2) List saved searches
+GET http://localhost:3000/api/saved-searches
+
+### 3) Delete a saved search (fill id from step 2)
+DELETE http://localhost:3000/api/saved-searches
+Content-Type: application/json
+
+{
+  "id": "<replace-with-id-from-step-2>"
+}
+
+### 4) List again (should be fewer/empty)
+GET http://localhost:3000/api/saved-searches

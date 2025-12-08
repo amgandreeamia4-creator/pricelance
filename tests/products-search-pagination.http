@@ -1,0 +1,29 @@
+### 1) First page
+POST http://localhost:3000/api/products/search
+Content-Type: application/json
+
+{
+  "query": "",
+  "page": 1,
+  "pageSize": 2
+}
+
+### 2) Second page
+POST http://localhost:3000/api/products/search
+Content-Type: application/json
+
+{
+  "query": "",
+  "page": 2,
+  "pageSize": 2
+}
+
+### 3) With a specific query
+POST http://localhost:3000/api/products/search
+Content-Type: application/json
+
+{
+  "query": "pro",
+  "page": 1,
+  "pageSize": 5
+}

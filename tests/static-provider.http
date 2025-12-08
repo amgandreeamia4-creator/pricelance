@@ -1,0 +1,26 @@
+### 1) Run static provider ingest
+GET http://localhost:3000/api/internal/static-provider
+
+### 2) Check products via search - laptop
+POST http://localhost:3000/api/products/search
+Content-Type: application/json
+
+{
+  "query": "Aurora"
+}
+
+### 3) Check products via search - phone
+POST http://localhost:3000/api/products/search
+Content-Type: application/json
+
+{
+  "query": "Nova"
+}
+
+### 4) Check products via search - shoes
+POST http://localhost:3000/api/products/search
+Content-Type: application/json
+
+{
+  "query": "CloudStep"
+}
