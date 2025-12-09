@@ -13,7 +13,7 @@
   "dependencies": {
     "@prisma/client": "^6.19.0",
     "lucide-react": "^0.556.0",
-    "next": "16.0.3",
+    "next": "16.0.7",
     "next-themes": "latest",
     "react": "19.2.0",
     "react-dom": "19.2.0",
