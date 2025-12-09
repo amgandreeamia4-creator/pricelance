@@ -42,9 +42,8 @@ export async function GET(req: NextRequest) {
 
     const productIds = demoProducts.map((p) => p.id);
 
-    if (process.env.NODE_ENV !== "production") {
-      console.log("[cleanup-demo][GET] Found demo/static products:", productIds.length);
-    }
+    // Already guaranteed non-production by early return above
+    console.log("[cleanup-demo][GET] Found demo/static products:", productIds.length);
 
     return NextResponse.json(
       {
@@ -120,9 +119,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (process.env.NODE_ENV !== "production") {
-      console.log("[cleanup-demo][POST] Deleting:", productIds.length, "products");
-    }
+    // Already guaranteed non-production by early return above
+    console.log("[cleanup-demo][POST] Deleting:", productIds.length, "products");
 
     // Delete in correct order to respect foreign key constraints
     // 1. Delete favorites first (no cascade)
@@ -145,9 +143,8 @@ export async function POST(req: NextRequest) {
       where: { id: { in: productIds } },
     });
 
-    if (process.env.NODE_ENV !== "production") {
-      console.log("[cleanup-demo][POST] Deleted:", deletedProducts.count, "products");
-    }
+    // Already guaranteed non-production by early return above
+    console.log("[cleanup-demo][POST] Deleted:", deletedProducts.count, "products");
 
     return NextResponse.json(
       {

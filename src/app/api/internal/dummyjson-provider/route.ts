@@ -31,9 +31,10 @@ export async function GET(req: NextRequest) {
         : 100;
 
     // Delegate fetching + mapping to the shared provider implementation.
-    const payload = await dummyJsonProvider.searchProducts("", {
+    const payloads = await dummyJsonProvider.searchProducts("", {
       limit: safeLimit,
     });
+    const payload = payloads[0] ?? [];
 
     const products = normalizeProducts(payload);
 

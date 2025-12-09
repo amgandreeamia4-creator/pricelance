@@ -210,7 +210,6 @@ export async function findProductsWithHistory(
           p.name,
           p.displayName,
           p.brand,
-          p.description,
           p.category,
         ]
           .filter((v): v is string => typeof v === "string" && v.length > 0)

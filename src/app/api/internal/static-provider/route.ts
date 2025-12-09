@@ -16,7 +16,8 @@ export async function GET(req: NextRequest) {
   if (authError) return authError;
 
   try {
-    const payload = await staticProvider.searchProducts("");
+    const payloads = await staticProvider.searchProducts("");
+    const payload = payloads[0] ?? [];
     const products = normalizeProducts(payload);
 
     const result = await ingestProducts(products);

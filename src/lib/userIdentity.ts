@@ -29,10 +29,7 @@ export function getOrCreateUserId(req: NextRequest): UserIdResult {
 /**
  * Attaches the user id cookie to a response if needed.
  */
-export function attachUserIdCookie(
-  res: NextResponse,
-  userId: string
-): NextResponse {
+export function attachUserIdCookie<T>(res: NextResponse<T>, userId: string): NextResponse<T> {
   res.cookies.set(COOKIE_NAME, userId, {
     path: "/",
     maxAge: 60 * 60 * 24 * 365, // 1 year

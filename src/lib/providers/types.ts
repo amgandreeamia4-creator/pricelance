@@ -35,7 +35,7 @@ export interface ProductProvider {
    * 
    * @deprecated Use searchProductsWithStatus for better error handling.
    */
-  searchProducts(query: string): Promise<IngestPayload[]>;
+  searchProducts(query: string, options?: { limit?: number }): Promise<IngestPayload[]>;
   
   /**
    * Search for products with detailed status/error information.
