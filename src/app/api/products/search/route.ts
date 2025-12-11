@@ -369,7 +369,7 @@ async function handleSearchRequest(req: NextRequest) {
   // Best-effort search analytics logging (non-critical)
   if (query && query.trim().length > 0) {
     try {
-      await prisma.searchLog.create({
+      await (prisma as any).searchLog.create({
         data: {
           query: query.trim(),
           resultCount: products.length,
