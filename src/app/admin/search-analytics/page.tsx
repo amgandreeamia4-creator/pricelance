@@ -164,6 +164,25 @@ export default async function SearchAnalyticsPage({
               <code>?debug</code> value) to inspect the guard values without
               404s.
             </p>
+
+            {/* TEMP DEBUG: show what searchParams the server actually sees */}
+            <div className="mt-6 text-left">
+              <div className="text-[10px] uppercase tracking-wide text-slate-600 mb-1">
+                DEBUG: searchParams as seen on the server
+              </div>
+              <pre className="text-[10px] text-slate-600 whitespace-pre-wrap break-words bg-slate-900/70 border border-slate-800 rounded-md p-3 max-h-48 overflow-auto">
+                {JSON.stringify(
+                  {
+                    searchParams,
+                    providedKey,
+                    debugParam,
+                    hasDebugParam,
+                  },
+                  null,
+                  2
+                )}
+              </pre>
+            </div>
           </div>
         </div>
       );
