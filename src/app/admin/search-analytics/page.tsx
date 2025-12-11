@@ -24,7 +24,7 @@ type TopQueryRow = {
 // --- helpers using findMany instead of groupBy ------------------------------
 
 async function getZeroResultQueries(): Promise<ZeroResultRow[]> {
-  const logs = await prisma.searchLog.findMany({
+  const logs = await (prisma as any).searchLog.findMany({
     where: { resultCount: 0 },
     orderBy: { createdAt: "desc" },
     take: 500,
@@ -61,7 +61,7 @@ async function getZeroResultQueries(): Promise<ZeroResultRow[]> {
 }
 
 async function getTopQueries(): Promise<TopQueryRow[]> {
-  const logs = await prisma.searchLog.findMany({
+  const logs = await (prisma as any).searchLog.findMany({
     orderBy: { createdAt: "desc" },
     take: 1000,
   });
