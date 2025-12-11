@@ -108,33 +108,31 @@ export default async function SearchAnalyticsPage({
       ? searchParams.adminKey
       : undefined;
 
-  // DEBUG SHORT-CIRCUIT
+  // 1) DEBUG SHORT-CIRCUIT (runs before any guard)
   if (searchParams?.debug === "1") {
     return (
-      <html>
-        <body>
-          <pre>
-            {JSON.stringify(
-              {
-                version: "admin-search-analytics-debug-v1",
-                nodeEnv: process.env.NODE_ENV,
-                hasAdminSecret: !!ADMIN_SECRET,
-                adminSecretMasked: ADMIN_SECRET
-                  ? `${ADMIN_SECRET.slice(0, 4)}...${ADMIN_SECRET.slice(-4)}`
-                  : null,
-                providedKey: providedKey ?? null,
-                keysMatch: providedKey === ADMIN_SECRET,
-              },
-              null,
-              2
-            )}
-          </pre>
-        </body>
-      </html>
+      <div className="min-h-screen bg-slate-950 text-slate-50 p-6">
+        <pre className="text-xs whitespace-pre-wrap">
+          {JSON.stringify(
+            {
+              version: "admin-search-analytics-debug-v1",
+              nodeEnv: process.env.NODE_ENV,
+              hasAdminSecret: !!ADMIN_SECRET,
+              adminSecretMasked: ADMIN_SECRET
+                ? `${ADMIN_SECRET.slice(0, 4)}...${ADMIN_SECRET.slice(-4)}`
+                : null,
+              providedKey: providedKey ?? null,
+              keysMatch: providedKey === ADMIN_SECRET,
+            },
+            null,
+            2
+          )}
+        </pre>
+      </div>
     );
   }
 
-  // PRODUCTION ADMIN GUARD – NO notFound()
+  // 2) PRODUCTION ADMIN GUARD – NO notFound()
   if (process.env.NODE_ENV === "production") {
     if (!ADMIN_SECRET || providedKey !== ADMIN_SECRET) {
       return (
@@ -161,6 +159,7 @@ export default async function SearchAnalyticsPage({
     }
   }
 
+  // 3) ANALYTICS UI (only when guard passes)
   const [zeroResultQueries, topQueries] = await Promise.all([
     getZeroResultQueries(),
     getTopQueries(),
