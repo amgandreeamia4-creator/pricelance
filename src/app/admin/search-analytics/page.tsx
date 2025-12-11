@@ -108,20 +108,30 @@ export default async function SearchAnalyticsPage({
       ? searchParams.adminKey
       : undefined;
 
+  const debugParam = searchParams?.debug;
+  const isDebug =
+    typeof debugParam === "string"
+      ? debugParam === "1" || debugParam.toLowerCase() === "true"
+      : Array.isArray(debugParam)
+      ? debugParam.includes("1") ||
+        debugParam.some((v) => v?.toLowerCase() === "true")
+      : false;
+
   // 1) DEBUG SHORT-CIRCUIT (runs before any guard)
-  if (searchParams?.debug === "1") {
+  if (isDebug) {
     return (
       <div className="min-h-screen bg-slate-950 text-slate-50 p-6">
         <pre className="text-xs whitespace-pre-wrap">
           {JSON.stringify(
             {
-              version: "admin-search-analytics-debug-v1",
+              version: "admin-search-analytics-debug-v2",
               nodeEnv: process.env.NODE_ENV,
               hasAdminSecret: !!ADMIN_SECRET,
               adminSecretMasked: ADMIN_SECRET
                 ? `${ADMIN_SECRET.slice(0, 4)}...${ADMIN_SECRET.slice(-4)}`
                 : null,
               providedKey: providedKey ?? null,
+              rawDebugParam: debugParam ?? null,
               keysMatch: providedKey === ADMIN_SECRET,
             },
             null,
