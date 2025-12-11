@@ -4,8 +4,6 @@ import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
-const ADMIN_SECRET = process.env.ADMIN_SECRET ?? "";
-
 type SearchAnalyticsPageProps = {
   searchParams?: { [key: string]: string | string[] | undefined };
 };
@@ -101,95 +99,10 @@ async function getTopQueries(): Promise<TopQueryRow[]> {
 // --- page -------------------------------------------------------------------
 
 export default async function SearchAnalyticsPage({
-  searchParams = {},
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  searchParams,
 }: SearchAnalyticsPageProps) {
-  // Normalize adminKey and debug param (can be string or string[])
-  const rawAdminKey = searchParams.adminKey;
-  const providedKey = Array.isArray(rawAdminKey)
-    ? rawAdminKey[0]
-    : rawAdminKey;
-
-  const debugParam = searchParams.debug;
-  const hasDebugParam =
-    typeof debugParam !== "undefined" &&
-    (Array.isArray(debugParam) ? debugParam.length >= 0 : true);
-
-  // 1) DEBUG SHORT-CIRCUIT (runs before any guard)
-  if (hasDebugParam) {
-    return (
-      <div className="min-h-screen bg-slate-950 text-slate-50 p-6">
-        <pre className="text-xs whitespace-pre-wrap">
-          {JSON.stringify(
-            {
-              version: "admin-search-analytics-debug-v4",
-              nodeEnv: process.env.NODE_ENV,
-              hasAdminSecret: !!ADMIN_SECRET,
-              adminSecretMasked: ADMIN_SECRET
-                ? `${ADMIN_SECRET.slice(0, 4)}...${ADMIN_SECRET.slice(-4)}`
-                : null,
-              providedKey: providedKey ?? null,
-              debugParam,
-              searchParams,
-              keysMatch:
-                typeof providedKey === "string" &&
-                providedKey === ADMIN_SECRET,
-            },
-            null,
-            2
-          )}
-        </pre>
-      </div>
-    );
-  }
-
-  // 2) PRODUCTION ADMIN GUARD – NO notFound()
-  if (process.env.NODE_ENV === "production") {
-    if (!ADMIN_SECRET || providedKey !== ADMIN_SECRET) {
-      return (
-        <div className="min-h-screen bg-slate-950 text-slate-50 flex items-center justify-center">
-          <div className="max-w-md p-8 space-y-4 text-center">
-            <h1 className="text-2xl font-semibold text-red-400">
-              Access Denied
-            </h1>
-            <p className="text-slate-400">
-              You are not authorized to view this page. A valid admin key is
-              required.
-            </p>
-            <p className="text-xs text-slate-500">
-              If you believe you should have access, please check your
-              credentials and try again.
-            </p>
-            <p className="mt-4 text-xs text-slate-500">
-              Hint: you can use <code>?debug=1</code> (or any{" "}
-              <code>?debug</code> value) to inspect the guard values without
-              404s.
-            </p>
-
-            {/* TEMP DEBUG: show what searchParams the server actually sees */}
-            <div className="mt-6 text-left">
-              <div className="text-[10px] uppercase tracking-wide text-slate-600 mb-1">
-                DEBUG: searchParams as seen on the server
-              </div>
-              <pre className="text-[10px] text-slate-600 whitespace-pre-wrap break-words bg-slate-900/70 border border-slate-800 rounded-md p-3 max-h-48 overflow-auto">
-                {JSON.stringify(
-                  {
-                    searchParams,
-                    providedKey,
-                    debugParam,
-                    hasDebugParam,
-                  },
-                  null,
-                  2
-                )}
-              </pre>
-            </div>
-          </div>
-        </div>
-      );
-    }
-  }
-
-  // 3) ANALYTICS UI (only when guard passes)
+  // No auth / debug logic for now – always render the analytics UI
   const [zeroResultQueries, topQueries] = await Promise.all([
     getZeroResultQueries(),
     getTopQueries(),
@@ -264,7 +177,7 @@ export default async function SearchAnalyticsPage({
                       <td className="px-3 py-2">
                         <Link
                           href={`/admin/catalog?q=${encodeURIComponent(
-                            row.query
+                            row.query,
                           )}`}
                           className="text-sky-400 hover:underline"
                         >
