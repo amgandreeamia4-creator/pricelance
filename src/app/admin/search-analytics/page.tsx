@@ -108,30 +108,21 @@ export default async function SearchAnalyticsPage({
       ? searchParams.adminKey
       : undefined;
 
-  const debugParam = searchParams?.debug;
-  const isDebug =
-    typeof debugParam === "string"
-      ? debugParam === "1" || debugParam.toLowerCase() === "true"
-      : Array.isArray(debugParam)
-      ? debugParam.includes("1") ||
-        debugParam.some((v) => v?.toLowerCase() === "true")
-      : false;
-
   // 1) DEBUG SHORT-CIRCUIT (runs before any guard)
-  if (isDebug) {
+  if (searchParams?.debug === "1") {
     return (
       <div className="min-h-screen bg-slate-950 text-slate-50 p-6">
         <pre className="text-xs whitespace-pre-wrap">
           {JSON.stringify(
             {
-              version: "admin-search-analytics-debug-v2",
+              version: "admin-search-analytics-debug-v1",
               nodeEnv: process.env.NODE_ENV,
               hasAdminSecret: !!ADMIN_SECRET,
               adminSecretMasked: ADMIN_SECRET
                 ? `${ADMIN_SECRET.slice(0, 4)}...${ADMIN_SECRET.slice(-4)}`
                 : null,
               providedKey: providedKey ?? null,
-              rawDebugParam: debugParam ?? null,
+              debugParam: searchParams?.debug ?? null,
               keysMatch: providedKey === ADMIN_SECRET,
             },
             null,
@@ -146,7 +137,7 @@ export default async function SearchAnalyticsPage({
   if (process.env.NODE_ENV === "production") {
     if (!ADMIN_SECRET || providedKey !== ADMIN_SECRET) {
       return (
-        <div className="min-h-screen bg-slate-950 text-slate-50 flex items-center justify-center">
+        <div className="min-h-screen bg-slate-950 text-slate-50 flex flex-col items-center justify-center">
           <div className="max-w-md p-8 space-y-4 text-center">
             <h1 className="text-2xl font-semibold text-red-400">
               Access Denied
@@ -164,6 +155,20 @@ export default async function SearchAnalyticsPage({
               values without 404s.
             </p>
           </div>
+
+          {/* DEBUG DUMP – so we can see what the server actually received */}
+          <pre className="mt-6 max-w-xl text-[10px] text-slate-500 whitespace-pre-wrap px-4">
+            {JSON.stringify(
+              {
+                nodeEnv: process.env.NODE_ENV,
+                searchParams: searchParams ?? null,
+                providedKey: providedKey ?? null,
+                debugParam: searchParams?.debug ?? null,
+              },
+              null,
+              2
+            )}
+          </pre>
         </div>
       );
     }
