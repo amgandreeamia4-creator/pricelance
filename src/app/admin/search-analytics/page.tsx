@@ -101,17 +101,18 @@ async function getTopQueries(): Promise<TopQueryRow[]> {
 // --- page -------------------------------------------------------------------
 
 export default async function SearchAnalyticsPage({
-  searchParams,
+  searchParams = {},
 }: SearchAnalyticsPageProps) {
-  const providedKey =
-    typeof searchParams?.adminKey === "string"
-      ? searchParams.adminKey
-      : undefined;
+  // Normalize adminKey and debug param (can be string or string[])
+  const rawAdminKey = searchParams.adminKey;
+  const providedKey = Array.isArray(rawAdminKey)
+    ? rawAdminKey[0]
+    : rawAdminKey;
 
-  // treat *any* presence of ?debug=... as debug mode
+  const debugParam = searchParams.debug;
   const hasDebugParam =
-    !!searchParams &&
-    Object.prototype.hasOwnProperty.call(searchParams, "debug");
+    typeof debugParam !== "undefined" &&
+    (Array.isArray(debugParam) ? debugParam.length >= 0 : true);
 
   // 1) DEBUG SHORT-CIRCUIT (runs before any guard)
   if (hasDebugParam) {
@@ -120,15 +121,18 @@ export default async function SearchAnalyticsPage({
         <pre className="text-xs whitespace-pre-wrap">
           {JSON.stringify(
             {
-              version: "admin-search-analytics-debug-v3",
+              version: "admin-search-analytics-debug-v4",
               nodeEnv: process.env.NODE_ENV,
               hasAdminSecret: !!ADMIN_SECRET,
               adminSecretMasked: ADMIN_SECRET
                 ? `${ADMIN_SECRET.slice(0, 4)}...${ADMIN_SECRET.slice(-4)}`
                 : null,
               providedKey: providedKey ?? null,
-              rawDebugParam: searchParams?.debug ?? null,
-              keysMatch: providedKey === ADMIN_SECRET,
+              debugParam,
+              searchParams,
+              keysMatch:
+                typeof providedKey === "string" &&
+                providedKey === ADMIN_SECRET,
             },
             null,
             2
@@ -156,8 +160,9 @@ export default async function SearchAnalyticsPage({
               credentials and try again.
             </p>
             <p className="mt-4 text-xs text-slate-500">
-              Hint: you can use <code>?debug=1</code> to inspect the guard
-              values without 404s.
+              Hint: you can use <code>?debug=1</code> (or any{" "}
+              <code>?debug</code> value) to inspect the guard values without
+              404s.
             </p>
           </div>
         </div>
@@ -240,7 +245,7 @@ export default async function SearchAnalyticsPage({
                       <td className="px-3 py-2">
                         <Link
                           href={`/admin/catalog?q=${encodeURIComponent(
-                            row.query,
+                            row.query
                           )}`}
                           className="text-sky-400 hover:underline"
                         >
