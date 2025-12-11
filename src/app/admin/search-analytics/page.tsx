@@ -120,6 +120,28 @@ export default async function SearchAnalyticsPage({
       ? searchParams.adminKey
       : undefined;
 
+  // TEMP DEBUG BLOCK – to inspect admin guard values in production
+  if (searchParams?.debug === "1") {
+    return (
+      <html>
+        <body>
+          <pre>
+            {JSON.stringify(
+              {
+                nodeEnv: process.env.NODE_ENV,
+                rawAdminSecret: process.env.ADMIN_SECRET ?? null,
+                normalizedAdminSecret: adminSecret ?? null,
+                providedKey: providedKey ?? null,
+              },
+              null,
+              2
+            )}
+          </pre>
+        </body>
+      </html>
+    );
+  }
+
   if (process.env.NODE_ENV === "production") {
     if (!adminSecret || providedKey !== adminSecret) {
       notFound();
