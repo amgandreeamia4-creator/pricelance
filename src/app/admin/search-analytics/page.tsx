@@ -1,20 +1,10 @@
 // src/app/admin/search-analytics/page.tsx
-import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import Link from "next/link";
 
-function getNormalizedAdminSecret(): string | undefined {
-  const raw = process.env.ADMIN_SECRET;
-  if (!raw) return undefined;
-
-  // If the value accidentally includes a "KEY=" prefix like "ADMIN_SECRET=foo",
-  // strip everything up to and including the first "=".
-  const eqIndex = raw.indexOf("=");
-  if (eqIndex === -1) return raw;
-  return raw.slice(eqIndex + 1);
-}
-
 export const dynamic = "force-dynamic";
+
+const ADMIN_SECRET = process.env.ADMIN_SECRET ?? "";
 
 type SearchAnalyticsPageProps = {
   searchParams?: { [key: string]: string | string[] | undefined };
@@ -113,14 +103,12 @@ async function getTopQueries(): Promise<TopQueryRow[]> {
 export default async function SearchAnalyticsPage({
   searchParams,
 }: SearchAnalyticsPageProps) {
-  const adminSecret = getNormalizedAdminSecret();
-
   const providedKey =
     typeof searchParams?.adminKey === "string"
       ? searchParams.adminKey
       : undefined;
 
-  // TEMP DEBUG BLOCK – to inspect admin guard values in production
+  // DEBUG SHORT-CIRCUIT
   if (searchParams?.debug === "1") {
     return (
       <html>
@@ -128,10 +116,14 @@ export default async function SearchAnalyticsPage({
           <pre>
             {JSON.stringify(
               {
+                version: "admin-search-analytics-debug-v1",
                 nodeEnv: process.env.NODE_ENV,
-                rawAdminSecret: process.env.ADMIN_SECRET ?? null,
-                normalizedAdminSecret: adminSecret ?? null,
+                hasAdminSecret: !!ADMIN_SECRET,
+                adminSecretMasked: ADMIN_SECRET
+                  ? `${ADMIN_SECRET.slice(0, 4)}...${ADMIN_SECRET.slice(-4)}`
+                  : null,
                 providedKey: providedKey ?? null,
+                keysMatch: providedKey === ADMIN_SECRET,
               },
               null,
               2
@@ -142,9 +134,30 @@ export default async function SearchAnalyticsPage({
     );
   }
 
+  // PRODUCTION ADMIN GUARD – NO notFound()
   if (process.env.NODE_ENV === "production") {
-    if (!adminSecret || providedKey !== adminSecret) {
-      notFound();
+    if (!ADMIN_SECRET || providedKey !== ADMIN_SECRET) {
+      return (
+        <div className="min-h-screen bg-slate-950 text-slate-50 flex items-center justify-center">
+          <div className="max-w-md p-8 space-y-4 text-center">
+            <h1 className="text-2xl font-semibold text-red-400">
+              Access Denied
+            </h1>
+            <p className="text-slate-400">
+              You are not authorized to view this page. A valid admin key is
+              required.
+            </p>
+            <p className="text-xs text-slate-500">
+              If you believe you should have access, please check your
+              credentials and try again.
+            </p>
+            <p className="mt-4 text-xs text-slate-500">
+              Hint: you can use <code>?debug=1</code> to inspect the guard
+              values without 404s.
+            </p>
+          </div>
+        </div>
+      );
     }
   }
 
