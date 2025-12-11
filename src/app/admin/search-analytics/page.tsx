@@ -3,6 +3,17 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import Link from "next/link";
 
+function getNormalizedAdminSecret(): string | undefined {
+  const raw = process.env.ADMIN_SECRET;
+  if (!raw) return undefined;
+
+  // If the value accidentally includes a "KEY=" prefix like "ADMIN_SECRET=foo",
+  // strip everything up to and including the first "=".
+  const eqIndex = raw.indexOf("=");
+  if (eqIndex === -1) return raw;
+  return raw.slice(eqIndex + 1);
+}
+
 export const dynamic = "force-dynamic";
 
 type SearchAnalyticsPageProps = {
@@ -102,7 +113,7 @@ async function getTopQueries(): Promise<TopQueryRow[]> {
 export default async function SearchAnalyticsPage({
   searchParams,
 }: SearchAnalyticsPageProps) {
-  const adminSecret = process.env.ADMIN_SECRET;
+  const adminSecret = getNormalizedAdminSecret();
 
   const providedKey =
     typeof searchParams?.adminKey === "string"
