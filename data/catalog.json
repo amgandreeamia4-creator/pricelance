@@ -1,0 +1,215 @@
+[
+  {
+    "id": "cat-honey-0",
+    "name": "Organic Wildflower Honey 500g",
+    "category": "honey",
+    "imageUrl": "https://images.pricelance.local/honey/organic-wildflower-500g.jpg",
+    "description": "Certified organic wildflower honey in a 500g glass jar, unfiltered and gently strained.",
+    "listings": [
+      {
+        "storeName": "FreshMarket",
+        "url": "https://freshmarket.local/products/organic-wildflower-honey-500g",
+        "price": 8.49,
+        "currency": "USD",
+        "shippingCost": 2.5
+      },
+      {
+        "storeName": "DailyGrocer",
+        "url": "https://dailygrocer.local/products/organic-wildflower-honey-500g",
+        "price": 8.29,
+        "currency": "USD",
+        "shippingCost": 0
+      }
+    ]
+  },
+  {
+    "id": "cat-honey-1",
+    "name": "Raw Acacia Honey 350g",
+    "category": "honey",
+    "imageUrl": "https://images.pricelance.local/honey/raw-acacia-350g.jpg",
+    "description": "Light and delicate raw acacia honey in a 350g glass jar, slow-filtered for clarity.",
+    "listings": [
+      {
+        "storeName": "Green Pantry",
+        "url": "https://greenpantry.local/products/organic-acacia-honey-250g",
+        "price": 9.5,
+        "currency": "USD",
+        "shippingCost": 0
+      }
+    ]
+  },
+  {
+    "id": "cat-honey-2",
+    "name": "Mountain Forest Honey 900g",
+    "category": "honey",
+    "imageUrl": "https://images.pricelance.local/honey/mountain-forest-900g.jpg",
+    "description": "Dark, aromatic honey collected from mountain forest blossoms, packed in a 900g jar.",
+    "listings": [
+      {
+        "storeName": "Everyday Grocer",
+        "url": "https://shop.everydaygrocer.local/products/mountain-forest-honey-900g",
+        "price": 14.99,
+        "currency": "USD",
+        "shippingCost": 3.99
+      }
+    ]
+  },
+  {
+    "id": "cat-tea-0",
+    "name": "English Breakfast Tea 80 Bags",
+    "category": "tea",
+    "imageUrl": "https://images.pricelance.local/tea/english-breakfast-80bags.jpg",
+    "description": "Robust black tea blend, ideal for mornings. Box of 80 biodegradable tea bags.",
+    "listings": [
+      {
+        "storeName": "Everyday Grocer",
+        "url": "https://shop.everydaygrocer.local/products/english-breakfast-tea-80",
+        "price": 4.29,
+        "currency": "USD",
+        "shippingCost": 0
+      },
+      {
+        "storeName": "City Corner Market",
+        "url": "https://citycorner.local/products/english-breakfast-tea-80",
+        "price": 4.79,
+        "currency": "USD",
+        "shippingCost": 1.99
+      }
+    ]
+  },
+  {
+    "id": "cat-tea-1",
+    "name": "Green Sencha Tea Loose Leaf 200g",
+    "category": "tea",
+    "imageUrl": "https://images.pricelance.local/tea/green-sencha-loose-200g.jpg",
+    "description": "Japanese-style sencha green tea, loose leaf, packed in a resealable 200g pouch.",
+    "listings": [
+      {
+        "storeName": "Green Pantry",
+        "url": "https://greenpantry.local/products/green-sencha-loose-leaf-200g",
+        "price": 11.99,
+        "currency": "USD",
+        "shippingCost": 2.99
+      }
+    ]
+  },
+  {
+    "id": "cat-tea-2",
+    "name": "Herbal Chamomile Tea 40 Bags",
+    "category": "tea",
+    "imageUrl": "https://images.pricelance.local/tea/chamomile-40bags.jpg",
+    "description": "Caffeine-free chamomile infusion made from whole blossoms. 40 tea bags.",
+    "listings": [
+      {
+        "storeName": "Everyday Grocer",
+        "url": "https://shop.everydaygrocer.local/products/herbal-chamomile-tea-40",
+        "price": 3.99,
+        "currency": "USD",
+        "shippingCost": 0
+      }
+    ]
+  },
+  {
+    "id": "cat-olive-oil-0",
+    "name": "Extra Virgin Olive Oil 1L",
+    "category": "olive oil",
+    "imageUrl": "https://images.pricelance.local/oil/extra-virgin-olive-1l.jpg",
+    "description": "Cold-pressed extra virgin olive oil, medium fruitiness, 1L glass bottle.",
+    "listings": [
+      {
+        "storeName": "Mediterranean Foods",
+        "url": "https://medfoods.local/products/extra-virgin-olive-oil-1l",
+        "price": 12.49,
+        "currency": "USD",
+        "shippingCost": 4.5
+      },
+      {
+        "storeName": "Everyday Grocer",
+        "url": "https://shop.everydaygrocer.local/products/extra-virgin-olive-oil-1l",
+        "price": 11.99,
+        "currency": "USD",
+        "shippingCost": 3.5
+      }
+    ]
+  },
+  {
+    "id": "cat-olive-oil-1",
+    "name": "Organic Greek Olive Oil 750ml",
+    "category": "olive oil",
+    "imageUrl": "https://images.pricelance.local/oil/organic-greek-olive-750ml.jpg",
+    "description": "Organic extra virgin olive oil from Greek Koroneiki olives, 750ml tin.",
+    "listings": [
+      {
+        "storeName": "Green Pantry",
+        "url": "https://greenpantry.local/products/organic-greek-olive-oil-750ml",
+        "price": 15.99,
+        "currency": "USD",
+        "shippingCost": 0
+      }
+    ]
+  },
+  {
+    "id": "cat-rice-0",
+    "name": "Basmati Rice 5kg",
+    "category": "rice",
+    "imageUrl": "https://images.pricelance.local/rice/basmati-5kg.jpg",
+    "description": "Aged long-grain basmati rice with a fragrant aroma, 5kg woven bag.",
+    "listings": [
+      {
+        "storeName": "Everyday Grocer",
+        "url": "https://shop.everydaygrocer.local/products/basmati-rice-5kg",
+        "price": 18.49,
+        "currency": "USD",
+        "shippingCost": 0
+      }
+    ]
+  },
+  {
+    "id": "cat-rice-1",
+    "name": "Short Grain Sushi Rice 1kg",
+    "category": "rice",
+    "imageUrl": "https://images.pricelance.local/rice/sushi-1kg.jpg",
+    "description": "Polished short-grain rice ideal for sushi and rice bowls, 1kg bag.",
+    "listings": [
+      {
+        "storeName": "City Corner Market",
+        "url": "https://citycorner.local/products/short-grain-sushi-rice-1kg",
+        "price": 5.79,
+        "currency": "USD",
+        "shippingCost": 1.5
+      }
+    ]
+  },
+  {
+    "id": "cat-pasta-0",
+    "name": "Durum Wheat Spaghetti 500g",
+    "category": "pasta",
+    "imageUrl": "https://images.pricelance.local/pasta/spaghetti-500g.jpg",
+    "description": "Classic Italian-style spaghetti made from 100% durum wheat semolina.",
+    "listings": [
+      {
+        "storeName": "Everyday Grocer",
+        "url": "https://shop.everydaygrocer.local/products/durum-wheat-spaghetti-500g",
+        "price": 1.49,
+        "currency": "USD",
+        "shippingCost": 0
+      }
+    ]
+  },
+  {
+    "id": "cat-sugar-0",
+    "name": "Fine White Sugar 1kg",
+    "category": "sugar",
+    "imageUrl": "https://images.pricelance.local/sugar/white-1kg.jpg",
+    "description": "Fine granulated white sugar, ideal for baking and everyday use.",
+    "listings": [
+      {
+        "storeName": "Everyday Grocer",
+        "url": "https://shop.everydaygrocer.local/products/fine-white-sugar-1kg",
+        "price": 1.09,
+        "currency": "USD",
+        "shippingCost": 0
+      }
+    ]
+  }
+]

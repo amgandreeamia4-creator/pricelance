@@ -13,13 +13,6 @@ export const dynamic = "force-dynamic";
  * Does NOT actually delete anything - use POST for that.
  */
 export async function GET(req: NextRequest) {
-  if (process.env.NODE_ENV === "production") {
-    return NextResponse.json(
-      { ok: false, error: "Not available in production" },
-      { status: 404 },
-    );
-  }
-
   const authError = checkInternalAuth(req);
   if (authError) return authError;
 
@@ -75,13 +68,6 @@ export async function GET(req: NextRequest) {
  * Protected by INTERNAL_API_KEY header.
  */
 export async function POST(req: NextRequest) {
-  if (process.env.NODE_ENV === "production") {
-    return NextResponse.json(
-      { ok: false, error: "Not available in production" },
-      { status: 404 },
-    );
-  }
-
   const authError = checkInternalAuth(req);
   if (authError) return authError;
 

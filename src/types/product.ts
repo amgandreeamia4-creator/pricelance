@@ -1,32 +1,37 @@
 // src/types/product.ts
 
 export interface ProductListing {
-  id: string;
-  store: string;
-  url: string;
-  imageUrl: string;
+  id?: string;
+  
+  /** Store name - the mapper uses storeName, legacy uses store */
+  storeName?: string;
+  store?: string;
+  storeLogoUrl?: string | null;
+  
+  url?: string | null;
+  imageUrl?: string | null;
 
   price: number;
-  currency: string;
-  shippingCost: number;
+  currency?: string;
+  shippingCost?: number | null;
 
   /** Estimated delivery time in days */
-  deliveryTimeDays: number;
+  deliveryTimeDays?: number | null;
 
   /** True if this is considered "fast delivery" (e.g. <= 2 days). */
-  fastDelivery: boolean;
+  fastDelivery?: boolean;
 
   /** Location this listing is primarily targeting (city / country / region). */
-  location: string;
+  location?: string | null;
 
   /** Whether the item is currently in stock at this store. */
-  inStock: boolean;
+  inStock?: boolean;
 
   /** Optional rating between 0 and 5. */
-  rating?: number;
+  rating?: number | null;
 
   /** Optional number of reviews for this product on this store. */
-  reviewCount?: number;
+  reviewCount?: number | null;
 
   /** Optional provider/source tag, e.g. "static", "dummyjson", "ebay". */
   source?: string | null;
@@ -40,12 +45,20 @@ export interface ProductListing {
 
 export interface ProductPriceHistoryPoint {
   /**
-   * Month identifier. You can treat this as a label, e.g. "2025-01" or "Jan".
-   * The chart component can display it directly.
+   * Date string (ISO format or YYYY-MM-DD). The mapper uses 'date'.
    */
-  month: string;
-  /** Average or representative price for that month. */
-  averagePrice: number;
+  date?: string;
+  /**
+   * Month identifier. You can treat this as a label, e.g. "2025-01" or "Jan".
+   * The chart component can display it directly. Legacy field.
+   */
+  month?: string;
+  /** Price for that date/month. */
+  price?: number;
+  /** Average or representative price for that month. Legacy field. */
+  averagePrice?: number;
+  /** Currency code */
+  currency?: string;
 }
 
 export interface ProductDealInfo {
@@ -55,8 +68,11 @@ export interface ProductDealInfo {
 }
 
 export interface ProductWithHistory {
-  /** Stable internal ID for the product. */
-  productId: string;
+  /** Stable internal ID for the product (preferred). */
+  id?: string;
+  
+  /** Alias for id - legacy field, some components use productId */
+  productId?: string;
 
   /** Main user-facing name used in the UI. */
   displayName: string;
@@ -64,14 +80,20 @@ export interface ProductWithHistory {
   /** Optional more technical or internal name. */
   name?: string;
 
+  /** Optional product description. */
+  description?: string | null;
+
   /** Category used for filtering or grouping (e.g. "Laptops", "Headphones"). */
-  category: string;
+  category?: string | null;
 
   /** Optional thumbnail for quick display. */
-  thumbnailUrl?: string;
+  thumbnailUrl?: string | null;
+  
+  /** Optional full-size image URL. */
+  imageUrl?: string | null;
 
   /** Optional brand name. */
-  brand?: string;
+  brand?: string | null;
 
   /** Store-specific offers for this product. */
   listings: ProductListing[];

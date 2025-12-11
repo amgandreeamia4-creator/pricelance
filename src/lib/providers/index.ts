@@ -3,12 +3,14 @@ import type { ProductProvider, ProviderId } from "./types";
 import { staticProvider } from "./staticProvider";
 import { dummyJsonProvider } from "./dummyJsonProvider";
 import { realStoreProvider } from "./realStoreProvider";
+import { catalogProvider } from "./catalogProvider";
 import { providerConfigs } from "@/config/providerConfig";
 
 const providerMap: Record<ProviderId, ProductProvider> = {
   static: staticProvider,
   dummyjson: dummyJsonProvider,
   realstore: realStoreProvider,
+  catalog: catalogProvider,
 };
 
 /**

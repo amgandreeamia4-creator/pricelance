@@ -136,12 +136,13 @@ export async function findProductsWithHistory(
       const t = typeof term === "string" ? term.trim() : "";
       if (!t) continue;
 
+      // Use case-insensitive matching for PostgreSQL
       orFilters.push(
-        { name: { contains: t, } },
-        { displayName: { contains: t, } },
-        { brand: { contains: t, } },
-        { description: { contains: t,  } },
-        { category: { contains: t, } } // Added closing braces here
+        { name: { contains: t, mode: "insensitive" } },
+        { displayName: { contains: t, mode: "insensitive" } },
+        { brand: { contains: t, mode: "insensitive" } },
+        { description: { contains: t, mode: "insensitive" } },
+        { category: { contains: t, mode: "insensitive" } }
       );
     }
 
@@ -152,8 +153,8 @@ export async function findProductsWithHistory(
     where.AND = where.AND ?? [];
     where.AND.push({
       OR: [
-        { category: { contains: options.categoryHint, } },
-        { category: { equals: options.categoryHint, } },
+        { category: { contains: options.categoryHint, mode: "insensitive" } },
+        { category: { equals: options.categoryHint, mode: "insensitive" } },
       ],
     });
   }
@@ -166,12 +167,14 @@ export async function findProductsWithHistory(
     if (options.location) {
       listingWhere.location = {
         contains: options.location,
+        mode: "insensitive",
       };
     }
 
     if (options.store) {
       listingWhere.storeName = {
         contains: options.store,
+        mode: "insensitive",
       };
     }
 
@@ -196,8 +199,8 @@ export async function findProductsWithHistory(
   let products = prismaProducts.map(mapToProductWithHistory);
 
   // ---- Application-level case-insensitive filter ----
-  // SQLite `contains` is case-sensitive, so we apply a second pass in JS
-  // to ensure case-insensitive matching.
+  // PostgreSQL with mode: 'insensitive' handles case, but we do a sanity check.
+  // Changed from ALL terms to ANY term matching for better recall.
   if (textTerms.length > 0) {
     const lowerTerms = textTerms
       .map((t) => (typeof t === "string" ? t.trim().toLowerCase() : ""))
@@ -205,19 +208,20 @@ export async function findProductsWithHistory(
 
     if (lowerTerms.length > 0) {
       products = products.filter((p) => {
-        // Build a lowercase haystack from all searchable fields
+        // Build a lowercase haystack from all searchable fields (including description)
         const haystack = [
           p.name,
           p.displayName,
           p.brand,
           p.category,
+          p.description,
         ]
           .filter((v): v is string => typeof v === "string" && v.length > 0)
           .join(" ")
           .toLowerCase();
 
-        // Require ALL terms to be present in the haystack
-        return lowerTerms.every((term) => haystack.includes(term));
+        // Require ANY term to be present in the haystack (OR logic for better recall)
+        return lowerTerms.some((term) => haystack.includes(term));
       });
     }
   }

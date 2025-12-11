@@ -426,8 +426,10 @@ export const realStoreProvider: ProductProvider & {
           id: productId,
           name: title,
           displayName: title,
-          description: "",
-          category: undefined,
+          // Store the search query in description so products can be found by the original search term
+          description: `Search: ${normalizedQuery}`,
+          // Store the search query as category so DB text search can find products by query
+          category: normalizedQuery,
           brand: undefined,
           imageUrl,
           thumbnailUrl: imageUrl,
@@ -613,8 +615,10 @@ export const realStoreProvider: ProductProvider & {
         id: productId,
         name: title,
         displayName: title,
-        description: "",
-        category: undefined,
+        // Store the search query in description so products can be found by the original search term
+        description: `Search: ${normalizedQuery}`,
+        // Store the search query as category so DB text search can find products by query
+        category: normalizedQuery,
         brand: undefined,
         imageUrl,
         thumbnailUrl: imageUrl,

@@ -1,6 +1,6 @@
 import type { IngestPayload } from "@/lib/ingestService";
 
-export type ProviderId = "static" | "dummyjson" | "realstore";
+export type ProviderId = "static" | "dummyjson" | "realstore" | "catalog";
 
 /**
  * Error types that can occur when calling a provider.

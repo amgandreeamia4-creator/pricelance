@@ -9,6 +9,12 @@ import {
   MIN_RESULTS_BEFORE_ENRICH,
   type EnrichmentResult,
 } from "@/lib/searchEnrichment";
+import {
+  computeSearchStatus,
+  type SearchStatus,
+  type ProviderStatus,
+} from "@/lib/searchStatus";
+
 import { 
   normalizeSearchQuery, 
   normalizeUserQuery, 
@@ -304,6 +310,11 @@ async function handleSearchRequest(req: NextRequest) {
   });
 
   const totalCount = enriched.length;
+  const { status, providerStatus } = computeSearchStatus(
+    totalCount,
+    enrichmentMeta,
+  );
+
   const skip = (page - 1) * pageSize;
   const take = pageSize;
 
@@ -355,6 +366,24 @@ async function handleSearchRequest(req: NextRequest) {
     }
   }
 
+  // Best-effort search analytics logging (non-critical)
+  if (query && query.trim().length > 0) {
+    try {
+      await prisma.searchLog.create({
+        data: {
+          query: query.trim(),
+          resultCount: products.length,
+        },
+      });
+    } catch (logError) {
+      console.error(
+        "[/api/products/search] Failed to log search to SearchLog:",
+        logError instanceof Error ? logError.message : String(logError)
+      );
+      // Continue - search results must not fail because analytics logging failed
+    }
+  }
+
   const meta = {
     // Search-level info
     query: searchMeta.query,
@@ -380,6 +409,10 @@ async function handleSearchRequest(req: NextRequest) {
     dataStatus: enrichmentMeta?.dataStatus ?? "ok",
     hadProviderTimeout: enrichmentMeta?.hadTimeout ?? false,
     hadProviderError: enrichmentMeta?.hadError ?? false,
+
+    // Unified status fields for consistent UX across search and assistant
+    status: status as SearchStatus,
+    providerStatus: providerStatus as ProviderStatus,
   };
 
   // Wrap Prisma call in try/catch - saving search history is non-critical
@@ -404,6 +437,8 @@ async function handleSearchRequest(req: NextRequest) {
 
   const res = NextResponse.json({
     ok: true,
+    status,
+    providerStatus,
     products,
     meta: {
       ...meta,

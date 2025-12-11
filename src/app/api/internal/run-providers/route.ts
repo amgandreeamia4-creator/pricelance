@@ -1,8 +1,11 @@
 // src/app/api/internal/run-providers/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { checkInternalAuth } from "@/lib/internalAuth";
+import { realStoreProvider } from "@/lib/providers/realStoreProvider";
+import { ingestProducts } from "@/lib/ingestService";
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 type ProviderResult = {
   ok: boolean;
@@ -11,70 +14,100 @@ type ProviderResult = {
   error?: string;
 };
 
-async function callProvider(path: string, internalKey: string | null): Promise<ProviderResult> {
-  try {
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
-    const headers: Record<string, string> = {};
-    if (internalKey) {
-      headers["x-internal-key"] = internalKey;
-    }
-
-    const res = await fetch(`${baseUrl}${path}`, {
-      method: "GET",
-      headers,
-    });
-
-    const json = (await res.json()) as any;
-
-    return {
-      ok: json.ok ?? res.ok,
-      ingested: json.ingested ?? 0,
-      productIds: json.productIds ?? [],
-      error: json.error,
-    };
-  } catch (error) {
-    console.error(`[run-providers] Failed to call ${path}:`, error);
-    return {
-      ok: false,
-      ingested: 0,
-      productIds: [],
-      error: error instanceof Error ? error.message : String(error),
-    };
-  }
-}
-
+/**
+ * GET /api/internal/run-providers
+ *
+ * Run product providers to fetch and ingest data.
+ * Query params:
+ *   - providers: comma-separated list (default: "realstore")
+ *   - query: search query to use (default: "laptop")
+ *
+ * Example: /api/internal/run-providers?providers=realstore&query=smartphone
+ */
 export async function GET(req: NextRequest) {
-  if (process.env.NODE_ENV === "production") {
-    return NextResponse.json(
-      { ok: false, error: "Not available in production" },
-      { status: 404 },
-    );
-  }
-
   const authError = checkInternalAuth(req);
   if (authError) return authError;
 
-  const providers = [
-    { name: "demo-provider", path: "/api/internal/demo-provider" },
-    { name: "dummyjson-provider", path: "/api/internal/dummyjson-provider" },
-    { name: "static-provider", path: "/api/internal/static-provider" },
-  ];
+  const { searchParams } = new URL(req.url);
+  const providersParam = searchParams.get("providers") ?? "realstore";
+  const query = searchParams.get("query") ?? "laptop";
+
+  const requestedProviders = providersParam.split(",").map((p) => p.trim().toLowerCase());
+
+  console.log("[run-providers] Starting with providers:", requestedProviders, "query:", query);
 
   const results: Record<string, ProviderResult> = {};
   let totalIngested = 0;
+  let totalListings = 0;
   const allProductIds: string[] = [];
 
-  const headerKey = req.headers.get("x-internal-key");
+  for (const providerName of requestedProviders) {
+    if (providerName === "realstore") {
+      try {
+        console.log("[run-providers] Calling realstore provider with query:", query);
+        
+        // realStoreProvider always has searchProductsWithStatus defined
+        if (!realStoreProvider.searchProductsWithStatus) {
+          throw new Error("realStoreProvider.searchProductsWithStatus is not defined");
+        }
+        const searchResult = await realStoreProvider.searchProductsWithStatus(query);
 
-  for (const provider of providers) {
-    const result = await callProvider(provider.path, headerKey);
-    results[provider.name] = result;
+        if (searchResult.error) {
+          console.log("[run-providers] realstore returned error:", searchResult.error);
+          results[providerName] = {
+            ok: false,
+            ingested: 0,
+            productIds: [],
+            error: searchResult.error.message,
+          };
+          continue;
+        }
 
-    if (result.ok) {
-      totalIngested += result.ingested ?? 0;
-      if (result.productIds && Array.isArray(result.productIds)) {
-        allProductIds.push(...result.productIds);
+        // Ingest the payloads
+        let providerIngested = 0;
+        let providerListings = 0;
+        const providerProductIds: string[] = [];
+
+        for (const payload of searchResult.payloads) {
+          const ingestResult = await ingestProducts(payload);
+          providerIngested += ingestResult.count;
+          providerProductIds.push(...ingestResult.productIds);
+
+          // Count listings from payload
+          const products = Array.isArray(payload) ? payload : payload.products ?? [];
+          for (const p of products) {
+            providerListings += p.listings?.length ?? 0;
+          }
+        }
+
+        console.log("[run-providers] realstore ingested:", providerIngested, "products,", providerListings, "listings");
+
+        results[providerName] = {
+          ok: true,
+          ingested: providerIngested,
+          productIds: providerProductIds,
+        };
+
+        totalIngested += providerIngested;
+        totalListings += providerListings;
+        allProductIds.push(...providerProductIds);
+      } catch (error) {
+        console.error("[run-providers] realstore error:", error);
+        results[providerName] = {
+          ok: false,
+          ingested: 0,
+          productIds: [],
+          error: error instanceof Error ? error.message : String(error),
+        };
       }
+    } else {
+      // Unknown provider
+      results[providerName] = {
+        ok: false,
+        ingested: 0,
+        productIds: [],
+        error: `Unknown provider: ${providerName}. Supported: realstore`,
+      };
     }
   }
 
@@ -83,7 +116,10 @@ export async function GET(req: NextRequest) {
   return NextResponse.json(
     {
       ok,
-      totalIngested,
+      providersRequested: requestedProviders,
+      providersRun: Object.keys(results).filter((k) => results[k].ok),
+      ingestedProducts: totalIngested,
+      ingestedListings: totalListings,
       uniqueProductIds: Array.from(new Set(allProductIds)),
       providers: results,
     },

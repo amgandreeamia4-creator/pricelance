@@ -26,7 +26,7 @@ export function ProductCard({ product, isSelected, onSelect }: Props) {
       <div className="h-14 w-20 overflow-hidden rounded-xl bg-slate-800">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={listings[0]?.imageUrl}
+          src={listings[0]?.imageUrl ?? product.imageUrl ?? product.thumbnailUrl ?? undefined}
           alt={product.displayName}
           className="h-full w-full object-cover"
         />

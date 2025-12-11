@@ -6,17 +6,24 @@ import { getBestListing } from '@/lib/productService';
 
 /**
  * Check if a URL is a demo/placeholder URL that shouldn't be clickable.
+ * Returns true only for known demo domains or empty/invalid URLs.
  */
 function isDemoUrl(url: string | null | undefined): boolean {
-  if (!url) return true;
-  try {
-    const u = new URL(url);
-    if (u.hostname === "example.com") return true;
-    if (u.hostname === "dummyjson.com") return true;
+  if (!url || url.trim() === "") return true;
+  
+  const lower = url.toLowerCase();
+  
+  // Known demo/placeholder domains
+  if (lower.includes("example.com")) return true;
+  if (lower.includes("dummyjson.com")) return true;
+  
+  // If it looks like a real URL (starts with http), it's not demo
+  if (lower.startsWith("http://") || lower.startsWith("https://")) {
     return false;
-  } catch {
-    return true;
   }
+  
+  // For relative URLs or other formats, assume not demo
+  return false;
 }
 
 type Props = {

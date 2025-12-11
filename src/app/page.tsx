@@ -842,6 +842,17 @@ export default function HomePage() {
                       </div>
                     ) : (
                       <>
+                        {/* Provider error banner - show when we have results but providers failed */}
+                        {(resultsMeta?.hadProviderError || resultsMeta?.hadProviderTimeout) && results.length > 0 && (
+                          <div className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-700 dark:bg-amber-900/20 dark:text-amber-300">
+                            <span className="font-medium">
+                              {resultsMeta?.hadProviderTimeout 
+                                ? "Live providers are slow to respond." 
+                                : "Live providers are temporarily unavailable."}
+                            </span>{" "}
+                            Showing cached results from our database.
+                          </div>
+                        )}
                         {/* Fallback query banner */}
                         {resultsMeta?.fallbackQueryUsed && (
                           <div className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-700 dark:bg-amber-900/20 dark:text-amber-300">

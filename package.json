@@ -8,7 +8,13 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "test": "vitest"
+    "test": "vitest",
+    "dev:cleanup-demo": "tsx scripts/cleanupDemo.ts",
+    "dev:run-realstore": "tsx scripts/runRealstore.ts",
+    "dev:seed-realstore": "tsx scripts/seedAllRealstore.ts",
+    "dev:seed-static": "tsx scripts/seedStatic.ts",
+    "dev:seed-catalog": "tsx scripts/seedCatalog.ts",
+    "dev:migrate-catalog": "tsx scripts/migrateCatalogToDB.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.19.0",
@@ -27,6 +33,7 @@
     "@types/react-dom": "^19.0.2",
     "@vitest/ui": "^2.1.9",
     "autoprefixer": "^10.4.22",
+    "dotenv": "^17.2.3",
     "eslint": "^9.13.0",
     "eslint-config-next": "16.0.3",
     "i": "^0.3.7",

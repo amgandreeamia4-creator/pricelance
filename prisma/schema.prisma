@@ -1,9 +1,8 @@
-// prisma/schema.prisma
+// Prisma datasource is now PostgreSQL (Supabase).
+// Uses the DATABASE_URL environment variable.
 
 datasource db {
-  provider = "sqlite"
-  // DATABASE_URL = "file:./prisma/dev.db" (relative to project root).
-  // DB file lives at <project-root>/prisma/dev.db.
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -47,6 +46,7 @@ model Listing {
   estimatedDeliveryDays Int?
   deliveryDays          Int?
   location              String?
+  countryCode           String? // ISO 3166-1 alpha-2, e.g. "US", "RO", "DE"
   inStock               Boolean  @default(true)
   rating                Float?
   reviewCount           Int?
@@ -87,4 +87,37 @@ model SavedSearch {
 
   @@index([userId])
   @@index([createdAt])
+}
+
+model CuratedProduct {
+  id              String           @id
+  name            String
+  category        String
+  imageUrl        String?
+  description     String?
+  defaultPrice    Float?
+  defaultCurrency String           @default("USD")
+  createdAt       DateTime         @default(now())
+
+  listings        CuratedListing[]
+}
+
+model CuratedListing {
+  id         String         @id @default(cuid())
+  product    CuratedProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId  String
+
+  storeName  String
+  url        String
+  price      Float
+  currency   String
+  shippingCost Float?
+  countryCode String? // ISO 3166-1 alpha-2, e.g. "US", "RO", "DE"
+}
+
+model SearchLog {
+  id          String   @id @default(cuid())
+  query       String
+  resultCount Int
+  createdAt   DateTime @default(now())
 }

@@ -31,6 +31,11 @@ export const providerConfigs: ProviderConfig[] = [
     baseUrl: env.DUMMYJSON_BASE_URL || "https://dummyjson.com",
   },
   {
+    id: "catalog",
+    name: "Curated Catalog",
+    enabled: true,
+  },
+  {
     id: "realstore",
     name: "Real-Time Product Search (Aggregator)",
     // Disabled by default in local/dev; can be turned on via env flag
