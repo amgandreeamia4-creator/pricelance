@@ -6,7 +6,7 @@ import { prisma } from "@/lib/db";
 async function buildCatalogProductsForQuery(query: string): Promise<IngestProductInput[]> {
   const normalized = query.trim();
 
-  const products = await prisma.curatedProduct.findMany({
+  const products = await (prisma as any).curatedProduct.findMany({
     where: {
       OR: [
         { category: { contains: normalized, mode: "insensitive" } },
@@ -21,7 +21,7 @@ async function buildCatalogProductsForQuery(query: string): Promise<IngestProduc
 
   if (!products.length) return [];
 
-  return products.map((p) => {
+  return products.map((p: any) => {
     const imageUrl = p.imageUrl ?? null;
 
     return {
@@ -32,7 +32,7 @@ async function buildCatalogProductsForQuery(query: string): Promise<IngestProduc
       category: p.category,
       imageUrl,
       thumbnailUrl: imageUrl,
-      listings: p.listings.map((l) => ({
+      listings: p.listings.map((l: any) => ({
         storeName: l.storeName,
         url: l.url,
         price: l.price,
