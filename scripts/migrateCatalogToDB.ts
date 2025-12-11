@@ -47,7 +47,7 @@ async function main() {
     let totalListings = 0;
 
     for (const p of products) {
-      const curatedProduct = await prisma.curatedProduct.upsert({
+      const curatedProduct = await (prisma as any).curatedProduct.upsert({
         where: { id: p.id },
         update: {
           name: p.name,

@@ -83,7 +83,9 @@ async function getTopQueries(): Promise<TopQueryRow[]> {
   }
 
   const rows: TopQueryRow[] = [];
-  for (const [query, { count, sumResults }] of agg.entries()) {
+  for (const entry of Array.from(agg.entries())) {
+    const query = entry[0];
+    const { count, sumResults } = entry[1];
     rows.push({
       query,
       timesSearched: count,

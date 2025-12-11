@@ -174,6 +174,7 @@ async function ingestProducts(items: RTPProduct[], query: string) {
       currency: string;
       shippingCost: number | null;
       imageUrl: string | null;
+      countryCode?: string | null;
     }> = [];
 
     for (const offer of rawOffers) {
