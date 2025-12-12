@@ -14,15 +14,16 @@
     "dev:seed-realstore": "tsx scripts/seedAllRealstore.ts",
     "dev:seed-static": "tsx scripts/seedStatic.ts",
     "dev:seed-catalog": "tsx scripts/seedCatalog.ts",
-    "dev:migrate-catalog": "tsx scripts/migrateCatalogToDB.ts"
+    "dev:migrate-catalog": "tsx scripts/migrateCatalogToDB.ts",
+    "fix-db-url": "node scripts/fix-database-url.mjs"
   },
   "dependencies": {
     "@prisma/client": "^6.19.0",
     "lucide-react": "^0.556.0",
-    "next": "16.0.7",
+    "next": "^16.0.10",
     "next-themes": "latest",
-    "react": "19.2.0",
-    "react-dom": "19.2.0",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3",
     "recharts": "^3.4.1"
   },
   "devDependencies": {

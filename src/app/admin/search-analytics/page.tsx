@@ -4,6 +4,8 @@ import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
+const ADMIN_SECRET = process.env.ADMIN_SECRET ?? "";
+
 type SearchAnalyticsPageProps = {
   searchParams?: { [key: string]: string | string[] | undefined };
 };
@@ -102,7 +104,41 @@ export default async function SearchAnalyticsPage({
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   searchParams,
 }: SearchAnalyticsPageProps) {
-  // No auth / debug logic for now – always render the analytics UI
+  const providedKey =
+    typeof searchParams?.adminKey === "string"
+      ? searchParams.adminKey
+      : undefined;
+
+  const isProduction = (process.env.NODE_ENV ?? "development") === "production";
+
+  if (isProduction) {
+    if (!ADMIN_SECRET) {
+      return (
+        <div className="min-h-screen bg-slate-950 text-slate-50 flex items-center justify-center">
+          <div className="max-w-md p-8 space-y-4 text-center">
+            <h1 className="text-2xl font-semibold text-red-400">Access Denied</h1>
+            <p className="text-slate-400">
+              Admin access is not configured. Please set the ADMIN_SECRET environment variable.
+            </p>
+          </div>
+        </div>
+      );
+    }
+
+    if (providedKey !== ADMIN_SECRET) {
+      return (
+        <div className="min-h-screen bg-slate-950 text-slate-50 flex items-center justify-center">
+          <div className="max-w-md p-8 space-y-4 text-center">
+            <h1 className="text-2xl font-semibold text-red-400">Access Denied</h1>
+            <p className="text-slate-400">
+              You are not authorized to view this page. A valid admin key is required.
+            </p>
+          </div>
+        </div>
+      );
+    }
+  }
+
   const [zeroResultQueries, topQueries] = await Promise.all([
     getZeroResultQueries(),
     getTopQueries(),

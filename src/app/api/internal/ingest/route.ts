@@ -10,11 +10,9 @@ function flagEnabled(value: string | undefined): boolean {
 }
 
 export async function POST(req: NextRequest) {
-  // Disabled by default everywhere unless explicitly enabled
   const enabled = flagEnabled(process.env.ALLOW_INTERNAL_INGEST);
 
   if (!enabled) {
-    // 404 to reduce endpoint discovery
     return NextResponse.json(
       { ok: false, error: "Not available in this environment" },
       { status: 404 }
@@ -28,11 +26,20 @@ export async function POST(req: NextRequest) {
     const body = (await req.json()) as IngestPayload;
     const result = await ingestProducts(body);
 
-    return NextResponse.json({ ok: true, ...result }, { status: 200 });
+    return NextResponse.json(
+      {
+        ok: true,
+        ...result,
+      },
+      { status: 200 }
+    );
   } catch (error) {
     console.error("Failed to ingest products:", error);
     return NextResponse.json(
-      { ok: false, error: error instanceof Error ? error.message : String(error) },
+      {
+        ok: false,
+        error: error instanceof Error ? error.message : String(error),
+      },
       { status: 500 }
     );
   }
@@ -51,5 +58,8 @@ export async function GET(req: NextRequest) {
   const authError = checkInternalAuth(req);
   if (authError) return authError;
 
-  return NextResponse.json({ ok: true, message: "Internal ingest endpoint is alive" });
+  return NextResponse.json(
+    { ok: true, message: "Internal ingest endpoint is alive" },
+    { status: 200 }
+  );
 }
