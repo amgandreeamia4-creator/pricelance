@@ -1,6 +1,6 @@
 // src/lib/searchAnalytics.ts
 import type { SavedSearch } from "@prisma/client";
-import prisma from "@/lib/db";
+import { prisma } from "@/lib/db";
 
 export type TopQuery = {
   query: string;
