@@ -1,232 +1,149 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { FormEvent, useState } from "react";
 
-type AssistantDeal = {
-  productId: string;
-  productName: string;
-  storeName: string;
-  url: string | null;
-  price: number;
-  currency: string;
+type Listing = {
+  price?: number | string | null;
+  storeName?: string | null;
+  store?: string | null;
+  shippingDays?: number | null;
 };
 
-type AssistantResponse = {
-  ok: boolean;
-  query: string;
-  summary?: string;
-  bestDeal: AssistantDeal | null;
-  alternatives: AssistantDeal[];
-  products?: any[];
-  locationIntent?: boolean;
-  error?: string;
+type Product = {
+  id?: string | number;
+  name?: string | null;
   brand?: string | null;
   category?: string | null;
-  dealMode?: boolean;
-  status?: "ok" | "ok-db-only" | "no-results" | "error";
-  providerStatus?: {
-    realstore?: "ok" | "error" | "disabled";
-    catalog?: "ok" | "error" | "disabled";
-  };
+  listings?: Listing[];
 };
 
-interface ChatAssistantProps {
-  location?: any;
-  onClose?: () => void;
-}
+type ChatAssistantProps = {
+  products: Product[];
+  searchQuery: string;
+  location?: string;
+};
 
-export const ChatAssistant: React.FC<ChatAssistantProps> = ({ location, onClose }) => {
+export default function ChatAssistant({
+  products,
+  searchQuery,
+  location,
+}: ChatAssistantProps) {
   const [input, setInput] = useState("");
+  const [answer, setAnswer] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [answer, setAnswer] = useState<string | null>(null);
-  const [bestDeal, setBestDeal] = useState<AssistantDeal | null>(null);
-  const [alternatives, setAlternatives] = useState<AssistantDeal[]>([]);
-  const [hasAsked, setHasAsked] = useState(false);
-  const [dealMode, setDealMode] = useState(false);
-  const [status, setStatus] = useState<AssistantResponse["status"]>(undefined);
 
-  async function handleSubmit(e: React.FormEvent) {
+  const hasResults = Array.isArray(products) && products.length > 0;
+
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    const message = input.trim();
-    if (!message) return;
+    if (!input.trim() || !hasResults) return;
 
     setIsLoading(true);
     setError(null);
-    setHasAsked(true);
-    setAnswer(null);
-    setBestDeal(null);
-    setAlternatives([]);
-    setDealMode(false);
-    setStatus(undefined);
 
     try {
-      const res = await fetch("/api/assistant/query", {
+      const res = await fetch("/api/assistant", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
-          message,
-          countryCode: location?.country ?? undefined,
+          query: input.trim(),
+          searchQuery,
+          location,
+          products,
         }),
       });
 
-      const data = (await res.json().catch(() => null)) as
-        | AssistantResponse
-        | null;
-
-      if (!res.ok || !data) {
-        setError(
-          data?.error || "Something went wrong asking the assistant."
-        );
-        return;
+      if (!res.ok) {
+        throw new Error("Assistant request failed");
       }
 
-      if (!data.ok) {
-        setError(data.error || "Assistant returned an error.");
-        return;
-      }
-
-      setStatus(data.status);
-
-      if (data.status === "no-results") {
-        setAnswer(
-          data.summary ||
-            `I couldn’t find any products for "${data.query}" in our catalog yet.`,
-        );
-      } else if (data.status === "error") {
-        setError(
-          data.summary ||
-            "Something went wrong while checking prices. Please try again in a moment.",
-        );
-        return;
-      } else {
-        if (!data.summary) {
-          setError("The assistant did not return a summary.");
-          return;
-        }
-        setAnswer(data.summary);
-      }
-      setBestDeal(data.bestDeal ?? null);
-      setAlternatives(Array.isArray(data.alternatives) ? data.alternatives : []);
-      setDealMode(Boolean(data.dealMode));
-    } catch (err) {
-      console.error("[ChatAssistant] Error talking to assistant:", err);
-      setError("Network error while talking to the assistant.");
+      const data = await res.json();
+      setAnswer(data.answer ?? "I couldn't generate a summary this time.");
+    } catch (err: any) {
+      console.error(err);
+      setError(
+        err?.message ?? "Something went wrong while talking to the assistant."
+      );
     } finally {
       setIsLoading(false);
     }
   }
 
+  const disabledMessage = !hasResults
+    ? "Run a search first so I can look at real prices."
+    : "";
+
   return (
-    <div className="rounded-2xl border border-teal-400/60 bg-slate-900/80 p-4 shadow-[0_0_25px_rgba(45,212,191,0.35)] text-sm">
-      <div className="mb-3 flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full border border-teal-400/70 bg-teal-500/20 text-xs font-semibold text-teal-200">
-            AI
-          </div>
-          <div className="flex flex-col">
-            <span className="text-sm font-semibold text-teal-100">Assistant</span>
-            <span className="text-xs text-teal-200/80">
-              Ask about products, prices, or what to buy next.
-            </span>
-          </div>
+    <div className="rounded-2xl border border-[var(--pl-card-border)] bg-[var(--pl-card)] p-4 shadow-sm ring-1 ring-teal-400/40 dark:ring-teal-500/40">
+      <div className="mb-3 flex items-start justify-between gap-2">
+        <div>
+          <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-slate-700 dark:text-slate-200 mb-1.5">
+            Assistant
+          </h3>
+          <p className="text-xs leading-relaxed text-slate-700 dark:text-slate-300">
+            Ask about products, prices, or what to buy next.
+          </p>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="rounded-full bg-slate-900/80 px-3 py-1 text-xs font-medium text-teal-200/80">
-            {isLoading ? "Thinking…" : hasAsked ? "Ready" : "Try asking"}
-          </div>
-          {onClose && (
-            <button
-              type="button"
-              onClick={onClose}
-              className="inline-flex h-6 w-6 items-center justify-center rounded-full text-sm text-slate-400 hover:bg-slate-800 hover:text-slate-100 transition"
-              aria-label="Close assistant"
-            >
-              ×
-            </button>
-          )}
-        </div>
+        <span className="mt-0.5 rounded-full border border-[var(--pl-card-border)] bg-[var(--pl-bg)] px-2 py-1 text-[10px] text-slate-600 dark:text-slate-300">
+          Try asking
+        </span>
       </div>
 
-      <form onSubmit={handleSubmit} className="mb-3 flex items-center gap-2">
+      <form onSubmit={handleSubmit} className="relative mb-3">
         <input
-          type="text"
+          className="w-full rounded-full border border-[var(--pl-card-border)] bg-[var(--pl-bg)] px-3 py-2 pr-14 text-xs text-slate-700 shadow-sm outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-200 dark:text-slate-100 dark:focus:border-teal-300 dark:focus:ring-teal-500/40"
+          placeholder={
+            hasResults
+              ? "Ask about these prices, stores, or which option is best..."
+              : "Search for something first, then ask me about the results..."
+          }
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Ask about these prices, stores, or delivery times…"
-          className="flex-1 rounded-xl bg-slate-950/70 border border-slate-700 px-3 py-2 text-xs text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-teal-400 focus:border-teal-400"
-          disabled={isLoading}
+          disabled={isLoading || !hasResults}
         />
         <button
           type="submit"
-          disabled={isLoading || !input.trim()}
-          className="rounded-xl bg-teal-500/90 px-3 py-2 text-xs font-semibold text-slate-950 shadow hover:bg-teal-400 disabled:cursor-not-allowed disabled:bg-slate-700"
+          disabled={isLoading || !hasResults || !input.trim()}
+          className="absolute right-1 top-1/2 -translate-y-1/2 rounded-full bg-[var(--pl-primary)] px-3 py-1 text-xs font-medium text-white shadow-md transition enabled:hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {isLoading ? "Thinking…" : "Ask"}
+          {isLoading ? "..." : "Ask"}
         </button>
       </form>
 
+      {!hasResults && (
+        <p className="mb-2 text-xs leading-relaxed text-slate-700 dark:text-slate-300">
+          {disabledMessage}
+        </p>
+      )}
+
       {error && (
-        <div className="mb-2 text-[11px] text-red-400">{error}</div>
+        <p className="mb-2 text-xs leading-relaxed text-red-500 dark:text-red-400">
+          {error}
+        </p>
       )}
 
       {answer ? (
-        <div className="mt-2 space-y-3">
-          <div className="rounded-xl border border-slate-800 bg-slate-950/80 p-3 text-xs text-slate-200 leading-relaxed">
-            {answer}
-          </div>
-
-          {bestDeal && (
-            <div className="rounded-xl border border-teal-600/60 bg-slate-950/80 p-3 text-xs text-slate-100">
-              <div className="mb-1 text-[11px] font-semibold uppercase text-teal-300">
-                {dealMode ? "Hottest offer" : "Best price found"}
-              </div>
-              <div className="text-xs font-medium">
-                {bestDeal.productName || "Unnamed product"}
-              </div>
-              <div className="mt-0.5 text-[11px] text-slate-300">
-                {bestDeal.price.toFixed(2)} {bestDeal.currency} at {bestDeal.storeName}
-              </div>
-              {bestDeal.url && (
-                <a
-                  href={bestDeal.url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="mt-1 inline-flex text-[11px] text-teal-300 hover:underline"
-                >
-                  View offer
-                </a>
-              )}
-            </div>
-          )}
-
-          {alternatives.length > 0 && (
-            <div className="rounded-xl border border-slate-800 bg-slate-950/80 p-3 text-[11px] text-slate-200 space-y-1">
-              <div className="font-semibold uppercase text-slate-400">
-                Other options
-              </div>
-              <ul className="space-y-1">
-                {alternatives.map((alt) => (
-                  <li key={`${alt.productId}-${alt.storeName}-${alt.price}`}>
-                    <span className="font-medium">{alt.productName || "Unnamed product"}</span>{" "}
-                    – {alt.price.toFixed(2)} {alt.currency} at {alt.storeName}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+        <div className="mt-2 rounded-2xl bg-[var(--pl-bg)] p-3 text-xs leading-relaxed text-slate-700 shadow-sm dark:text-slate-100">
+          {answer.split("\n").map((line, idx) => (
+            <p key={idx} className="mb-[2px] last:mb-0">
+              {line}
+            </p>
+          ))}
         </div>
       ) : (
-        <p className="text-xs text-slate-300/80">
-          The assistant will read your question and return a short summary to help
-          you interpret prices, offers, and delivery options.
-        </p>
+        hasResults && (
+          <p className="mt-1 text-xs leading-relaxed text-slate-700 dark:text-slate-300">
+            Example: "Which option looks best for fast delivery?" or "Is there a clear
+            cheapest option here?"
+          </p>
+        )
       )}
     </div>
   );
-};
-
-export default ChatAssistant;
+}
 
 
 

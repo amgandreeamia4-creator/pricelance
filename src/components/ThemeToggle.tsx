@@ -1,37 +1,32 @@
 "use client";
 
-import { useTheme } from "next-themes";
+import { useTheme } from "@/components/ThemeProvider";
 import { useEffect, useState } from "react";
-import { Moon, Sun } from "lucide-react";
 
-export function ThemeToggle() {
-  const { theme, setTheme } = useTheme();
+export default function ThemeToggle() {
+  const { theme, toggleTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => setMounted(true), []);
 
-  if (!mounted) return null;
+  if (!mounted) {
+    return (
+      <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[var(--pl-card-border)] bg-[var(--pl-card)] text-[10px] text-[var(--pl-text-muted)]">
+        …
+      </div>
+    );
+  }
 
   const isDark = theme === "dark";
 
   return (
     <button
       type="button"
-      aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
-      onClick={() => setTheme(isDark ? "light" : "dark")}
-      className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800"
+      onClick={toggleTheme}
+      className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[var(--pl-card-border)] bg-[var(--pl-card)] text-[10px] text-[var(--pl-text-muted)] hover:text-[var(--pl-text)] hover:border-blue-500/50 transition-all"
     >
-      {isDark ? (
-        <>
-          <Sun className="h-4 w-4" />
-          <span>Light</span>
-        </>
-      ) : (
-        <>
-          <Moon className="h-4 w-4" />
-          <span>Dark</span>
-        </>
-      )}
+      <span>{isDark ? "☀" : "🌙"}</span>
+      <span>{isDark ? "Light" : "Dark"}</span>
     </button>
   );
 }
