@@ -1,5 +1,6 @@
 // src/lib/ingestService.ts
 import { prisma } from "@/lib/db";
+import type { Prisma } from "@prisma/client";
 
 export type IngestListingInput = {
   id?: string;
@@ -92,7 +93,9 @@ export async function ingestProducts(payload: IngestPayload): Promise<IngestResu
           },
         });
       } else {
-        product = await prisma.product.create({ data: baseData });
+        product = await prisma.product.create({
+          data: baseData as unknown as Prisma.ProductCreateInput,
+        });
       }
 
       // 2) Listings: replace existing listings for this product

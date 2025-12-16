@@ -1,6 +1,10 @@
 // src/app/api/internal/search-analytics/route.ts
 import { NextRequest, NextResponse } from "next/server";
+<<<<<<< HEAD
 import { prisma } from "@/lib/db";;
+=======
+import { prisma } from "@/lib/db";
+>>>>>>> restore-ui
 import { checkInternalAuth } from "@/lib/internalAuth";
 import { computeTopQueries } from "@/lib/searchAnalytics";
 

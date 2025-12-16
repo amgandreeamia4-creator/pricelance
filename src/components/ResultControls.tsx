@@ -1,94 +1,68 @@
-// src/components/ResultControls.tsx
 "use client";
-
 import React from "react";
+import { STORES } from "@/config/catalog";
 
-type SortBy = "default" | "price" | "delivery";
-
-type Props = {
-  sortBy: SortBy;
-  onSortByChange: (value: SortBy) => void;
-  storeFilter: string;
-  onStoreFilterChange: (value: string) => void;
-  fastOnly: boolean;
-  onFastOnlyChange: (value: boolean) => void;
-  // meta is optional; we keep it for future use but don't rely on it
-  meta?: any;
-};
-
-const STORE_OPTIONS: { value: string; label: string }[] = [
-  { value: "all", label: "All stores" },
-  // You can adjust these to match real store names in your data
-  { value: "emag", label: "eMAG" },
-  { value: "pc-garage", label: "PC Garage" },
-  { value: "altex", label: "Altex" },
-  { value: "amazon", label: "Amazon" },
-];
-
-const ResultControls: React.FC<Props> = ({
+// Restored old UI layout for Filters panel
+export default function ResultControls({
   sortBy,
   onSortByChange,
+  onSortChange,
   storeFilter,
   onStoreFilterChange,
+  onStoreChange,
   fastOnly,
   onFastOnlyChange,
-}) => {
+  disabled,
+}: {
+  sortBy: string;
+  onSortByChange?: (v: string) => void;
+  onSortChange?: (v: string) => void;
+  storeFilter: string;
+  onStoreFilterChange?: (v: string) => void;
+  onStoreChange?: (v: string) => void;
+  fastOnly: boolean;
+  onFastOnlyChange: (v: boolean) => void;
+  disabled?: boolean;
+}) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-xs shadow-sm sm:text-sm dark:border-slate-700 dark:bg-slate-900 dark:shadow-none">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <div className="p-4 bg-[#0B1220] border border-slate-700 rounded-md shadow-sm">
+      <p className="text-[11px] text-slate-300 uppercase font-semibold mb-3">
+        Filters
+      </p>
 
-        {/* Sort + Store selects */}
-        <div className="flex flex-wrap items-center gap-3">
-          {/* Sort */}
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-medium text-slate-600 dark:text-slate-300">
-              Sort
-            </span>
-            <select
-              className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-900 shadow-sm placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-[var(--pl-accent)] focus:border-[var(--pl-accent)] dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500"
-              value={sortBy}
-              onChange={(e) => onSortByChange(e.target.value as SortBy)}
-            >
-              <option value="default">Default</option>
-              <option value="price">Price</option>
-              <option value="delivery">Delivery time</option>
-            </select>
-          </div>
+      <label className="text-[11px] text-slate-400 mb-1 block">Sort:</label>
+      <select
+        className="w-full mb-3 px-3 py-2 text-[12px] bg-[#111827] border border-slate-600 rounded"
+        value={sortBy}
+        onChange={(e) => (onSortByChange ?? onSortChange)?.(e.target.value)}
+      >
+        <option value="default">Default</option>
+        <option value="priceLow">Price (Low → High)</option>
+        <option value="priceHigh">Price (High → Low)</option>
+      </select>
 
-          {/* Store */}
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-medium text-slate-600 dark:text-slate-300">
-              Store
-            </span>
-            <select
-              className="min-w-[130px] rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-900 shadow-sm placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-[var(--pl-accent)] focus:border-[var(--pl-accent)] dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500"
-              value={storeFilter}
-              onChange={(e) => onStoreFilterChange(e.target.value)}
-            >
-              {STORE_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
+      <label className="text-[11px] text-slate-400 mb-1 block">Store:</label>
+      <select
+        className="w-full mb-3 px-3 py-2 text-[12px] bg-[#111827] border border-slate-600 rounded"
+        value={storeFilter}
+        onChange={(e) => (onStoreFilterChange ?? onStoreChange)?.(e.target.value)}
+      >
+        <option value="all">All stores</option>
+        {STORES.map((store) => (
+          <option key={store.id} value={store.id}>
+            {store.label}
+          </option>
+        ))}
+      </select>
 
-        {/* Fast shipping toggle */}
-        <div className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-200">
-          <label className="inline-flex cursor-pointer select-none items-center gap-2">
-            <input
-              type="checkbox"
-              className="h-3.5 w-3.5 rounded border-slate-300 text-[var(--pl-accent)] focus:ring-[var(--pl-accent)] dark:border-slate-600 dark:bg-slate-900 dark:text-[var(--pl-accent)]"
-              checked={fastOnly}
-              onChange={(e) => onFastOnlyChange(e.target.checked)}
-            />
-            <span>Fast shipping only</span>
-          </label>
-        </div>
+      <div className="flex items-center gap-2 mt-2">
+        <input
+          type="checkbox"
+          checked={fastOnly}
+          onChange={(e) => onFastOnlyChange(e.target.checked)}
+        />
+        <span className="text-[11px] text-slate-400">Fast delivery only</span>
       </div>
     </div>
   );
-};
-
-export default ResultControls;
+}

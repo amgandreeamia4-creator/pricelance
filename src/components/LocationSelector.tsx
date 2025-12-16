@@ -1,58 +1,41 @@
 // src/components/LocationSelector.tsx
 "use client";
-
 import React from "react";
 
-type SearchLocation = {
-  country?: string;
-  region?: string;
-  city?: string;
-};
-
-type Props = {
-  location: SearchLocation | null;
-  onLocationChange: (value: SearchLocation | null) => void;
-  onUseMyLocation: () => void;
-};
-
-export const LocationSelector: React.FC<Props> = ({
+// Restored classic UI layout from old PriceLance design (Screenshot #2)
+export default function LocationSelector({
   location,
   onLocationChange,
-  onUseMyLocation,
-}) => {
-  const countryValue = location?.country ?? "";
-
+  onUseLocation,
+}: {
+  location: string;
+  onLocationChange: (value: string) => void;
+  onUseLocation?: () => void;
+}) {
   return (
-    <div className="pl-card flex flex-col gap-3 px-4 py-3 text-xs text-slate-700 md:w-64 dark:text-slate-100">
-      <div className="text-[0.7rem] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-        Your location
-      </div>
+    <div className="p-4 border border-slate-700 bg-[#0B1220] rounded-md shadow-sm">
+      <p className="text-[11px] font-semibold text-slate-300 tracking-wide uppercase mb-2">
+        Your Location
+      </p>
+
       <select
-        className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-900 shadow-sm transition focus:outline-none focus:ring-1 focus:ring-[rgb(var(--pl-primary))] focus:border-[rgb(var(--pl-primary))] dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-        value={countryValue}
-        onChange={(e) => {
-          const value = e.target.value;
-          if (!value) {
-            onLocationChange(null);
-          } else {
-            onLocationChange({ country: value });
-          }
-        }}
+        className="w-full px-3 py-2 text-[12px] bg-[#111827] border border-slate-600 rounded focus:outline-none focus:border-blue-400"
+        value={location}
+        onChange={(e) => onLocationChange(e.target.value)}
       >
-        <option value="">Not set</option>
-        <option value="RO">Romania (RO)</option>
-        <option value="DE">Germany (DE)</option>
-        <option value="US">United States (US)</option>
+        <option>Not set</option>
+        <option>Romania</option>
+        <option>United States</option>
+        <option>Germany</option>
+        <option>United Kingdom</option>
       </select>
+
       <button
-        type="button"
-        className="pl-primary-btn mt-1 w-full justify-center text-sm"
-        onClick={onUseMyLocation}
+        onClick={onUseLocation}
+        className="mt-3 w-full py-2 rounded-md bg-blue-600 hover:bg-blue-700 text-[12px] text-white font-medium"
       >
-        Use my location (stub)
+        Use my location
       </button>
     </div>
   );
-};
-
-export default LocationSelector;
+}
