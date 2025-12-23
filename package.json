@@ -5,7 +5,7 @@
   "description": "PriceLance – a real-time price comparison web app for tracking genuine deals across stores.",
   "scripts": {
     "dev": "next dev",
-    "build": "next build && node scripts/fix-middleware-nft.mjs",
+    "build": "next build",
     "start": "next start",
     "lint": "eslint .",
     "test": "vitest",
