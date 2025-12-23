@@ -4,6 +4,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { googleSheetAdapter } from "@/lib/affiliates/googleSheet";
 import { importNormalizedListings } from "@/lib/importService";
+import { validateAdminToken } from "@/lib/adminAuth";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -15,6 +16,14 @@ export const runtime = "nodejs";
  * Downloads a CSV from the given URL and runs the shared CSV importer.
  */
 export async function POST(req: NextRequest) {
+  const authError = validateAdminToken(req.headers.get("x-admin-token"));
+  if (authError) {
+    return NextResponse.json(
+      { error: authError.error },
+      { status: authError.status }
+    );
+  }
+
   try {
     let body: unknown;
     try {

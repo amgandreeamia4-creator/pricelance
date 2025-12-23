@@ -4,6 +4,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { googleSheetAdapter } from "@/lib/affiliates/googleSheet";
 import { importNormalizedListings } from "@/lib/importService";
+import { validateAdminToken } from "@/lib/adminAuth";
 
 export const dynamic = "force-dynamic";
 
@@ -12,6 +13,14 @@ export const dynamic = "force-dynamic";
  * Bulk import products and listings from an uploaded CSV file.
  */
 export async function POST(req: NextRequest) {
+  const authError = validateAdminToken(req.headers.get("x-admin-token"));
+  if (authError) {
+    return NextResponse.json(
+      { error: authError.error },
+      { status: authError.status }
+    );
+  }
+
   try {
     const { searchParams } = new URL(req.url);
     const validateUrls = searchParams.get("validateUrls") === "true";

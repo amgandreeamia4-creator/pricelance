@@ -24,6 +24,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { fakeAffiliateAdapter } from "@/lib/affiliates/fakeAffiliateAdapter";
 import { importNormalizedListings } from "@/lib/importService";
+import { validateAdminToken } from "@/lib/adminAuth";
 
 export const dynamic = "force-dynamic";
 
@@ -33,6 +34,14 @@ export const dynamic = "force-dynamic";
  * Body: { csv: string }
  */
 export async function POST(req: NextRequest) {
+  const authError = validateAdminToken(req.headers.get("x-admin-token"));
+  if (authError) {
+    return NextResponse.json(
+      { error: authError.error },
+      { status: authError.status }
+    );
+  }
+
   try {
     // Guard 1: Check if affiliate import is enabled
     const enabled = process.env.ENABLE_AFFILIATE_IMPORT === "true";

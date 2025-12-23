@@ -11,6 +11,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { prisma } from "@/lib/db";
 import { defaultCountryForStore, normalizeStoreName } from "@/lib/stores/registry";
+import { validateAdminToken } from "@/lib/adminAuth";
 
 export const dynamic = "force-dynamic";
 
@@ -29,6 +30,14 @@ export const dynamic = "force-dynamic";
  * }
  */
 export async function POST(req: NextRequest) {
+  const authError = validateAdminToken(req.headers.get("x-admin-token"));
+  if (authError) {
+    return NextResponse.json(
+      { error: authError.error },
+      { status: authError.status }
+    );
+  }
+
   try {
     const body = await req.json();
 
