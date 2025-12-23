@@ -152,15 +152,13 @@ async function findOrCreateProduct(
   });
 
   if (nameMatch) {
-    // If we have a GTIN and found by name, update the product with the GTIN
-    if (normalizedGtin) {
-      await prisma.product.update({
-        where: { id: nameMatch.id },
-        data: { gtin: normalizedGtin },
-      });
-    }
-    return { id: nameMatch.id, isNew: false };
-  }
+  await (prisma.product.update as any)({
+    where: { id: nameMatch.id },
+    data: { gtin: normalizedGtin },
+  });
+
+  return { id: nameMatch.id, isNew: false };
+}
 
   // Strategy 3: Create new product
   const created = await prisma.product.create({
