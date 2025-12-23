@@ -2,10 +2,9 @@
 // Auth is handled by middleware (HTTP Basic Auth in production, bypassed in dev)
 
 import { prisma } from "@/lib/db";
+import { getSearchAnalyticsSummary } from "@/lib/searchAnalytics";
 
 export const dynamic = "force-dynamic";
-
-const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY ?? "";
 
 type DbHealthResponse = {
   ok: boolean;
@@ -52,6 +51,97 @@ type AffiliateProviderStats = {
 };
 
 /**
+ * Direct Prisma call to check database health and get counts.
+ */
+async function fetchDbHealth(): Promise<{ data: DbHealthResponse | null; error: string | null }> {
+  try {
+    const [productCount, listingCount, savedSearchCount, favoriteCount] = await Promise.all([
+      prisma.product.count(),
+      prisma.listing.count(),
+      prisma.savedSearch.count(),
+      prisma.favorite.count(),
+    ]);
+
+    return {
+      data: {
+        ok: true,
+        productCount,
+        listingCount,
+        savedSearchCount,
+        favoriteCount,
+      },
+      error: null,
+    };
+  } catch (err) {
+    console.error("[system-check] fetchDbHealth error:", err);
+    return {
+      data: { ok: false, error: err instanceof Error ? err.message : "Unknown error" },
+      error: err instanceof Error ? err.message : "Unknown error",
+    };
+  }
+}
+
+/**
+ * Direct Prisma call to get catalog stats.
+ */
+async function fetchCatalogStats(): Promise<{ data: CatalogStatsResponse | null; error: string | null }> {
+  try {
+    const [productCount, listingCount] = await Promise.all([
+      prisma.product.count(),
+      prisma.listing.count(),
+    ]);
+
+    return {
+      data: {
+        ok: true,
+        totals: {
+          productCount,
+          listingCount,
+        },
+      },
+      error: null,
+    };
+  } catch (err) {
+    console.error("[system-check] fetchCatalogStats error:", err);
+    return {
+      data: { ok: false, error: err instanceof Error ? err.message : "Unknown error" },
+      error: err instanceof Error ? err.message : "Unknown error",
+    };
+  }
+}
+
+/**
+ * Direct call to searchAnalytics helper for search stats.
+ */
+async function fetchSearchAnalytics(days: number): Promise<{ data: SearchAnalyticsSummary | null; error: string | null }> {
+  try {
+    const summary = await getSearchAnalyticsSummary(days);
+
+    // Convert Date to ISO string for zeroResultQueries.lastSearchedAt
+    const zeroResultQueries = (summary.zeroResultQueries ?? []).map((q) => ({
+      query: q.query,
+      timesSearched: q.timesSearched,
+      lastSearchedAt: q.lastSearchedAt ? q.lastSearchedAt.toISOString() : null,
+    }));
+
+    return {
+      data: {
+        ok: true,
+        totals: summary.totals,
+        zeroResultQueries,
+      },
+      error: null,
+    };
+  } catch (err) {
+    console.error("[system-check] fetchSearchAnalytics error:", err);
+    return {
+      data: { ok: false, error: err instanceof Error ? err.message : "Unknown error" },
+      error: err instanceof Error ? err.message : "Unknown error",
+    };
+  }
+}
+
+/**
  * Fetch listing counts grouped by source (manual, sheet, affiliate, seed)
  */
 async function fetchListingsBySource(): Promise<SourceStats[]> {
@@ -92,41 +182,11 @@ async function fetchListingsByAffiliateProvider(): Promise<AffiliateProviderStat
   }
 }
 
-async function fetchInternalJson<T>(path: string): Promise<{ data: T | null; error: string | null }> {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "";
-
-  try {
-    const res = await fetch(`${baseUrl}${path}`, {
-      method: "GET",
-      headers: INTERNAL_API_KEY
-        ? { "x-internal-key": INTERNAL_API_KEY }
-        : undefined,
-      cache: "no-store",
-    });
-
-    const json = (await res.json()) as T & { error?: string }; // tolerate extra fields
-
-    if (!res.ok) {
-      return {
-        data: null,
-        error: json && typeof json.error === "string" ? json.error : `Request failed with status ${res.status}`,
-      };
-    }
-
-    return { data: json, error: null };
-  } catch (err) {
-    return {
-      data: null,
-      error: err instanceof Error ? err.message : "Unknown error",
-    };
-  }
-}
-
 export default async function SystemCheckPage() {
   const [dbResult, catalogResult, analyticsResult, sourceStats, affiliateStats] = await Promise.all([
-    fetchInternalJson<DbHealthResponse>("/api/internal/db-health"),
-    fetchInternalJson<CatalogStatsResponse>("/api/internal/catalog-stats"),
-    fetchInternalJson<SearchAnalyticsSummary>("/api/internal/search-analytics?days=7"),
+    fetchDbHealth(),
+    fetchCatalogStats(),
+    fetchSearchAnalytics(7),
     fetchListingsBySource(),
     fetchListingsByAffiliateProvider(),
   ]);
