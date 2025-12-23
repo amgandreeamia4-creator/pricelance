@@ -161,7 +161,7 @@ async function findOrCreateProduct(
 }
 
   // Strategy 3: Create new product
-  const created = await prisma.product.create({
+  const created = await (prisma.product.create as any)({
     data: {
       id: randomUUID(),
       name: productTitle,
