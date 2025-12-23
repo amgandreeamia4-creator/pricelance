@@ -21,6 +21,10 @@ type Listing = {
   deliveryDays?: number | null;
   inStock?: boolean | null;
   deliveryTimeDays?: number | null;
+
+  // New: affiliate metadata from API
+  source?: string | null;
+  affiliateProvider?: string | null;
 };
 
 type ProductWithListings = {
@@ -500,6 +504,22 @@ export default function Page() {
           </span>
         </div>
       </header>
+
+      {/* INTRO */}
+      <section className="w-full px-6 mt-4">
+        <div className="max-w-4xl mx-auto">
+          <h1 className="text-3xl font-semibold mb-3 text-slate-900 dark:text-slate-100">
+            Find real tech prices in one place
+          </h1>
+          <p className="text-sm text-gray-700 dark:text-gray-200 mb-4">
+            PriceLance compares prices for tech products like phones and laptops from
+            Romanian stores such as eMAG, Altex, and others. Data is curated and
+            comes from official feeds where possible &mdash; no scraping. Always
+            double-check the final price, delivery costs, and details on the
+            retailer&apos;s website before buying.
+          </p>
+        </div>
+      </section>
 
       {/* SEARCH BAR */}
       <div className="w-full px-6 mt-2">

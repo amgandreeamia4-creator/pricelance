@@ -30,6 +30,10 @@ type ListingResponse = {
   deliveryDays?: number | null;
   inStock?: boolean | null;
   deliveryTimeDays?: number | null;
+
+  // New: minimal affiliate metadata for UI
+  source?: string | null;
+  affiliateProvider?: string | null;
 };
 
 type ProductWithListings = {
@@ -135,7 +139,7 @@ export async function GET(req: NextRequest) {
       // ⬆⬆⬆
 
       // Map each listing to the expected response shape
-      let listings: ListingResponse[] = filteredBySource.map((l) => ({
+      let listings: ListingResponse[] = filteredBySource.map((l: any) => ({
         id: String(l.id),
         storeId: l.storeName ?? undefined, // Use storeName as storeId for filtering
         storeName: l.storeName ?? "",
@@ -147,6 +151,10 @@ export async function GET(req: NextRequest) {
         deliveryDays: l.deliveryDays ?? l.estimatedDeliveryDays ?? null,
         inStock: l.inStock ?? null,
         deliveryTimeDays: l.deliveryTimeDays ?? null,
+
+        // New affiliate metadata for UI
+        source: l.source ?? null,
+        affiliateProvider: l.affiliateProvider ?? null,
       }));
 
       // Pre-affiliate hardening: Filter to "good listings" only

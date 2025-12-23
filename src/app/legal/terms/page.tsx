@@ -2,7 +2,7 @@ import React from "react";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Terms of Service  PriceLance",
+  title: "Terms of Service – PriceLance",
   description: "Terms of Service for using the PriceLance website.",
 };
 
@@ -41,6 +41,23 @@ export default function TermsPage() {
           delivery conditions, and product details directly on the retailer&apos;s
           website. The retailer&apos;s information always prevails over what you
           see on PriceLance.
+        </p>
+      </section>
+
+      <section className="mb-6">
+        <h2 className="text-xl font-semibold mb-2">Affiliate Links</h2>
+        <p className="text-sm text-gray-800 dark:text-gray-100 mb-2">
+          Some links on PriceLance may be affiliate links. This means that
+          if you click on a link to a retailer and make a purchase, we may
+          receive a commission or other benefit from that retailer or from
+          an affiliate network. This does not change the price you pay, nor
+          does it affect how we display or rank offers in the comparison
+          view.
+        </p>
+        <p className="text-sm text-gray-800 dark:text-gray-100">
+          We aim to present offers fairly and transparently regardless of
+          whether an affiliate relationship exists. You are free to ignore
+          affiliate links and purchase through any channel you prefer.
         </p>
       </section>
 

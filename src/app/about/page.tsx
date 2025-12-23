@@ -45,6 +45,23 @@ export default function AboutPage() {
         features, you are very welcome to get in touch. This is an
         early-stage project and real-world feedback is extremely valuable.
       </p>
+
+      <h2 className="text-xl font-semibold mt-8 mb-3">
+        How PriceLance is funded
+      </h2>
+      <p className="mb-3 text-sm text-gray-800 dark:text-gray-100">
+        PriceLance may include affiliate links for some stores or offers.
+        This means that if you choose to buy a product after clicking one
+        of those links, PriceLance may earn a small commission. This does
+        not change the price you pay or the way offers are ranked in the
+        comparison view.
+      </p>
+      <p className="mb-4 text-sm text-gray-800 dark:text-gray-100">
+        Any affiliate relationships are intended to help keep the project
+        sustainable while staying focused on transparent, useful price
+        comparison. You should always choose the offer that makes the most
+        sense for you, regardless of whether it is an affiliate link or not.
+      </p>
     </main>
   );
 }

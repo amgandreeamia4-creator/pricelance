@@ -2,7 +2,7 @@ import React from "react";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy  PriceLance",
+  title: "Privacy Policy – PriceLance",
   description: "Privacy practices for visitors using PriceLance.",
 };
 
@@ -36,6 +36,32 @@ export default function PrivacyPage() {
           Analytics are used solely to make PriceLance better: to improve
           performance, understand which features are useful, and identify where
           the experience can be improved.
+        </p>
+      </section>
+
+      <section className="mb-6">
+        <h2 className="text-xl font-semibold mb-2">
+          Affiliate Links and Tracking Parameters
+        </h2>
+        <p className="text-sm text-gray-800 dark:text-gray-100 mb-2">
+          When you click on an offer that uses an affiliate link, your
+          browser may be redirected through an affiliate network before
+          arriving at the retailer&apos;s website. As part of this process,
+          non-personal identifiers such as a campaign ID or click reference
+          may be included in the URL so that the affiliate network can
+          attribute any resulting purchases.
+        </p>
+        <p className="text-sm text-gray-800 dark:text-gray-100 mb-2">
+          These tracking parameters are used to attribute commissions and
+          to understand which links are effective. They are not used by
+          PriceLance to identify you personally. The exact data collected
+          on the retailer&apos;s side is governed by the retailer&apos;s and
+          affiliate network&apos;s own privacy policies.
+        </p>
+        <p className="text-sm text-gray-800 dark:text-gray-100">
+          If you prefer not to use affiliate links, you may navigate to the
+          retailer&apos;s website directly instead of clicking through links on
+          PriceLance.
         </p>
       </section>
 

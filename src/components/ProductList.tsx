@@ -14,6 +14,10 @@ type Listing = {
   fastDelivery?: boolean | null;
   deliveryDays?: number | null;
   inStock?: boolean | null;
+
+  // New: affiliate metadata (optional)
+  source?: string | null;
+  affiliateProvider?: string | null;
 };
 
 type Product = {
@@ -66,6 +70,11 @@ export default function ProductList({
 
   return (
     <div className="flex flex-col gap-3">
+      <p className="text-[10px] text-slate-500 dark:text-slate-400">
+        Offers marked as <span className="font-semibold">Affiliate</span> may
+        use affiliate links. If you buy through them, PriceLance may earn a
+        small commission at no extra cost to you.
+      </p>
       {rows.map(({ product, listing }) => {
         const isSelected =
           selectedProductId != null && selectedProductId === product.id;
@@ -160,9 +169,16 @@ export default function ProductList({
                 ) : (
                   <div className="h-3.5 w-3.5 rounded bg-[var(--pl-card-border)]" />
                 )}
-                <span className="text-[11px] text-[var(--pl-text-muted)]">
-                  {listing.storeName}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] text-[var(--pl-text-muted)]">
+                    {listing.storeName}
+                  </span>
+                  {listing.source === "affiliate" && listing.affiliateProvider && (
+                    <span className="inline-flex items-center rounded-full bg-blue-50 text-blue-700 dark:bg-blue-900/40 dark:text-blue-200 px-2 py-0.5 text-[10px] font-medium border border-blue-100 dark:border-blue-800">
+                      Affiliate
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
 
