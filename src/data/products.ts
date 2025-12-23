@@ -18,7 +18,7 @@ export const PRODUCTS: ProductWithHistory[] = [
       {
         id: 'ultraslim14-amazon-ro',
         store: 'Amazon RO',
-        url: 'https://example.com/ultraslim14-amazon-ro',
+        url: 'https://www.amazon.ro/dp/B0ULTRASLIM14',
         imageUrl:
           'https://images.pexels.com/photos/18105/pexels-photo.jpg?auto=compress&cs=tinysrgb&w=800',
         price: 3999,
@@ -34,7 +34,7 @@ export const PRODUCTS: ProductWithHistory[] = [
       {
         id: 'ultraslim14-emag',
         store: 'eMAG',
-        url: 'https://example.com/ultraslim14-emag',
+        url: 'https://www.emag.ro/laptop-ultraslim-14-professional',
         imageUrl:
           'https://images.pexels.com/photos/18105/pexels-photo.jpg?auto=compress&cs=tinysrgb&w=800',
         price: 3899,
@@ -50,7 +50,7 @@ export const PRODUCTS: ProductWithHistory[] = [
       {
         id: 'ultraslim14-pcgarage',
         store: 'PC Garage',
-        url: 'https://example.com/ultraslim14-pcgarage',
+        url: 'https://www.pcgarage.ro/laptopuri/novatech/ultraslim-14-professional/',
         imageUrl:
           'https://images.pexels.com/photos/18105/pexels-photo.jpg?auto=compress&cs=tinysrgb&w=800',
         price: 3799,
@@ -66,7 +66,7 @@ export const PRODUCTS: ProductWithHistory[] = [
       {
         id: 'ultraslim14-local-tech',
         store: 'LocalTech Store',
-        url: 'https://example.com/ultraslim14-local',
+        url: null,
         imageUrl:
           'https://images.pexels.com/photos/18105/pexels-photo.jpg?auto=compress&cs=tinysrgb&w=800',
         price: 4099,
@@ -111,7 +111,7 @@ export const PRODUCTS: ProductWithHistory[] = [
       {
         id: 'anc-phones-amazon-ro',
         store: 'Amazon RO',
-        url: 'https://example.com/anc-phones-amazon-ro',
+        url: 'https://www.amazon.ro/dp/B0ANCHEADPHONES',
         imageUrl:
           'https://images.pexels.com/photos/373945/pexels-photo-373945.jpeg?auto=compress&cs=tinysrgb&w=800',
         price: 899,
@@ -127,7 +127,7 @@ export const PRODUCTS: ProductWithHistory[] = [
       {
         id: 'anc-phones-emag',
         store: 'eMAG',
-        url: 'https://example.com/anc-phones-emag',
+        url: 'https://www.emag.ro/casti-wireless-silentwave-anc',
         imageUrl:
           'https://images.pexels.com/photos/373945/pexels-photo-373945.jpeg?auto=compress&cs=tinysrgb&w=800',
         price: 879,
@@ -143,7 +143,7 @@ export const PRODUCTS: ProductWithHistory[] = [
       {
         id: 'anc-phones-altex',
         store: 'Altex',
-        url: 'https://example.com/anc-phones-altex',
+        url: 'https://altex.ro/casti-wireless-silentwave-anc',
         imageUrl:
           'https://images.pexels.com/photos/373945/pexels-photo-373945.jpeg?auto=compress&cs=tinysrgb&w=800',
         price: 859,
@@ -159,7 +159,7 @@ export const PRODUCTS: ProductWithHistory[] = [
       {
         id: 'anc-phones-local-tech',
         store: 'LocalTech Store',
-        url: 'https://example.com/anc-phones-local',
+        url: null,
         imageUrl:
           'https://images.pexels.com/photos/373945/pexels-photo-373945.jpeg?auto=compress&cs=tinysrgb&w=800',
         price: 919,
@@ -204,7 +204,7 @@ export const PRODUCTS: ProductWithHistory[] = [
       {
         id: 'novaphone-x-amazon-ro',
         store: 'Amazon RO',
-        url: 'https://example.com/novaphone-x-amazon-ro',
+        url: 'https://www.amazon.ro/dp/B0NOVAPHONEXPRO',
         imageUrl:
           'https://images.pexels.com/photos/47261/pexels-photo-47261.jpeg?auto=compress&cs=tinysrgb&w=800',
         price: 3499,
@@ -220,7 +220,7 @@ export const PRODUCTS: ProductWithHistory[] = [
       {
         id: 'novaphone-x-emag',
         store: 'eMAG',
-        url: 'https://example.com/novaphone-x-emag',
+        url: 'https://www.emag.ro/telefon-mobil-novaphone-x-pro-5g',
         imageUrl:
           'https://images.pexels.com/photos/47261/pexels-photo-47261.jpeg?auto=compress&cs=tinysrgb&w=800',
         price: 3399,
@@ -236,7 +236,7 @@ export const PRODUCTS: ProductWithHistory[] = [
       {
         id: 'novaphone-x-altex',
         store: 'Altex',
-        url: 'https://example.com/novaphone-x-altex',
+        url: 'https://altex.ro/telefon-mobil-novaphone-x-pro-5g',
         imageUrl:
           'https://images.pexels.com/photos/47261/pexels-photo-47261.jpeg?auto=compress&cs=tinysrgb&w=800',
         price: 3299,
@@ -252,7 +252,7 @@ export const PRODUCTS: ProductWithHistory[] = [
       {
         id: 'novaphone-x-local-tech',
         store: 'LocalTech Store',
-        url: 'https://example.com/novaphone-x-local',
+        url: null,
         imageUrl:
           'https://images.pexels.com/photos/47261/pexels-photo-47261.jpeg?auto=compress&cs=tinysrgb&w=800',
         price: 3599,
@@ -293,7 +293,7 @@ export const PRODUCTS: ProductWithHistory[] = [
       {
         id: 'novaphone-lite-emag',
         store: 'eMAG',
-        url: 'https://example.com/novaphone-lite-emag',
+        url: 'https://www.emag.ro/telefon-mobil-novaphone-lite-4g',
         imageUrl:
           'https://images.pexels.com/photos/1092644/pexels-photo-1092644.jpeg?auto=compress&cs=tinysrgb&w=800',
         price: 1599,
@@ -309,7 +309,7 @@ export const PRODUCTS: ProductWithHistory[] = [
       {
         id: 'novaphone-lite-altex',
         store: 'Altex',
-        url: 'https://example.com/novaphone-lite-altex',
+        url: 'https://altex.ro/telefon-mobil-novaphone-lite-4g',
         imageUrl:
           'https://images.pexels.com/photos/1092644/pexels-photo-1092644.jpeg?auto=compress&cs=tinysrgb&w=800',
         price: 1549,
@@ -325,7 +325,7 @@ export const PRODUCTS: ProductWithHistory[] = [
       {
         id: 'novaphone-lite-amazon-ro',
         store: 'Amazon RO',
-        url: 'https://example.com/novaphone-lite-amazon-ro',
+        url: 'https://www.amazon.ro/dp/B0NOVAPHONELITE',
         imageUrl:
           'https://images.pexels.com/photos/1092644/pexels-photo-1092644.jpeg?auto=compress&cs=tinysrgb&w=800',
         price: 1649,
@@ -370,7 +370,7 @@ export const PRODUCTS: ProductWithHistory[] = [
       {
         id: 'rtx4070-pcgarage',
         store: 'PC Garage',
-        url: 'https://example.com/rtx4070-pcgarage',
+        url: 'https://www.pcgarage.ro/placi-video/cyclone/rtx-4070-gaming-gpu/',
         imageUrl:
           'https://images.pexels.com/photos/2582933/pexels-photo-2582933.jpeg?auto=compress&cs=tinysrgb&w=800',
         price: 3799,
@@ -386,7 +386,7 @@ export const PRODUCTS: ProductWithHistory[] = [
       {
         id: 'rtx4070-emag',
         store: 'eMAG',
-        url: 'https://example.com/rtx4070-emag',
+        url: 'https://www.emag.ro/placa-video-cyclone-rtx-4070-12gb',
         imageUrl:
           'https://images.pexels.com/photos/2582933/pexels-photo-2582933.jpeg?auto=compress&cs=tinysrgb&w=800',
         price: 3899,
@@ -402,7 +402,7 @@ export const PRODUCTS: ProductWithHistory[] = [
       {
         id: 'rtx4070-amazon-ro',
         store: 'Amazon RO',
-        url: 'https://example.com/rtx4070-amazon-ro',
+        url: 'https://www.amazon.ro/dp/B0RTX4070GPU',
         imageUrl:
           'https://images.pexels.com/photos/2582933/pexels-photo-2582933.jpeg?auto=compress&cs=tinysrgb&w=800',
         price: 3999,
@@ -443,7 +443,7 @@ export const PRODUCTS: ProductWithHistory[] = [
       {
         id: 'gtx1660s-pcgarage',
         store: 'PC Garage',
-        url: 'https://example.com/gtx1660s-pcgarage',
+        url: 'https://www.pcgarage.ro/placi-video/cyclone/gtx-1660-super-gpu/',
         imageUrl:
           'https://images.pexels.com/photos/2582931/pexels-photo-2582931.jpeg?auto=compress&cs=tinysrgb&w=800',
         price: 1499,
@@ -459,7 +459,7 @@ export const PRODUCTS: ProductWithHistory[] = [
       {
         id: 'gtx1660s-emag',
         store: 'eMAG',
-        url: 'https://example.com/gtx1660s-emag',
+        url: 'https://www.emag.ro/placa-video-cyclone-gtx-1660-super-6gb',
         imageUrl:
           'https://images.pexels.com/photos/2582931/pexels-photo-2582931.jpeg?auto=compress&cs=tinysrgb&w=800',
         price: 1559,
@@ -475,7 +475,7 @@ export const PRODUCTS: ProductWithHistory[] = [
       {
         id: 'gtx1660s-amazon-ro',
         store: 'Amazon RO',
-        url: 'https://example.com/gtx1660s-amazon-ro',
+        url: 'https://www.amazon.ro/dp/B0GTX1660SUP',
         imageUrl:
           'https://images.pexels.com/photos/2582931/pexels-photo-2582931.jpeg?auto=compress&cs=tinysrgb&w=800',
         price: 1599,
@@ -519,7 +519,7 @@ export const PRODUCTS: ProductWithHistory[] = [
       {
         id: 'iphone15-emag',
         store: 'eMAG',
-        url: 'https://example.com/iphone15-emag',
+        url: 'https://www.emag.ro/apple-iphone-15-128gb-5g',
         imageUrl: 'https://images.pexels.com/photos/163117/iphone-smartphone-apple-apple-inc-163117.jpeg?auto=compress&cs=tinysrgb&w=800',
         price: 5299,
         currency: 'RON',
@@ -534,7 +534,7 @@ export const PRODUCTS: ProductWithHistory[] = [
       {
         id: 'iphone15-altex',
         store: 'Altex',
-        url: 'https://example.com/iphone15-altex',
+        url: 'https://altex.ro/apple-iphone-15-128gb-5g',
         imageUrl: 'https://images.pexels.com/photos/163117/iphone-smartphone-apple-apple-inc-163117.jpeg?auto=compress&cs=tinysrgb&w=800',
         price: 5199,
         currency: 'RON',
@@ -549,7 +549,7 @@ export const PRODUCTS: ProductWithHistory[] = [
       {
         id: 'iphone15-amazon-de',
         store: 'Amazon DE',
-        url: 'https://example.com/iphone15-amazon-de',
+        url: 'https://www.amazon.de/dp/B0CIPHONE15',
         imageUrl: 'https://images.pexels.com/photos/163117/iphone-smartphone-apple-apple-inc-163117.jpeg?auto=compress&cs=tinysrgb&w=800',
         price: 1029,
         currency: 'EUR',
@@ -588,7 +588,7 @@ export const PRODUCTS: ProductWithHistory[] = [
       {
         id: 's23-emag',
         store: 'eMAG',
-        url: 'https://example.com/s23-emag',
+        url: 'https://www.emag.ro/samsung-galaxy-s23-256gb-5g',
         imageUrl: 'https://images.pexels.com/photos/1092644/pexels-photo-1092644.jpeg?auto=compress&cs=tinysrgb&w=800',
         price: 4399,
         currency: 'RON',
@@ -603,7 +603,7 @@ export const PRODUCTS: ProductWithHistory[] = [
       {
         id: 's23-altex',
         store: 'Altex',
-        url: 'https://example.com/s23-altex',
+        url: 'https://altex.ro/samsung-galaxy-s23-256gb-5g',
         imageUrl: 'https://images.pexels.com/photos/1092644/pexels-photo-1092644.jpeg?auto=compress&cs=tinysrgb&w=800',
         price: 4299,
         currency: 'RON',
@@ -618,7 +618,7 @@ export const PRODUCTS: ProductWithHistory[] = [
       {
         id: 's23-amazon-de',
         store: 'Amazon DE',
-        url: 'https://example.com/s23-amazon-de',
+        url: 'https://www.amazon.de/dp/B0CS23GALAXY',
         imageUrl: 'https://images.pexels.com/photos/1092644/pexels-photo-1092644.jpeg?auto=compress&cs=tinysrgb&w=800',
         price: 849,
         currency: 'EUR',
@@ -657,7 +657,7 @@ export const PRODUCTS: ProductWithHistory[] = [
       {
         id: 'sony-xm5-emag',
         store: 'eMAG',
-        url: 'https://example.com/sony-xm5-emag',
+        url: 'https://www.emag.ro/casti-sony-wh-1000xm5-wireless',
         imageUrl: 'https://images.pexels.com/photos/3394663/pexels-photo-3394663.jpeg?auto=compress&cs=tinysrgb&w=800',
         price: 1899,
         currency: 'RON',
@@ -672,7 +672,7 @@ export const PRODUCTS: ProductWithHistory[] = [
       {
         id: 'sony-xm5-altex',
         store: 'Altex',
-        url: 'https://example.com/sony-xm5-altex',
+        url: 'https://altex.ro/casti-sony-wh-1000xm5-wireless',
         imageUrl: 'https://images.pexels.com/photos/3394663/pexels-photo-3394663.jpeg?auto=compress&cs=tinysrgb&w=800',
         price: 1849,
         currency: 'RON',
@@ -687,7 +687,7 @@ export const PRODUCTS: ProductWithHistory[] = [
       {
         id: 'sony-xm5-amazon-de',
         store: 'Amazon DE',
-        url: 'https://example.com/sony-xm5-amazon-de',
+        url: 'https://www.amazon.de/dp/B0BWH1000XM5',
         imageUrl: 'https://images.pexels.com/photos/3394663/pexels-photo-3394663.jpeg?auto=compress&cs=tinysrgb&w=800',
         price: 349,
         currency: 'EUR',
@@ -726,7 +726,7 @@ export const PRODUCTS: ProductWithHistory[] = [
       {
         id: 'lg-27ul850-emag',
         store: 'eMAG',
-        url: 'https://example.com/lg-27ul850-emag',
+        url: 'https://www.emag.ro/monitor-lg-27ul850-w-27-4k-uhd',
         imageUrl: 'https://images.pexels.com/photos/1714208/pexels-photo-1714208.jpeg?auto=compress&cs=tinysrgb&w=800',
         price: 2499,
         currency: 'RON',
@@ -741,7 +741,7 @@ export const PRODUCTS: ProductWithHistory[] = [
       {
         id: 'lg-27ul850-pcgarage',
         store: 'PC Garage',
-        url: 'https://example.com/lg-27ul850-pcgarage',
+        url: 'https://www.pcgarage.ro/monitoare/lg/27ul850-w-27-4k-uhd/',
         imageUrl: 'https://images.pexels.com/photos/1714208/pexels-photo-1714208.jpeg?auto=compress&cs=tinysrgb&w=800',
         price: 2399,
         currency: 'RON',
@@ -756,7 +756,7 @@ export const PRODUCTS: ProductWithHistory[] = [
       {
         id: 'lg-27ul850-amazon-de',
         store: 'Amazon DE',
-        url: 'https://example.com/lg-27ul850-amazon-de',
+        url: 'https://www.amazon.de/dp/B07LG27UL850',
         imageUrl: 'https://images.pexels.com/photos/1714208/pexels-photo-1714208.jpeg?auto=compress&cs=tinysrgb&w=800',
         price: 469,
         currency: 'EUR',
@@ -795,7 +795,7 @@ export const PRODUCTS: ProductWithHistory[] = [
       {
         id: 'delonghi-ec685-emag',
         store: 'eMAG',
-        url: 'https://example.com/delonghi-ec685-emag',
+        url: 'https://www.emag.ro/espressor-delonghi-dedica-ec685-m',
         imageUrl: 'https://images.pexels.com/photos/312418/pexels-photo-312418.jpeg?auto=compress&cs=tinysrgb&w=800',
         price: 1299,
         currency: 'RON',
@@ -810,7 +810,7 @@ export const PRODUCTS: ProductWithHistory[] = [
       {
         id: 'delonghi-ec685-altex',
         store: 'Altex',
-        url: 'https://example.com/delonghi-ec685-altex',
+        url: 'https://altex.ro/espressor-delonghi-dedica-ec685-m',
         imageUrl: 'https://images.pexels.com/photos/312418/pexels-photo-312418.jpeg?auto=compress&cs=tinysrgb&w=800',
         price: 1249,
         currency: 'RON',
@@ -825,7 +825,7 @@ export const PRODUCTS: ProductWithHistory[] = [
       {
         id: 'delonghi-ec685-amazon-de',
         store: 'Amazon DE',
-        url: 'https://example.com/delonghi-ec685-amazon-de',
+        url: 'https://www.amazon.de/dp/B01DE685M',
         imageUrl: 'https://images.pexels.com/photos/312418/pexels-photo-312418.jpeg?auto=compress&cs=tinysrgb&w=800',
         price: 239,
         currency: 'EUR',

@@ -29,6 +29,29 @@ To learn more about Next.js, take a look at the following resources:
 
 You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
+## Admin & Import Routes
+
+Admin pages (`/admin/*`) and API routes (`/api/admin/*`) support optional HTTP Basic Auth protection.
+
+**Configuration:**
+- Set `ADMIN_USER` and `ADMIN_PASSWORD` environment variables to protect admin & import routes.
+- If neither variable is set, admin routes are accessible without authentication (development mode).
+
+## Affiliates & Links
+
+PriceLance may use affiliate links provided by partner networks. When users click some store links and complete a purchase, PriceLance might earn a commission. This has no impact on the listed price shown to users.
+
+All store names and logos remain trademarks of their respective owners.
+
+**Technical notes:**
+- All affiliate imports go through the same normalized pipeline (`importNormalizedListings`)
+- All listings pass through the "good listing" filter (`isGoodListing`) before being shown to users
+- Affiliate metadata (provider, program, merchant ID) is stored on the Listing model for debugging
+
+## Maintenance
+
+See `docs/maintenance.md` for a suggested weekly / monthly / quarterly maintenance routine for PriceLance.
+
 ## Deploy on Vercel
 
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.

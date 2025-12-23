@@ -1,32 +1,76 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 
 import ThemeToggle from "@/components/ThemeToggle";
 import ProductList from "@/components/ProductList";
 import ChatAssistant from "@/components/ChatAssistant";
-import { CORE_CATEGORIES, CATEGORY_LABELS, STORES } from "@/config/catalog";
+import { STORES, StoreId } from "@/config/catalog";
 import PriceTrendChart from "@/components/PriceTrendChart";
 import ProductSummary from "@/components/ProductSummary";
 
+type Listing = {
+  id: string;
+  storeId?: StoreId | string;
+  storeName: string;
+  storeLogoUrl?: string | null;
+  price: number;
+  currency: string;
+  url?: string | null;
+  fastDelivery?: boolean | null;
+  deliveryDays?: number | null;
+  inStock?: boolean | null;
+  deliveryTimeDays?: number | null;
+};
+
+type ProductWithListings = {
+  id: string;
+  name: string;
+  displayName?: string | null;
+  brand?: string | null;
+  imageUrl?: string | null;
+  listings: Listing[];
+};
+
+const FAST_SHIPPING_DAYS = 3;
+
 export default function Page() {
   const [query, setQuery] = useState("");
-  const [products, setProducts] = useState<any[]>([]);
+  const [products, setProducts] = useState<ProductWithListings[]>([]);
   const [isSearching, setIsSearching] = useState(false);
-  const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
+  const [selectedProductId, setSelectedProductId] =
+    useState<string | null>(null);
 
   // Filters
-  const [sortBy, setSortBy] = useState("default");
+  const [sortBy, setSortBy] = useState<
+    "relevance" | "price-asc" | "price-desc"
+  >("relevance");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
-  const [storeFilter, setStoreFilter] = useState("all");
+  const [storeFilter, setStoreFilter] = useState<StoreId | "all">("all");
   const [fastOnly, setFastOnly] = useState(false);
 
   // Location
   const [location, setLocation] = useState("Not set");
 
+  // Favorites (local only for now)
+  const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
+
+  // Dynamic categories from DB
+  const [categories, setCategories] = useState<string[]>([]);
+  const [isCategoriesLoading, setIsCategoriesLoading] = useState(false);
+  const [categoriesError, setCategoriesError] = useState<string | null>(null);
+
   // Saved searches (mock)
   const [savedSearches] = useState([
-    "laptop", "coffee", "coffee", "laptop", "nike", "honey", "coffee", "iphone", "samsung"
+    "laptop",
+    "coffee",
+    "coffee",
+    "laptop",
+    "nike",
+    "honey",
+    "coffee",
+    "iphone",
+    "samsung",
   ]);
 
   const [trendProductId, setTrendProductId] = useState<string | null>(null);
@@ -36,8 +80,144 @@ export default function Page() {
   const [isTrendLoading, setIsTrendLoading] = useState(false);
   const [trendError, setTrendError] = useState<string | null>(null);
 
+  function isFastListing(l: Listing): boolean {
+    // Prefer explicit numeric days if present
+    if (l.deliveryTimeDays != null) {
+      return l.deliveryTimeDays <= FAST_SHIPPING_DAYS;
+    }
+
+    // Fallback: use deliveryDays if that's what the data uses
+    if (l.deliveryDays != null) {
+      return l.deliveryDays <= FAST_SHIPPING_DAYS;
+    }
+
+    // Fallback: a boolean hint
+    if (typeof l.fastDelivery === "boolean") {
+      return l.fastDelivery;
+    }
+
+    // If we know nothing, don't treat it as fast
+    return false;
+  }
+
+  function getStorePreferenceScore(
+    storeId: StoreId | string | undefined,
+    location: string,
+  ): number {
+    if (!storeId) return 0;
+
+    const loc = location.toLowerCase();
+    const id = String(storeId).toLowerCase();
+
+    const isRomania = loc.includes("romania") || loc === "ro";
+    const isGermany = loc.includes("germany") || loc === "de";
+    const isUK = loc.includes("united kingdom") || loc === "uk";
+
+    if (isRomania) {
+      if (id === "emag" || id === "altex" || id === "pcgarage" || id === "flanco") {
+        return 3;
+      }
+      if (id === "other_eu" || id === "amazon_de") {
+        return 1;
+      }
+    }
+
+    if (isGermany) {
+      if (id === "amazon_de" || id === "other_eu") {
+        return 2;
+      }
+    }
+
+    if (isUK) {
+      if (id === "other_eu") {
+        return 1;
+      }
+    }
+
+    return 0;
+  }
+
+  const visibleProducts = useMemo(() => {
+    let result = products.map((p) => ({
+      ...p,
+      listings: [...p.listings],
+    }));
+
+    if (storeFilter !== "all") {
+      result = result
+        .map((p) => ({
+          ...p,
+          listings: p.listings.filter((l) => l.storeId === storeFilter),
+        }))
+        .filter((p) => p.listings.length > 0);
+    }
+
+    if (fastOnly) {
+      result = result
+        .map((p) => ({
+          ...p,
+          listings: p.listings.filter((l) => isFastListing(l)),
+        }))
+        .filter((p) => p.listings.length > 0);
+    }
+
+    const getMinPrice = (p: (typeof result)[number]): number => {
+      if (!p.listings.length) return Number.POSITIVE_INFINITY;
+      return p.listings.reduce(
+        (min, l) => (l.price < min ? l.price : min),
+        Number.POSITIVE_INFINITY,
+      );
+    };
+
+    const getBestStoreScore = (p: (typeof result)[number]): number => {
+      if (!p.listings.length) return 0;
+      let best = 0;
+      for (const l of p.listings) {
+        const score = getStorePreferenceScore(l.storeId as any, location);
+        if (score > best) best = score;
+      }
+      return best;
+    };
+
+    if (sortBy === "price-asc" || sortBy === "price-desc") {
+      result = [...result].sort((a, b) => {
+        const aMin = getMinPrice(a);
+        const bMin = getMinPrice(b);
+
+        const aHas = Number.isFinite(aMin);
+        const bHas = Number.isFinite(bMin);
+
+        if (!aHas && !bHas) return 0;
+        if (!aHas) return 1;
+        if (!bHas) return -1;
+
+        const base = sortBy === "price-asc" ? aMin - bMin : bMin - aMin;
+        if (base !== 0) return base;
+
+        const aScore = getBestStoreScore(a);
+        const bScore = getBestStoreScore(b);
+        return bScore - aScore;
+      });
+    }
+
+    return result;
+  }, [products, storeFilter, fastOnly, sortBy, location]);
+
   useEffect(() => {
-    if (!products || products.length === 0) {
+    if (!selectedProductId) return;
+
+    const stillThere = visibleProducts.some((p) => p.id === selectedProductId);
+    if (!stillThere) {
+      if (visibleProducts.length > 0) {
+        setSelectedProductId(visibleProducts[0].id);
+      } else {
+        setSelectedProductId(null);
+      }
+    }
+  }, [visibleProducts, selectedProductId]);
+
+  useEffect(() => {
+    if (!visibleProducts.length) {
       setTrendProductId(null);
       setTrendHistory([]);
       setTrendError(null);
@@ -45,19 +225,12 @@ export default function Page() {
       return;
     }
 
-    const fallbackId = (products[0] as any)?.id ?? null;
-    const targetId = selectedProductId ?? fallbackId;
+    const base =
+      visibleProducts.find((p) => p.id === selectedProductId) ??
+      visibleProducts[0];
 
-    if (!targetId) {
-      setTrendProductId(null);
-      setTrendHistory([]);
-      setTrendError(null);
-      setIsTrendLoading(false);
-      return;
-    }
-
-    setTrendProductId(targetId as string);
-  }, [products, selectedProductId]);
+    setTrendProductId(base.id);
+  }, [visibleProducts, selectedProductId]);
 
   useEffect(() => {
     if (!trendProductId) {
@@ -117,6 +290,93 @@ export default function Page() {
     };
   }, [trendProductId]);
 
+  // favorites: load from localStorage
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const raw = window.localStorage.getItem("pricelance:favorites");
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        setFavoriteIds(parsed.filter((id) => typeof id === "string"));
+      }
+    } catch (error) {
+      console.error("Failed to load favorites from localStorage", error);
+    }
+  }, []);
+
+  // favorites: persist to localStorage
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      window.localStorage.setItem(
+        "pricelance:favorites",
+        JSON.stringify(favoriteIds),
+      );
+    } catch (error) {
+      console.error("Failed to save favorites to localStorage", error);
+    }
+  }, [favoriteIds]);
+
+  // Load dynamic categories from DB on mount
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadCategories() {
+      setIsCategoriesLoading(true);
+      setCategoriesError(null);
+
+      try {
+        const res = await fetch("/api/categories", { method: "GET" });
+
+        if (cancelled) return;
+
+        if (!res.ok) {
+          console.error("Failed to load categories:", res.status);
+          setCategories([]);
+          setCategoriesError("Could not load categories.");
+          return;
+        }
+
+        const data = await res.json();
+
+        if (cancelled) return;
+
+        if (Array.isArray(data.categories)) {
+          setCategories(data.categories);
+          setCategoriesError(null);
+        } else {
+          setCategories([]);
+          setCategoriesError("Could not load categories.");
+        }
+      } catch (error) {
+        console.error("Error loading categories:", error);
+        if (!cancelled) {
+          setCategories([]);
+          setCategoriesError("Could not load categories.");
+        }
+      } finally {
+        if (!cancelled) {
+          setIsCategoriesLoading(false);
+        }
+      }
+    }
+
+    loadCategories();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const toggleFavorite = (productId: string) => {
+    setFavoriteIds((prev) =>
+      prev.includes(productId)
+        ? prev.filter((id) => id !== productId)
+        : [...prev, productId],
+    );
+  };
+
   // Resilient search function backed by /api/products
   async function runSearch(q: string) {
     const trimmed = q.trim();
@@ -135,6 +395,13 @@ export default function Page() {
       if (categoryFilter !== "all") {
         params.set("category", categoryFilter);
       }
+      if (storeFilter !== "all") {
+        params.set("store", storeFilter);
+      }
+      if (fastOnly) {
+        params.set("fastOnly", "true");
+      }
+
       const res = await fetch(`/api/products?${params.toString()}`, {
         method: "GET",
       });
@@ -163,40 +430,61 @@ export default function Page() {
   }
 
   function scrollToAssistant() {
-    document.getElementById("ai-assistant-panel")?.scrollIntoView({ behavior: "smooth", block: "center" });
+    document
+      .getElementById("ai-assistant-panel")
+      ?.scrollIntoView({ behavior: "smooth", block: "center" });
   }
 
   // Unified card style - single navy card background
-  const cardStyle = "rounded-2xl bg-[var(--pl-card)] border border-[var(--pl-card-border)]";
+  const cardStyle =
+    "rounded-2xl bg-[var(--pl-card)] border border-[var(--pl-card-border)]";
+
+  const activeProduct =
+    visibleProducts.find((p) => p.id === selectedProductId) ??
+    visibleProducts[0] ??
+    null;
+
+  const totalProducts = visibleProducts.length;
+  const totalOffers = visibleProducts.reduce(
+    (sum, p) => sum + p.listings.length,
+    0,
+  );
+
+  const favoriteProducts = visibleProducts.filter((p) =>
+    favoriteIds.includes(p.id),
+  );
+
+  const favoriteRows = favoriteProducts.flatMap((p) =>
+    (p.listings ?? []).map((l) => ({
+      key: `${p.id}-${l.id}`,
+      productName: p.displayName || p.name,
+      price: l.price,
+      currency: l.currency,
+      storeName: l.storeName,
+    })),
+  );
 
   return (
     <div className="min-h-screen w-full">
-      {/* ════════════════════════════════════════════════════════════════
-          TOP HEADER SECTION
-      ════════════════════════════════════════════════════════════════ */}
+      {/* HEADER */}
       <header className="relative w-full pt-6 pb-4 px-6">
-        {/* Centered content */}
         <div className="max-w-5xl mx-auto text-center">
-          {/* PRICELANCE badge */}
           <div className="inline-block px-5 py-1.5 rounded-full border border-[var(--pl-card-border)] bg-[var(--pl-card)] text-[12px] font-semibold tracking-[0.2em] uppercase text-[var(--pl-text)]">
             PRICELANCE
           </div>
-
-          {/* Subtitle lines */}
           <p className="mt-3 text-[12px] text-[var(--pl-text-muted)] leading-relaxed">
-            PriceLance helps you compare real prices across multiple providers, track genuine deals over time, and discover smarter ways to buy.
+            PriceLance is an early prototype that uses curated sample data to
+            explore real-time price comparison ideas. Prices are illustrative
+            and may not match current store prices.
           </p>
           <p className="mt-1 text-[11px] text-[var(--pl-text-subtle)]">
-            Real-time price comparison from live providers. If we can't find it, we'll tell you — no fake products, no demo data.
+            Real-time price comparison from live providers. If we can't find it,
+            we'll tell you — no fake products, no demo data.
           </p>
         </div>
 
-        {/* Right side controls - Light toggle + AI Assistant */}
         <div className="absolute right-6 top-6 flex items-center gap-3">
-          {/* Light/Dark toggle capsule */}
           <ThemeToggle />
-
-          {/* AI Assistant button with glow */}
           <button
             type="button"
             onClick={scrollToAssistant}
@@ -206,7 +494,6 @@ export default function Page() {
           </button>
         </div>
 
-        {/* Ad slot preview label (top right, below buttons) */}
         <div className="absolute right-6 top-[72px] text-[9px] text-[var(--pl-text-subtle)]">
           <span className="px-2 py-1 rounded bg-[var(--pl-card)] border border-[var(--pl-card-border)]">
             Ad slot preview · Header banner 776x90
@@ -214,13 +501,10 @@ export default function Page() {
         </div>
       </header>
 
-      {/* ════════════════════════════════════════════════════════════════
-          SEARCH BAR ROW
-      ════════════════════════════════════════════════════════════════ */}
+      {/* SEARCH BAR */}
       <div className="w-full px-6 mt-2">
         <div className="max-w-4xl mx-auto">
           <div className="flex items-center gap-3">
-            {/* Search input */}
             <div className="flex-1 relative">
               <input
                 type="text"
@@ -231,8 +515,6 @@ export default function Page() {
                 className="w-full px-5 py-3 rounded-2xl bg-[var(--pl-card)] border border-[var(--pl-card-border)] text-[12px] text-[var(--pl-text)] placeholder:text-[var(--pl-text-subtle)] focus:outline-none focus:border-blue-500 focus:shadow-[0_0_15px_var(--pl-primary-glow)] transition-all"
               />
             </div>
-
-            {/* Search button with blue glow */}
             <button
               onClick={() => runSearch(query)}
               disabled={isSearching}
@@ -241,31 +523,22 @@ export default function Page() {
               {isSearching ? "Searching..." : "Search"}
             </button>
           </div>
-
-          {/* Debug line */}
           <p className="mt-2 text-[10px] text-[var(--pl-text-subtle)] italic">
             Debug: no enrichment data for last search.
           </p>
         </div>
       </div>
 
-      {/* ════════════════════════════════════════════════════════════════
-          THREE-COLUMN LAYOUT
-      ════════════════════════════════════════════════════════════════ */}
+      {/* THREE-COLUMN LAYOUT */}
       <main className="w-full px-6 mt-6 pb-6">
         <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-[260px_1fr_260px] gap-5 items-start">
-
-          {/* ═══════════════════════════════════════════════════════════
-              LEFT COLUMN
-          ═══════════════════════════════════════════════════════════ */}
+          {/* LEFT COLUMN */}
           <div className="flex flex-col gap-4">
-
-            {/* YOUR LOCATION card */}
+            {/* LOCATION */}
             <div className={`${cardStyle} p-4`}>
               <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-slate-700 dark:text-slate-200 mb-3">
                 Your Location
               </h3>
-
               <select
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
@@ -277,7 +550,6 @@ export default function Page() {
                 <option value="Germany">Germany</option>
                 <option value="United Kingdom">United Kingdom</option>
               </select>
-
               <button
                 onClick={handleUseLocation}
                 className="mt-3 w-full py-2 rounded-lg bg-[var(--pl-primary)] hover:brightness-110 text-sm font-medium text-white shadow-[0_0_15px_var(--pl-primary-glow)] transition-all"
@@ -286,7 +558,7 @@ export default function Page() {
               </button>
             </div>
 
-            {/* FILTERS card */}
+            {/* FILTERS */}
             <div className={`${cardStyle} p-4`}>
               <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-slate-700 dark:text-slate-200 mb-3">
                 Filters
@@ -294,30 +566,41 @@ export default function Page() {
               <div className="flex flex-col gap-3">
                 {/* Sort */}
                 <div className="flex items-center gap-2">
-                  <span className="text-xs leading-relaxed text-slate-700 dark:text-slate-300 w-10">Sort</span>
+                  <span className="text-xs leading-relaxed text-slate-700 dark:text-slate-300 w-10">
+                    Sort
+                  </span>
                   <select
                     value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value)}
+                    onChange={(e) =>
+                      setSortBy(
+                        e.target.value as
+                          | "relevance"
+                          | "price-asc"
+                          | "price-desc",
+                      )
+                    }
                     className="flex-1 px-2 py-1.5 rounded-lg bg-[var(--pl-bg)] border border-[var(--pl-card-border)] text-[11px] text-[var(--pl-text)] focus:outline-none"
                   >
-                    <option value="default">Default</option>
-                    <option value="price_asc">Price ↑</option>
-                    <option value="price_desc">Price ↓</option>
+                    <option value="relevance">Relevance</option>
+                    <option value="price-asc">Price ↑</option>
+                    <option value="price-desc">Price ↓</option>
                   </select>
                 </div>
 
                 {/* Category */}
                 <div className="flex items-center gap-2">
-                  <span className="text-xs leading-relaxed text-slate-700 dark:text-slate-300 w-10">Category</span>
+                  <span className="text-xs leading-relaxed text-slate-700 dark:text-slate-300 w-10">
+                    Category
+                  </span>
                   <select
                     value={categoryFilter}
                     onChange={(e) => setCategoryFilter(e.target.value)}
                     className="flex-1 px-2 py-1.5 rounded-lg bg-[var(--pl-bg)] border border-[var(--pl-card-border)] text-[11px] text-[var(--pl-text)] focus:outline-none"
                   >
                     <option value="all">All categories</option>
-                    {CORE_CATEGORIES.map((cat) => (
+                    {categories.map((cat) => (
                       <option key={cat} value={cat}>
-                        {CATEGORY_LABELS[cat]}
+                        {cat}
                       </option>
                     ))}
                   </select>
@@ -325,10 +608,14 @@ export default function Page() {
 
                 {/* Store */}
                 <div className="flex items-center gap-2">
-                  <span className="text-xs leading-relaxed text-slate-700 dark:text-slate-300 w-10">Store</span>
+                  <span className="text-xs leading-relaxed text-slate-700 dark:text-slate-300 w-10">
+                    Store
+                  </span>
                   <select
                     value={storeFilter}
-                    onChange={(e) => setStoreFilter(e.target.value)}
+                    onChange={(e) =>
+                      setStoreFilter(e.target.value as StoreId | "all")
+                    }
                     className="flex-1 px-2 py-1.5 rounded-lg bg-[var(--pl-bg)] border border-[var(--pl-card-border)] text-[11px] text-[var(--pl-text)] focus:outline-none"
                   >
                     <option value="all">All stores</option>
@@ -340,7 +627,7 @@ export default function Page() {
                   </select>
                 </div>
 
-                {/* Fast shipping checkbox */}
+                {/* Fast shipping */}
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
@@ -348,7 +635,9 @@ export default function Page() {
                     onChange={(e) => setFastOnly(e.target.checked)}
                     className="w-3.5 h-3.5 rounded border-[var(--pl-card-border)] bg-[var(--pl-bg)] text-blue-500 focus:ring-blue-500"
                   />
-                  <span className="text-xs leading-relaxed text-slate-700 dark:text-slate-300">Fast shipping only</span>
+                  <span className="text-xs leading-relaxed text-slate-700 dark:text-slate-300">
+                    Fast shipping only
+                  </span>
                 </label>
               </div>
               <button
@@ -359,26 +648,28 @@ export default function Page() {
               </button>
             </div>
 
-            {/* Sidebar ad preview (moved from right column) */}
+            {/* Sidebar ad preview */}
             <div className={`${cardStyle} p-3`}>
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[11px] font-semibold tracking-[0.15em] uppercase text-slate-700 dark:text-slate-200">Ad</span>
-                <span className="text-[11px] font-semibold tracking-[0.15em] uppercase text-slate-700 dark:text-slate-200">Sidebar ad preview</span>
+                <span className="text-[11px] font-semibold tracking-[0.15em] uppercase text-slate-700 dark:text-slate-200">
+                  Ad
+                </span>
+                <span className="text-[11px] font-semibold tracking-[0.15em] uppercase text-slate-700 dark:text-slate-200">
+                  Sidebar ad preview
+                </span>
               </div>
               <div className="w-full h-[150px] rounded-lg bg-[var(--pl-bg)] border border-[var(--pl-card-border)] flex items-center justify-center">
-                <span className="text-xs leading-relaxed text-slate-700 dark:text-slate-300">300 × 250</span>
+                <span className="text-xs leading-relaxed text-slate-700 dark:text-slate-300">
+                  300 × 250
+                </span>
               </div>
             </div>
           </div>
 
-          {/* ═══════════════════════════════════════════════════════════
-              CENTER COLUMN
-          ═══════════════════════════════════════════════════════════ */}
+          {/* CENTER COLUMN */}
           <div className="flex flex-col gap-4">
-
-            {/* Results area */}
             <div className={`${cardStyle} p-5 min-h-[180px]`}>
-              {products.length === 0 ? (
+              {visibleProducts.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-6 text-center">
                   <h3 className="text-[13px] font-medium text-[var(--pl-text)] mb-1">
                     No results found
@@ -389,21 +680,26 @@ export default function Page() {
                 </div>
               ) : (
                 <ProductList
-                  products={products}
+                  products={visibleProducts}
                   selectedProductId={selectedProductId}
                   onSelectProduct={(id: string) => setSelectedProductId(id)}
+                  favoriteIds={favoriteIds}
+                  onToggleFavorite={toggleFavorite}
                 />
               )}
             </div>
 
-            {/* SAVED SEARCHES panel */}
+            {/* Saved searches */}
             <div className={`${cardStyle} p-4`}>
               <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-slate-700 dark:text-slate-200 mb-2">
                 Saved Searches
               </h3>
               <div className="max-h-[140px] overflow-y-auto pr-1 space-y-0.5">
                 {savedSearches.map((s, i) => (
-                  <div key={i} className="flex items-center justify-between py-0.5 group">
+                  <div
+                    key={i}
+                    className="flex items-center justify-between py-0.5 group"
+                  >
                     <span
                       onClick={() => runSearch(s)}
                       className="text-xs leading-relaxed text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 cursor-pointer transition-colors"
@@ -418,40 +714,45 @@ export default function Page() {
               </div>
             </div>
 
-            {/* MY FAVORITES (relocated from right column) */}
+            {/* Favorites */}
             <div className={`${cardStyle} p-4`}>
               <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-slate-700 dark:text-slate-200 mb-1.5">
                 My Favorites
               </h3>
-              <p className="text-xs leading-relaxed text-slate-700 dark:text-slate-300">
-                No favorites yet. Tap the ★ on a product to save it.
-              </p>
+              {favoriteRows.length === 0 ? (
+                <p className="text-xs leading-relaxed text-slate-700 dark:text-slate-300">
+                  No favorites yet. Tap the ★ on a product to save it.
+                </p>
+              ) : (
+                <div className="max-h-[160px] overflow-y-auto pr-1 space-y-1">
+                  {favoriteRows.map((row) => (
+                    <div
+                      key={row.key}
+                      className="flex items-center justify-between text-xs py-0.5"
+                    >
+                      <span className="line-clamp-1 text-[var(--pl-text)]">
+                        {row.productName}
+                      </span>
+                      <span className="ml-2 text-[10px] text-[var(--pl-text-subtle)]">
+                        {row.price != null
+                          ? `${row.price} ${row.currency ?? ""}` 
+                          : "No price"}
+                        {row.storeName ? ` · ${row.storeName}` : ""}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
-          {/* ═══════════════════════════════════════════════════════════
-              RIGHT COLUMN
-          ═══════════════════════════════════════════════════════════ */}
+          {/* RIGHT COLUMN */}
           <div className="space-y-4 lg:space-y-5">
-
             <ProductSummary
-              product={
-                (selectedProductId
-                  ? products.find((p: any) => p.id === selectedProductId) ?? null
-                  : products.length > 0
-                  ? (products[0] as any)
-                  : null) as any
-              }
+              product={activeProduct as any}
               selectedProductId={selectedProductId}
-              totalProducts={products.length}
-              totalOffers={
-                Array.isArray(products)
-                  ? products.reduce((sum, p: any) => {
-                      const listings = Array.isArray(p.listings) ? p.listings : [];
-                      return sum + listings.length;
-                    }, 0)
-                  : 0
-              }
+              totalProducts={totalProducts}
+              totalOffers={totalOffers}
             />
 
             <PriceTrendChart
@@ -460,18 +761,26 @@ export default function Page() {
               error={trendError}
             />
 
-            {/* AI ASSISTANT PANEL */}
             <div id="ai-assistant-panel">
               <ChatAssistant
-                products={products}
+                products={visibleProducts}
                 searchQuery={query}
                 location={location}
+                disabled={visibleProducts.length === 0}
               />
             </div>
           </div>
-
         </div>
       </main>
+
+      {/* Affiliate Disclosure Footer */}
+      <footer className="w-full px-6 py-4 border-t border-[var(--pl-card-border)]">
+        <div className="max-w-6xl mx-auto text-center">
+          <p className="text-[10px] text-[var(--pl-text-subtle)] leading-relaxed">
+            PriceLance may use affiliate links. If you buy through some of our links, we might earn a commission, at no extra cost to you.
+          </p>
+        </div>
+      </footer>
     </div>
   );
 }

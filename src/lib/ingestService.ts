@@ -1,4 +1,21 @@
 // src/lib/ingestService.ts
+// =============================================================================
+// LEGACY - DO NOT USE FOR NEW IMPORTS
+// =============================================================================
+//
+// This file is DEPRECATED and retained only for reference/internal tooling.
+// All production imports MUST use the core ingestion pipeline:
+//   src/lib/importService.ts → importNormalizedListings()
+//
+// The current import architecture uses adapters that normalize data
+// before calling the shared importNormalizedListings() function.
+// See: src/lib/affiliates/googleSheet.ts for the active adapter.
+//
+// This legacy code bypasses the normalized adapter pattern and
+// directly manipulates Product/Listing records. It may still be used
+// by internal/demo routes but should NOT be used for affiliate feeds.
+// =============================================================================
+
 import { prisma } from "@/lib/db";
 import type { Prisma } from "@prisma/client";
 

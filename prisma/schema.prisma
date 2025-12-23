@@ -10,6 +10,13 @@ generator client {
   provider = "prisma-client-js"
 }
 
+enum ListingSource {
+  manual
+  sheet
+  seed
+  affiliate
+}
+
 model Product {
   id           String                @id @default(cuid())
   name         String
@@ -17,6 +24,7 @@ model Product {
   description  String?
   category     String?
   brand        String?
+  gtin         String?
   imageUrl     String?
   thumbnailUrl String?
   createdAt    DateTime              @default(now())
@@ -27,6 +35,8 @@ model Product {
   favorites    Favorite[]
 }
 
+// Listing: represents a product offer from a specific store/merchant.
+// Affiliate metadata fields are used for debugging, tracking, and attribution.
 model Listing {
   id                    String   @id @default(cuid())
   product               Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
@@ -39,6 +49,7 @@ model Listing {
   price                 Float
   priceCents            Int?
   currency              String   @default("USD")
+  source                ListingSource @default(seed)
   shippingCost          Float?
   deliveryTimeDays      Int?
   fastDelivery          Boolean?
@@ -50,6 +61,14 @@ model Listing {
   inStock               Boolean  @default(true)
   rating                Float?
   reviewCount           Int?
+
+  // Affiliate metadata - used for debugging and attribution
+  // affiliateProvider: e.g. "fake", "awin", "impact", "cj"
+  // merchantOriginalId: the original merchant/product ID from the affiliate feed
+  // affiliateProgram: free-text identifier, e.g. "awin_ro_emag"
+  affiliateProvider     String?
+  merchantOriginalId    String?
+  affiliateProgram      String?
 
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt

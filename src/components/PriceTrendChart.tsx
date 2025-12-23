@@ -1,129 +1,77 @@
-// src/components/PriceTrendChart.tsx
 "use client";
 
-import React, { type ReactNode } from "react";
+import React from "react";
+import {
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+} from "recharts";
 
-type PriceTrendPoint = { date: string; price: number; currency: string };
-
-type PriceTrendChartProps = {
-  points: PriceTrendPoint[];
-  isLoading?: boolean;
-  error?: string | null;
+type Point = {
+  date: string;
+  price: number;
+  currency: string;
 };
 
-export const PriceTrendChart: React.FC<PriceTrendChartProps> = ({
-  points,
-  isLoading,
-  error,
-}) => {
-  const hasPoints = Array.isArray(points) && points.length > 0;
+type Props = {
+  points: Point[];
+  isLoading: boolean;
+  error: string | null;
+};
 
-  const width = 100;
-  const height = 80;
-
-  let polylinePoints = "";
-  const circles: ReactNode[] = [];
-
-  if (hasPoints) {
-    const prices = points.map((p) => p.price);
-    const minPrice = Math.min(...prices);
-    const maxPrice = Math.max(...prices);
-    const range = maxPrice - minPrice || 1;
-
-    const paddingTop = 6;
-    const paddingBottom = 12;
-    const chartHeight = height - paddingTop - paddingBottom;
-
-    const xForIndex = (index: number) => {
-      if (points.length === 1) return width / 2;
-      const t = index / (points.length - 1);
-      const left = 8;
-      const right = width - 8;
-      return left + t * (right - left);
-    };
-
-    polylinePoints = points
-      .map((p, index) => {
-        const x = xForIndex(index);
-        const normalized = (p.price - minPrice) / range;
-        const y = paddingTop + (1 - normalized) * chartHeight;
-        circles.push(
-          <circle
-            key={index}
-            cx={x}
-            cy={y}
-            r={1.6}
-            className="fill-sky-400 stroke-sky-500"
-            strokeWidth={0.4}
-          />
-        );
-        return `${x},${y}`;
-      })
-      .join(" ");
-  }
+export default function PriceTrendChart({ points, isLoading, error }: Props) {
+  const hasData = Array.isArray(points) && points.length > 0;
 
   return (
-    <div className="rounded-2xl bg-[var(--pl-card)] border border-[var(--pl-card-border)] p-4">
+    <div className="rounded-2xl border border-[var(--pl-card-border)] bg-[var(--pl-card)] p-4">
       <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-slate-700 dark:text-slate-200 mb-1.5">
-        Price Trend (Last 12 Months)
+        Price trend (last 12 months)
       </h3>
-      <p className="text-xs leading-relaxed text-slate-700 dark:text-slate-300 mb-3">
+      <p className="text-[11px] leading-relaxed text-slate-700 dark:text-slate-300">
         Track price fluctuations over time to identify the best time to buy.
       </p>
 
-      {isLoading ? (
-        <div className="flex items-center justify-center py-6 text-xs text-slate-700 dark:text-slate-300">
-          Loading price history
-        </div>
-      ) : error ? (
-        <div className="flex flex-col items-center justify-center py-4 text-center">
-          <p className="text-xs leading-relaxed text-slate-700 dark:text-slate-300">{error}</p>
-        </div>
-      ) : !hasPoints ? (
-        <div className="flex flex-col items-center justify-center py-4 text-center">
-          <p className="text-sm font-medium text-slate-800 dark:text-slate-100 mb-0.5">
-            No price history available
+      <div className="mt-3 h-40 w-full rounded-xl border border-[var(--pl-card-border)] bg-[var(--pl-bg)] flex items-center justify-center overflow-hidden">
+        {isLoading ? (
+          <p className="text-[11px] text-[var(--pl-text-subtle)]">
+            Loading history…
           </p>
-          <p className="text-xs leading-relaxed text-slate-700 dark:text-slate-300">
-            Price tracking data will appear here once available.
+        ) : error ? (
+          <p className="text-[11px] text-[var(--pl-text-subtle)]">{error}</p>
+        ) : !hasData ? (
+          <p className="text-[11px] text-[var(--pl-text-subtle)]">
+            No price history available yet for this product.
           </p>
-        </div>
-      ) : (
-        <div className="h-24 w-full">
-          <svg
-            viewBox={`0 0 ${width} ${height}`}
-            className="h-full w-full overflow-visible text-sky-400"
-          >
-            <line
-              x1={0}
-              y1={height - 12}
-              x2={width}
-              y2={height - 12}
-              className="stroke-slate-700/40"
-              strokeWidth={0.4}
-            />
-            <line
-              x1={0}
-              y1={height / 2}
-              x2={width}
-              y2={height / 2}
-              className="stroke-slate-700/20"
-              strokeWidth={0.3}
-            />
-            <polyline
-              points={polylinePoints}
-              fill="none"
-              className="stroke-sky-400"
-              strokeWidth={1.6}
-              strokeLinejoin="round"
-              strokeLinecap="round"
-            />
-            {circles}
-          </svg>
-        </div>
-      )}
+        ) : (
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart
+              data={points}
+              margin={{ top: 8, right: 8, left: 0, bottom: 4 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="date" hide />
+              <YAxis hide domain={["auto", "auto"]} />
+              <Tooltip
+                formatter={(value: any) =>
+                  `${value} ${points[0]?.currency ?? ""}` 
+                }
+                labelFormatter={() => ""}
+              />
+              <Line
+                type="monotone"
+                dataKey="price"
+                strokeWidth={2}
+                dot={false}
+                activeDot={{ r: 3 }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        )}
+      </div>
     </div>
   );
-};
-
-export default PriceTrendChart;
+}

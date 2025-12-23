@@ -36,6 +36,13 @@ interface SeedSummary {
 }
 
 async function main() {
+  if (process.env.ENABLE_SEED !== "true") {
+    console.log(
+      "Seeding is disabled. Set ENABLE_SEED=true to run seed intentionally."
+    );
+    return;
+  }
+
   console.log("=".repeat(60));
   console.log("[seedAllRealstore] Starting seed for", SEED_QUERIES.length, "queries");
   console.log("=".repeat(60));

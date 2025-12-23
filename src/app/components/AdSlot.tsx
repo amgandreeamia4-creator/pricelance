@@ -24,25 +24,24 @@ export const AdSlot: React.FC<AdSlotProps> = ({
   const enabled = adConfig.enabled;
   const clientId = adConfig.adsense.clientId;
   const slotId = adConfig.adsense.slots[slot];
-
-  // If ads are globally disabled, render nothing.
-  if (!enabled) {
-    return null;
-  }
-
-  const canRenderAdsense = !!clientId && !!slotId;
+  const canRenderAdsense = enabled && !!clientId && !!slotId;
 
   useEffect(() => {
     if (!canRenderAdsense) return;
 
     try {
-      // @ts-ignore
+      // @ts-expect-error adsbygoogle is injected by the AdSense script
       (window.adsbygoogle = window.adsbygoogle || []).push({});
     } catch (err) {
       // Fail silently; the placeholder is not shown in this mode.
       console.warn("[AdSlot] adsbygoogle push failed:", err);
     }
   }, [canRenderAdsense, slotId]);
+
+  // If ads are globally disabled, render nothing.
+  if (!enabled) {
+    return null;
+  }
 
   if (canRenderAdsense) {
     // Real AdSense slot

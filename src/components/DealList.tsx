@@ -31,6 +31,43 @@ export default function DealList({ deals, loading, error }: DealListProps) {
   const [sortMode, setSortMode] = useState<SortMode>("discount");
   const [fastOnly, setFastOnly] = useState(false);
 
+  const processedDeals = useMemo(() => {
+    let list = [...deals];
+
+    if (fastOnly) {
+      list = list.filter((deal) => deal.bestListing?.fastDelivery === true);
+    }
+
+    if (sortMode === "discount") {
+      list.sort((a, b) => {
+        const aDisc =
+          typeof a.discountPercent === "number" ? a.discountPercent : -Infinity;
+        const bDisc =
+          typeof b.discountPercent === "number" ? b.discountPercent : -Infinity;
+
+        if (aDisc === bDisc) {
+          const aPrice = a.currentPrice ?? Number.POSITIVE_INFINITY;
+          const bPrice = b.currentPrice ?? Number.POSITIVE_INFINITY;
+          return aPrice - bPrice;
+        }
+
+        // Bigger discount first; items without discount go last.
+        return bDisc - aDisc;
+      });
+    } else {
+      // sortMode === "price"
+      list.sort((a, b) => {
+        const aPrice = a.currentPrice ?? Number.POSITIVE_INFINITY;
+        const bPrice = b.currentPrice ?? Number.POSITIVE_INFINITY;
+        return aPrice - bPrice;
+      });
+    }
+
+    return list;
+  }, [deals, sortMode, fastOnly]);
+
+  const hasFastFilterButEmpty = fastOnly && processedDeals.length === 0;
+
   // Loading state – subtle skeleton cards
   if (loading) {
     return (
@@ -85,43 +122,6 @@ export default function DealList({ deals, loading, error }: DealListProps) {
       </div>
     );
   }
-
-  const processedDeals = useMemo(() => {
-    let list = [...deals];
-
-    if (fastOnly) {
-      list = list.filter((deal) => deal.bestListing?.fastDelivery === true);
-    }
-
-    if (sortMode === "discount") {
-      list.sort((a, b) => {
-        const aDisc =
-          typeof a.discountPercent === "number" ? a.discountPercent : -Infinity;
-        const bDisc =
-          typeof b.discountPercent === "number" ? b.discountPercent : -Infinity;
-
-        if (aDisc === bDisc) {
-          const aPrice = a.currentPrice ?? Number.POSITIVE_INFINITY;
-          const bPrice = b.currentPrice ?? Number.POSITIVE_INFINITY;
-          return aPrice - bPrice;
-        }
-
-        // Bigger discount first; items without discount go last.
-        return bDisc - aDisc;
-      });
-    } else {
-      // sortMode === "price"
-      list.sort((a, b) => {
-        const aPrice = a.currentPrice ?? Number.POSITIVE_INFINITY;
-        const bPrice = b.currentPrice ?? Number.POSITIVE_INFINITY;
-        return aPrice - bPrice;
-      });
-    }
-
-    return list;
-  }, [deals, sortMode, fastOnly]);
-
-  const hasFastFilterButEmpty = fastOnly && processedDeals.length === 0;
 
   return (
     <div className="space-y-3">

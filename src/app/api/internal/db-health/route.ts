@@ -1,27 +1,10 @@
 // src/app/api/internal/db-health/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { checkInternalAuth } from "@/lib/internalAuth";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
-
-/**
- * Simple helper to check the internal API key header.
- */
-function checkInternalKey(req: NextRequest): boolean {
-  const headerKey = req.headers.get("x-internal-key");
-  const expectedKey = process.env.INTERNAL_API_KEY;
-
-  // In development without a key configured, allow access
-  if (!expectedKey) {
-    if (process.env.NODE_ENV === "production") {
-      return false;
-    }
-    return true;
-  }
-
-  return headerKey === expectedKey;
-}
 
 /**
  * GET /api/internal/db-health
@@ -34,12 +17,8 @@ function checkInternalKey(req: NextRequest): boolean {
  * a cloud database like Supabase, Neon, PlanetScale, or Turso.
  */
 export async function GET(req: NextRequest) {
-  if (!checkInternalKey(req)) {
-    return NextResponse.json(
-      { ok: false, error: "Unauthorized: invalid internal key" },
-      { status: 401 }
-    );
-  }
+  const authError = checkInternalAuth(req);
+  if (authError) return authError;
 
   const dbUrl = process.env.DATABASE_URL ?? "missing";
   const nodeEnv = process.env.NODE_ENV ?? "unknown";

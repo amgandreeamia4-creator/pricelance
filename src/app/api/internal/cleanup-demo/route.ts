@@ -13,6 +13,17 @@ export const dynamic = "force-dynamic";
  * Does NOT actually delete anything - use POST for that.
  */
 export async function GET(req: NextRequest) {
+  if (process.env.ENABLE_DEMO_PROVIDERS !== "true") {
+    return NextResponse.json(
+      {
+        ok: false,
+        error:
+          "Demo cleanup is disabled. Set ENABLE_DEMO_PROVIDERS=true to run this endpoint intentionally.",
+      },
+      { status: 403 }
+    );
+  }
+
   const authError = checkInternalAuth(req);
   if (authError) return authError;
 
@@ -68,6 +79,17 @@ export async function GET(req: NextRequest) {
  * Protected by INTERNAL_API_KEY header.
  */
 export async function POST(req: NextRequest) {
+  if (process.env.ENABLE_DEMO_PROVIDERS !== "true") {
+    return NextResponse.json(
+      {
+        ok: false,
+        error:
+          "Demo cleanup is disabled. Set ENABLE_DEMO_PROVIDERS=true to run this endpoint intentionally.",
+      },
+      { status: 403 }
+    );
+  }
+
   const authError = checkInternalAuth(req);
   if (authError) return authError;
 

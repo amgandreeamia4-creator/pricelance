@@ -31,7 +31,7 @@ const STATIC_PRODUCTS = [
       {
         id: "static-laptop-ultrabook-13-techstore",
         storeName: "TechStore",
-        url: "https://example.com/ultrabook-13",
+        url: "https://www.techstore.com/products/ultrabook-13-16gb-512gb",
         imageUrl: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8",
         price: 1099.99,
         currency: "USD",
@@ -44,7 +44,7 @@ const STATIC_PRODUCTS = [
       {
         id: "static-laptop-ultrabook-13-cityelectronics",
         storeName: "City Electronics",
-        url: "https://example.com/ultrabook-13-city",
+        url: "https://www.cityelectronics.com/products/ultrabook-13-16gb-512gb",
         imageUrl: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8",
         price: 1049.99,
         currency: "USD",
@@ -69,7 +69,7 @@ const STATIC_PRODUCTS = [
       {
         id: "static-headphones-noise-cancelling-audioworld",
         storeName: "AudioWorld",
-        url: "https://example.com/quietwave-pro",
+        url: "https://www.audioworld.com/products/quietwave-pro",
         imageUrl: "https://images.unsplash.com/photo-1511367461989-f85a21fda167",
         price: 249.99,
         currency: "USD",
@@ -82,7 +82,7 @@ const STATIC_PRODUCTS = [
       {
         id: "static-headphones-noise-cancelling-techmart",
         storeName: "TechMart",
-        url: "https://example.com/quietwave-pro-techmart",
+        url: "https://www.techmart.com/products/quietwave-pro",
         imageUrl: "https://images.unsplash.com/photo-1511367461989-f85a21fda167",
         price: 229.99,
         currency: "USD",
@@ -107,7 +107,7 @@ const STATIC_PRODUCTS = [
       {
         id: "static-phone-flagship-6-mobilehub",
         storeName: "MobileHub",
-        url: "https://example.com/novaphone-6",
+        url: "https://www.mobilehub.com/products/novaphone-6-5g",
         imageUrl: "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9",
         price: 799.0,
         currency: "USD",
@@ -120,7 +120,7 @@ const STATIC_PRODUCTS = [
       {
         id: "static-phone-flagship-6-citymobile",
         storeName: "City Mobile",
-        url: "https://example.com/novaphone-6-city",
+        url: "https://www.citymobile.com/products/novaphone-6-5g",
         imageUrl: "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9",
         price: 769.0,
         currency: "USD",
@@ -145,7 +145,7 @@ const STATIC_PRODUCTS = [
       {
         id: "static-fragrance-eau-de-parfum-beautybay",
         storeName: "BeautyBay",
-        url: "https://example.com/aurora-eau-de-parfum",
+        url: "https://www.beautybay.com/p/maison-aurora/aurora-eau-de-parfum-50ml",
         imageUrl: "https://images.unsplash.com/photo-1612815154858-60aa4c59eaa2",
         price: 89.0,
         currency: "USD",
@@ -170,7 +170,7 @@ const STATIC_PRODUCTS = [
       {
         id: "static-skincare-hydrating-serum-glowmarket",
         storeName: "Glow Market",
-        url: "https://example.com/hydraglow-serum",
+        url: "https://www.glowmarket.com/products/hydraglow-hydrating-serum-30ml",
         imageUrl: "https://images.unsplash.com/photo-1612810432633-96f64dc8ccb6",
         price: 39.0,
         currency: "USD",
@@ -195,7 +195,7 @@ const STATIC_PRODUCTS = [
       {
         id: "static-grocery-organic-coffee-beans-freshmart",
         storeName: "FreshMart",
-        url: "https://example.com/morning-river-coffee",
+        url: "https://www.freshmart.com/products/morning-river-organic-arabica-coffee-1kg",
         imageUrl: "https://images.unsplash.com/photo-1509043759401-136742328bb3",
         price: 18.99,
         currency: "USD",
@@ -208,7 +208,7 @@ const STATIC_PRODUCTS = [
       {
         id: "static-grocery-organic-coffee-beans-localgrocer",
         storeName: "Local Grocer",
-        url: "https://example.com/morning-river-coffee-local",
+        url: "https://www.localgrocer.com/products/morning-river-organic-arabica-coffee-1kg",
         imageUrl: "https://images.unsplash.com/photo-1509043759401-136742328bb3",
         price: 17.49,
         currency: "USD",
@@ -233,7 +233,7 @@ const STATIC_PRODUCTS = [
       {
         id: "static-grocery-breakfast-cereal-freshmart",
         storeName: "FreshMart",
-        url: "https://example.com/crunchy-oats-cereal",
+        url: "https://www.freshmart.com/products/crunchy-oats-honey-cereal-750g",
         imageUrl: "https://images.unsplash.com/photo-1504753793650-d4a2b783c15e",
         price: 5.49,
         currency: "USD",
@@ -258,7 +258,7 @@ const STATIC_PRODUCTS = [
       {
         id: "static-console-gaming-gamehub",
         storeName: "GameHub",
-        url: "https://example.com/playbox-series-z",
+        url: "https://www.gamehub.com/products/playbox-series-z-1tb",
         imageUrl: "https://images.unsplash.com/photo-1606813902914-0e6c704d008b",
         price: 499.99,
         currency: "USD",
@@ -283,7 +283,7 @@ const STATIC_PRODUCTS = [
       {
         id: "static-monitor-27inch-techstore",
         storeName: "TechStore",
-        url: "https://example.com/ultraview-27-monitor",
+        url: "https://www.techstore.com/products/ultraview-27-4k-ips-monitor",
         imageUrl: "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf",
         price: 449.99,
         currency: "USD",
@@ -308,7 +308,7 @@ const STATIC_PRODUCTS = [
       {
         id: "static-wireless-headphones-audioworld",
         storeName: "AudioWorld",
-        url: "https://example.com/soundwave-wireless",
+        url: "https://www.audioworld.com/products/soundwave-wireless-headphones",
         imageUrl: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e",
         price: 179.99,
         currency: "USD",
@@ -397,6 +397,13 @@ async function seedStaticProducts() {
 }
 
 async function main() {
+  if (process.env.ENABLE_SEED !== "true") {
+    console.log(
+      "Seeding is disabled. Set ENABLE_SEED=true to run seed intentionally."
+    );
+    return;
+  }
+
   try {
     await seedStaticProducts();
   } catch (error) {

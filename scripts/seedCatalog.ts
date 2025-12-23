@@ -38,6 +38,13 @@ async function loadCatalog(): Promise<CatalogProduct[]> {
 }
 
 async function main() {
+  if (process.env.ENABLE_SEED !== "true") {
+    console.log(
+      "Seeding is disabled. Set ENABLE_SEED=true to run seed intentionally."
+    );
+    return;
+  }
+
   console.log("[seedCatalog] Starting curated catalog seed from data/catalog.json...");
 
   try {

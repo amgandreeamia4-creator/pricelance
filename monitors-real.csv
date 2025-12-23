@@ -1,0 +1,11 @@
+product_title,brand,category,gtin,store_id,store_name,listing_url,price,currency,delivery_days,fast_delivery,in_stock
+Dell Alienware AW2724DM 27" QHD 165Hz,Dell,Monitor Gaming,,emag,eMAG,PASTE_URL_HERE,PASTE_PRICE_HERE,RON,3,false,true
+Dell UltraSharp U2723QE 27" 4K,Dell,Monitor Productivity,,emag,eMAG,PASTE_URL_HERE,PASTE_PRICE_HERE,RON,3,false,true
+LG UltraGear 27GR75Q 27" QHD 165Hz,LG,Monitor Gaming,,emag,eMAG,PASTE_URL_HERE,PASTE_PRICE_HERE,RON,3,false,true
+LG 34WP65C-B 34" Ultrawide QHD,LG,Monitor Ultrawide,,emag,eMAG,PASTE_URL_HERE,PASTE_PRICE_HERE,RON,4,false,true
+Samsung Odyssey G5 27" QHD 144Hz,Samsung,Monitor Gaming,,emag,eMAG,PASTE_URL_HERE,PASTE_PRICE_HERE,RON,3,false,true
+Samsung ViewFinity S8 27" 4K,Samsung,Monitor Productivity,,emag,eMAG,PASTE_URL_HERE,PASTE_PRICE_HERE,RON,4,false,true
+ASUS TUF Gaming VG27AQ 27" QHD 165Hz,ASUS,Monitor Gaming,,emag,eMAG,PASTE_URL_HERE,PASTE_PRICE_HERE,RON,3,false,true
+AOC 24G2 24" FHD 144Hz,AOC,Monitor Budget,,emag,eMAG,PASTE_URL_HERE,PASTE_PRICE_HERE,RON,2,true,true
+BenQ MOBIUZ EX2710Q 27" QHD 165Hz,BenQ,Monitor Gaming,,altex,Altex,PASTE_URL_HERE,PASTE_PRICE_HERE,RON,3,false,true
+LG UltraGear 27GR75Q 27" QHD 165Hz,LG,Monitor Gaming,,pcgarage,PC Garage,PASTE_URL_HERE,PASTE_PRICE_HERE,RON,3,false,true

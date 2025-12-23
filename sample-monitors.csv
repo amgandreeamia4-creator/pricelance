@@ -1,0 +1,11 @@
+product_title,brand,category,gtin,store_id,store_name,listing_url,price,currency,delivery_days,fast_delivery,in_stock
+Dell Alienware AW2724DM 27" QHD 165Hz,Dell,Monitor Gaming,,emag,eMAG,https://www.emag.ro/monitor-gaming-dell-alienware-aw2724dm-27-qhd-ips-165hz-aw2724dm/pd/D1234/,2199.99,RON,2,true,true
+LG UltraGear 27GR75Q 27" QHD 165Hz,LG,Monitor Gaming,,emag,eMAG,https://www.emag.ro/monitor-gaming-lg-ultragear-27gr75q-27-qhd-ips-165hz/pd/D5678/,1799.99,RON,3,false,true
+Samsung Odyssey G5 27" QHD 165Hz,Samsung,Monitor Gaming,,emag,eMAG,https://www.emag.ro/monitor-gaming-samsung-odyssey-g5-27-qhd-va-165hz/pd/D9012/,1599.99,RON,3,false,true
+Dell UltraSharp U2723QE 27" 4K IPS,Dell,Monitor Productivity,,emag,eMAG,https://www.emag.ro/monitor-dell-ultrasharp-u2723qe-27-4k-ips/pd/D3456/,2899.99,RON,3,false,true
+LG 34WP65C-B 34" Ultrawide QHD,LG,Monitor Ultrawide,,emag,eMAG,https://www.emag.ro/monitor-lg-34wp65c-b-34-ultrawide-qhd-va/pd/D7890/,2399.99,RON,4,false,true
+ASUS ProArt PA278QV 27" QHD IPS,ASUS,Monitor Productivity,,emag,eMAG,https://www.emag.ro/monitor-asus-proart-pa278qv-27-qhd-ips/pd/D2345/,1899.99,RON,2,true,true
+BenQ MOBIUZ EX2710Q 27" QHD 165Hz,BenQ,Monitor Gaming,,altex,Altex,https://altex.ro/monitor-gaming-benq-mobiuz-ex2710q-27-qhd-ips-165hz/cpd/MON2710Q/,2099.99,RON,3,false,true
+AOC 24G2SP 24" FHD 165Hz,AOC,Monitor Gaming,,pcgarage,PC Garage,https://www.pcgarage.ro/monitoare/aoc/24g2sp-24-fhd-ips-165hz/,799.99,RON,1,true,true
+Dell Alienware AW2724DM 27" QHD 165Hz,Dell,Monitor Gaming,,altex,Altex,https://altex.ro/monitor-gaming-dell-alienware-aw2724dm-27-qhd-ips-165hz/cpd/AW2724DM/,2299.99,RON,4,false,true
+LG UltraGear 27GR75Q 27" QHD 165Hz,LG,Monitor Gaming,,pcgarage,PC Garage,https://www.pcgarage.ro/monitoare/lg/ultragear-27gr75q-27-qhd-ips-165hz/,1749.99,RON,2,true,true

@@ -1,0 +1,3 @@
+product_title,brand,category,gtin,store_id,store_name,listing_url,price,currency,delivery_days,fast_delivery,in_stock
+Test Monitor 123,Dell,Monitor Test,,emag,eMAG,https://www.emag.ro/test-monitor-123,1999.99,RON,3,false,true
+Test Headphones 456,Sony,Audio Test,,emag,eMAG,https://www.emag.ro/test-headphones-456,499.99,RON,2,true,true

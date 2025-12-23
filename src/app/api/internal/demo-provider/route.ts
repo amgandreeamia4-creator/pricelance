@@ -134,6 +134,17 @@ export async function GET(req: NextRequest) {
     );
   }
 
+  if (process.env.ENABLE_DEMO_PROVIDERS !== "true") {
+    return NextResponse.json(
+      {
+        ok: false,
+        error:
+          "Demo ingestion is disabled. Set ENABLE_DEMO_PROVIDERS=true to run this endpoint intentionally.",
+      },
+      { status: 403 },
+    );
+  }
+
   const authError = checkInternalAuth(req);
   if (authError) return authError;
 

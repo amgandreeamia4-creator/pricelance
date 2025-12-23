@@ -1,148 +1,91 @@
 // src/app/admin/search-analytics/page.tsx
-import { prisma } from "@/lib/db";
+// Auth is handled by middleware (HTTP Basic Auth in production, bypassed in dev)
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
-const ADMIN_SECRET = process.env.ADMIN_SECRET ?? "";
+const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY ?? "";
 
-type SearchAnalyticsPageProps = {
-  searchParams?: { [key: string]: string | string[] | undefined };
+type SearchAnalyticsSummary = {
+  ok: boolean;
+  range?: {
+    days: number;
+    since: string;
+    until: string;
+  } | null;
+  totals?: {
+    totalSearches: number;
+    uniqueQueries: number;
+    avgResultCount: number | null;
+  } | null;
+  topQueries?: { query: string; count: number; avgResultCount: number | null }[] | null;
+  zeroResultQueries?: {
+    query: string;
+    timesSearched: number;
+    lastSearchedAt: string | null;
+  }[] | null;
+  error?: string | null;
 };
 
-type ZeroResultRow = {
-  query: string;
-  timesSearched: number;
-  lastSearchedAt: Date | null;
-};
-
-type TopQueryRow = {
-  query: string;
-  timesSearched: number;
-  averageResultCount: number;
-};
-
-// --- helpers using findMany instead of groupBy ------------------------------
-
-async function getZeroResultQueries(): Promise<ZeroResultRow[]> {
-  const logs = await (prisma as any).searchLog.findMany({
-    where: { resultCount: 0 },
-    orderBy: { createdAt: "desc" },
-    take: 500,
-  });
-
-  const map = new Map<string, ZeroResultRow>();
-
-  for (const log of logs as any[]) {
-    const q = log.query as string;
-    const createdAt = log.createdAt as Date;
-
-    const existing = map.get(q);
-    if (!existing) {
-      map.set(q, {
-        query: q,
-        timesSearched: 1,
-        lastSearchedAt: createdAt ?? null,
-      });
-    } else {
-      existing.timesSearched += 1;
-      if (
-        createdAt &&
-        (!existing.lastSearchedAt ||
-          createdAt > (existing.lastSearchedAt as Date))
-      ) {
-        existing.lastSearchedAt = createdAt;
-      }
-    }
-  }
-
-  const rows = Array.from(map.values());
-  rows.sort((a, b) => b.timesSearched - a.timesSearched);
-  return rows.slice(0, 50);
+// Safe number extraction
+function safeNumber(value: unknown, fallback: number = 0): number {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  return fallback;
 }
 
-async function getTopQueries(): Promise<TopQueryRow[]> {
-  const logs = await (prisma as any).searchLog.findMany({
-    orderBy: { createdAt: "desc" },
-    take: 1000,
-  });
-
-  type Agg = { count: number; sumResults: number };
-  const agg = new Map<string, Agg>();
-
-  for (const log of logs as any[]) {
-    const q = log.query as string;
-    const resultCount = (log.resultCount as number) ?? 0;
-
-    const existing = agg.get(q);
-    if (!existing) {
-      agg.set(q, { count: 1, sumResults: resultCount });
-    } else {
-      existing.count += 1;
-      existing.sumResults += resultCount;
-    }
-  }
-
-  const rows: TopQueryRow[] = [];
-  for (const entry of Array.from(agg.entries())) {
-    const query = entry[0];
-    const { count, sumResults } = entry[1];
-    rows.push({
-      query,
-      timesSearched: count,
-      averageResultCount: count > 0 ? sumResults / count : 0,
-    });
-  }
-
-  rows.sort((a, b) => b.timesSearched - a.timesSearched);
-  return rows.slice(0, 50);
+// Safe string extraction
+function safeString(value: unknown, fallback: string = ""): string {
+  if (typeof value === "string") return value;
+  return fallback;
 }
 
 // --- page -------------------------------------------------------------------
 
-export default async function SearchAnalyticsPage({
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  searchParams,
-}: SearchAnalyticsPageProps) {
-  const providedKey =
-    typeof searchParams?.adminKey === "string"
-      ? searchParams.adminKey
-      : undefined;
+export default async function SearchAnalyticsPage() {
+  const days = 7;
 
-  const isProduction = (process.env.NODE_ENV ?? "development") === "production";
+  let summary: SearchAnalyticsSummary | null = null;
+  let fetchError: string | null = null;
 
-  if (isProduction) {
-    if (!ADMIN_SECRET) {
-      return (
-        <div className="min-h-screen bg-slate-950 text-slate-50 flex items-center justify-center">
-          <div className="max-w-md p-8 space-y-4 text-center">
-            <h1 className="text-2xl font-semibold text-red-400">Access Denied</h1>
-            <p className="text-slate-400">
-              Admin access is not configured. Please set the ADMIN_SECRET environment variable.
-            </p>
-          </div>
-        </div>
-      );
+  try {
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_BASE_URL ?? ""}/api/internal/search-analytics?days=${days}`,
+      {
+        method: "GET",
+        headers: INTERNAL_API_KEY
+          ? { "x-internal-key": INTERNAL_API_KEY }
+          : undefined,
+        cache: "no-store",
+      },
+    );
+
+    if (!res.ok) {
+      fetchError = `API returned status ${res.status}`;
+      console.error("[admin/search-analytics] API error:", fetchError);
+    } else {
+      const json = await res.json();
+      summary = json as SearchAnalyticsSummary;
     }
-
-    if (providedKey !== ADMIN_SECRET) {
-      return (
-        <div className="min-h-screen bg-slate-950 text-slate-50 flex items-center justify-center">
-          <div className="max-w-md p-8 space-y-4 text-center">
-            <h1 className="text-2xl font-semibold text-red-400">Access Denied</h1>
-            <p className="text-slate-400">
-              You are not authorized to view this page. A valid admin key is required.
-            </p>
-          </div>
-        </div>
-      );
-    }
+  } catch (error) {
+    fetchError = error instanceof Error ? error.message : "Unknown fetch error";
+    console.error("[admin/search-analytics] Failed to fetch summary:", fetchError);
   }
 
-  const [zeroResultQueries, topQueries] = await Promise.all([
-    getZeroResultQueries(),
-    getTopQueries(),
-  ]);
+  // Determine if we have an error state
+  const hasError = fetchError !== null || summary?.ok === false;
+  const errorMessage = fetchError ?? safeString(summary?.error, "Unknown error");
+
+  // Safely extract data with fallbacks
+  const zeroResultQueries = Array.isArray(summary?.zeroResultQueries)
+    ? summary.zeroResultQueries
+    : [];
+  const topQueries = Array.isArray(summary?.topQueries) ? summary.topQueries : [];
+  const totalSearches = safeNumber(summary?.totals?.totalSearches, 0);
+  const uniqueQueries = safeNumber(summary?.totals?.uniqueQueries, 0);
+  const avgResultCount = summary?.totals?.avgResultCount ?? null;
+
+  // Check if there's any data at all
+  const hasNoData = totalSearches === 0 && topQueries.length === 0 && zeroResultQueries.length === 0;
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-50">
@@ -157,38 +100,69 @@ export default async function SearchAnalyticsPage({
           </p>
         </header>
 
+        {/* Error banner */}
+        {hasError && (
+          <div className="rounded-lg border border-red-800 bg-red-950/50 p-4 text-sm">
+            <div className="flex items-start gap-3">
+              <span className="text-red-400 text-lg">⚠</span>
+              <div>
+                <h3 className="font-semibold text-red-300">
+                  Failed to load analytics
+                </h3>
+                <p className="mt-1 text-red-400/80">{errorMessage}</p>
+                <p className="mt-2 text-xs text-slate-500">
+                  The data below may be incomplete or stale.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* No data message */}
+        {!hasError && hasNoData && (
+          <div className="rounded-lg border border-slate-700 bg-slate-900/50 p-6 text-center">
+            <div className="text-4xl mb-3">📊</div>
+            <h3 className="text-lg font-semibold text-slate-200">No data yet</h3>
+            <p className="mt-2 text-sm text-slate-400 max-w-md mx-auto">
+              Search analytics will appear here once users start searching. 
+              Try searching for products on the homepage to generate some data.
+            </p>
+          </div>
+        )}
+
         <section className="grid gap-4 rounded-lg border border-slate-800 bg-slate-900/70 p-4 text-sm text-slate-200 md:grid-cols-3">
           <div>
             <div className="text-xs uppercase text-slate-400">
-              Zero-result queries
+              Total searches (last {days} days)
             </div>
             <div className="mt-1 text-xl font-semibold">
-              {zeroResultQueries.length}
+              {totalSearches}
             </div>
             <p className="mt-1 text-xs text-slate-400">
-              Unique queries that returned 0 products (top 50 by frequency).
+              Number of search requests logged in the selected time window.
             </p>
           </div>
           <div>
             <div className="text-xs uppercase text-slate-400">
-              Tracked queries
+              Unique queries
             </div>
             <div className="mt-1 text-xl font-semibold">
-              {topQueries.length}
+              {uniqueQueries}
             </div>
             <p className="mt-1 text-xs text-slate-400">
-              Top 50 queries overall, sorted by how often they were searched.
+              Distinct normalized queries seen in this period.
             </p>
           </div>
           <div className="flex flex-col justify-between gap-2 text-xs text-slate-400">
             <p>
+              Average results per search: {avgResultCount != null
+                ? avgResultCount.toFixed(1)
+                : "—"}
+            </p>
+            <p>
               Use this page to decide which queries to add to the curated
               catalog. Start with zero-result queries that appear multiple
               times.
-            </p>
-            <p>
-              Tip: Click a query to jump to the curated catalog admin with the
-              search pre-filled.
             </p>
           </div>
         </section>
@@ -226,7 +200,6 @@ export default async function SearchAnalyticsPage({
                       <td className="px-3 py-2 text-xs text-slate-400 whitespace-nowrap">
                         {row.lastSearchedAt
                           ? row.lastSearchedAt
-                              .toISOString()
                               .slice(0, 19)
                               .replace("T", " ")
                           : "—"}
@@ -272,10 +245,12 @@ export default async function SearchAnalyticsPage({
                         <span>{row.query}</span>
                       </td>
                       <td className="px-3 py-2 text-sm">
-                        {row.timesSearched}
+                        {row.count}
                       </td>
                       <td className="px-3 py-2 text-sm">
-                        {row.averageResultCount.toFixed(1)}
+                        {row.avgResultCount != null
+                          ? row.avgResultCount.toFixed(1)
+                          : "-"}
                       </td>
                     </tr>
                   ))}

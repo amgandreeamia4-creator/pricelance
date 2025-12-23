@@ -29,7 +29,14 @@ interface Props {
   products: Product[];
   selectedProductId?: string | null;
   onSelectProduct?: (id: string) => void;
+  favoriteIds: string[];
+  onToggleFavorite: (productId: string) => void;
 }
+
+type OfferRow = {
+  product: Product;
+  listing: Listing;
+};
 
 function isValidImageUrl(url: string | null | undefined): url is string {
   if (!url || typeof url !== "string") return false;
@@ -41,87 +48,135 @@ function isValidImageUrl(url: string | null | undefined): url is string {
   }
 }
 
-export default function ProductList({ products, selectedProductId, onSelectProduct }: Props) {
+export default function ProductList({
+  products,
+  selectedProductId,
+  onSelectProduct,
+  favoriteIds,
+  onToggleFavorite,
+}: Props) {
   if (!products?.length) return null;
 
-  return (
-    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-      {products.map((product) => {
-        const listings = Array.isArray(product.listings) ? product.listings : [];
+  // One row per listing
+  const rows: OfferRow[] = products.flatMap((product) =>
+    (product.listings ?? []).map((listing) => ({ product, listing })),
+  );
 
+  if (rows.length === 0) return null;
+
+  return (
+    <div className="flex flex-col gap-3">
+      {rows.map(({ product, listing }) => {
         const isSelected =
           selectedProductId != null && selectedProductId === product.id;
+        const isFavorite = favoriteIds.includes(product.id);
+        const hasUrl =
+          typeof listing.url === "string" && listing.url.trim().length > 0;
+
+        const cardClasses =
+          "relative flex items-center gap-3 rounded-xl border border-[var(--pl-card-border)] bg-[var(--pl-card)] p-3 shadow-sm transition hover:border-blue-500/50 " +
+          (isSelected ? "border-blue-400 ring-2 ring-blue-500/40" : "") +
+          (hasUrl ? " cursor-pointer" : " cursor-default opacity-90");
+
+        const handleCardClick = (e: React.MouseEvent) => {
+          // If clicking star or an explicit link, don't double-handle
+          const target = e.target as HTMLElement;
+          if (
+            target.closest('[data-favorite-btn="true"]') ||
+            target.closest("a")
+          ) {
+            return;
+          }
+
+          onSelectProduct?.(product.id);
+
+          if (hasUrl && listing.url) {
+            window.open(listing.url, "_blank", "noopener,noreferrer");
+          }
+        };
 
         return (
           <div
-            key={product.id}
-            onClick={() => onSelectProduct?.(product.id)}
-            className={
-              "rounded-xl border border-[var(--pl-card-border)] bg-[var(--pl-card)] p-3 shadow-sm transition hover:border-blue-500/50 " +
-              (isSelected ? "border-blue-400 ring-2 ring-blue-500/40" : "")
-            }
+            key={`${product.id}-${listing.id}`}
+            className={cardClasses}
+            onClick={handleCardClick}
           >
-            {/* Product Image */}
-            <div className="relative mb-3 h-36 w-full overflow-hidden rounded-lg bg-[var(--pl-bg)]">
+            {/* Favorite toggle */}
+            <button
+              type="button"
+              data-favorite-btn="true"
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleFavorite(product.id);
+              }}
+              aria-label={
+                isFavorite ? "Remove from favorites" : "Add to favorites"
+              }
+              className="absolute right-2 top-2 z-10 rounded-full bg-[var(--pl-card)]/80 px-1.5 py-0.5 text-[12px] shadow-sm border border-[var(--pl-card-border)] hover:border-yellow-400/80 transition-colors"
+            >
+              <span
+                className={
+                  isFavorite
+                    ? "text-yellow-400"
+                    : "text-[var(--pl-text-subtle)]"
+                }
+              >
+                ★
+              </span>
+            </button>
+
+            {/* Product thumbnail */}
+            <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg bg-[var(--pl-bg)]">
               {isValidImageUrl(product.imageUrl) ? (
                 <Image
                   src={product.imageUrl}
                   alt={product.name}
                   fill
-                  className="object-contain p-2"
+                  className="object-contain p-1"
                   unoptimized
                 />
               ) : (
-                <div className="flex h-full w-full items-center justify-center text-[11px] text-[var(--pl-text-subtle)]">
-                  No image
+                <div className="flex h-full w-full items-center justify-center text-[9px] text-[var(--pl-text-subtle)]">
+                  No img
                 </div>
               )}
             </div>
 
-            {/* Name */}
-            <h3 className="mb-2 line-clamp-2 text-[13px] font-semibold text-[var(--pl-text)]">
-              {product.displayName || product.name}
-            </h3>
+            {/* Product + store info */}
+            <div className="flex-1 min-w-0">
+              <h3 className="text-[12px] font-semibold text-[var(--pl-text)] line-clamp-1 mb-1">
+                {product.displayName || product.name}
+              </h3>
+              <div className="flex items-center gap-2">
+                {isValidImageUrl(listing.storeLogoUrl) ? (
+                  <Image
+                    src={listing.storeLogoUrl}
+                    alt={listing.storeName}
+                    width={14}
+                    height={14}
+                    className="rounded-sm"
+                    unoptimized
+                  />
+                ) : (
+                  <div className="h-3.5 w-3.5 rounded bg-[var(--pl-card-border)]" />
+                )}
+                <span className="text-[11px] text-[var(--pl-text-muted)]">
+                  {listing.storeName}
+                </span>
+              </div>
+            </div>
 
-            {/* Listings */}
-            <div className="space-y-1.5">
-              {listings.map((l) => (
-                <a
-                  key={l.id}
-                  href={l.url || "#"}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex items-center justify-between rounded-lg border border-[var(--pl-card-border)] bg-[var(--pl-bg)] px-2.5 py-1.5 text-[11px] transition hover:border-blue-500/50"
-                >
-                  <div className="flex items-center gap-2">
-                    {isValidImageUrl(l.storeLogoUrl) ? (
-                      <Image
-                        src={l.storeLogoUrl}
-                        alt={l.storeName}
-                        width={16}
-                        height={16}
-                        className="rounded-sm"
-                        unoptimized
-                      />
-                    ) : (
-                      <div className="h-4 w-4 rounded bg-[var(--pl-card-border)]" />
-                    )}
-                    <span className="text-[var(--pl-text-muted)]">{l.storeName}</span>
-                  </div>
+            {/* Price / fast-delivery */}
+            <div className="flex flex-col items-end text-right min-w-[90px]">
+              <span className="text-[14px] font-semibold text-blue-400">
+                {listing.price} {listing.currency}
+              </span>
 
-                  <div className="text-right">
-                    <span className="font-semibold text-blue-400">
-                      {l.price} {l.currency}
-                    </span>
-
-                    {l.fastDelivery && (
-                      <div className="text-[9px] text-emerald-400">
-                        Fast delivery
-                      </div>
-                    )}
-                  </div>
-                </a>
-              ))}
+              {listing.fastDelivery && (
+                <span className="text-[10px] text-emerald-400 mt-0.5">
+                  Fast delivery
+                </span>
+              )}
             </div>
           </div>
         );

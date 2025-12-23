@@ -1,0 +1,11 @@
+product_title,brand,category,gtin,store_id,store_name,listing_url,price,currency,delivery_days,fast_delivery,in_stock
+Apple iPhone 15 128GB,Apple,Phone Flagship,,emag,eMAG,PASTE_URL_HERE,PASTE_PRICE_HERE,RON,3,false,true
+Apple iPhone 15 Pro 256GB,Apple,Phone Flagship,,emag,eMAG,PASTE_URL_HERE,PASTE_PRICE_HERE,RON,3,false,true
+Apple iPhone 15 Pro Max 256GB,Apple,Phone Flagship,,emag,eMAG,PASTE_URL_HERE,PASTE_PRICE_HERE,RON,4,false,true
+Samsung Galaxy S24 128GB,Samsung,Phone Android High-End,,emag,eMAG,PASTE_URL_HERE,PASTE_PRICE_HERE,RON,3,false,true
+Samsung Galaxy S24 Ultra 256GB,Samsung,Phone Android High-End,,emag,eMAG,PASTE_URL_HERE,PASTE_PRICE_HERE,RON,4,false,true
+Google Pixel 9 128GB,Google,Phone Android High-End,,emag,eMAG,PASTE_URL_HERE,PASTE_PRICE_HERE,RON,4,false,true
+Xiaomi 14 256GB,Xiaomi,Phone Android High-End,,emag,eMAG,PASTE_URL_HERE,PASTE_PRICE_HERE,RON,3,false,true
+OnePlus 12 256GB,OnePlus,Phone Android High-End,,emag,eMAG,PASTE_URL_HERE,PASTE_PRICE_HERE,RON,3,false,true
+Apple iPhone 15 128GB,Apple,Phone Flagship,,altex,Altex,PASTE_URL_HERE,PASTE_PRICE_HERE,RON,3,false,true
+Samsung Galaxy S24 128GB,Samsung,Phone Android High-End,,pcgarage,PC Garage,PASTE_URL_HERE,PASTE_PRICE_HERE,RON,3,false,true
