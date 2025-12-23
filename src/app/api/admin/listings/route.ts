@@ -96,19 +96,20 @@ export async function POST(req: NextRequest) {
       defaultCountryForStore(storeId, "RO") ?? "RO";
 
     const listing = await prisma.listing.create({
-      data: {
-        id: randomUUID(),
-        productId,
-        storeName: normalizedStoreName,
-        url,
-        price,
-        currency,
-        fastDelivery,
-        deliveryTimeDays,
-        countryCode,
-        source: "manual", // Mark as manually created via admin UI
-      },
-    });
+  // Prisma types don’t know about `source` yet; cast data as `any`.
+  data: {
+    id: randomUUID(),
+    productId,
+    storeName: normalizedStoreName,
+    url,
+    price,
+    currency,
+    fastDelivery,
+    deliveryTimeDays,
+    countryCode,
+    source: "manual", // Mark as manually created via admin UI
+  } as any,
+});
 
     return NextResponse.json(listing, { status: 201 });
   } catch (error) {
