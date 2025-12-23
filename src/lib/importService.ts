@@ -126,12 +126,12 @@ async function findOrCreateProduct(
 
   // Strategy 1: Try GTIN-first matching if GTIN is provided
   if (normalizedGtin) {
-    const gtinMatch = await prisma.product.findFirst({
-      where: {
-        gtin: { equals: normalizedGtin, mode: "insensitive" },
-      },
-      select: { id: true, brand: true },
-    });
+    const gtinMatch = await (prisma.product.findFirst as any)({
+  where: {
+    gtin: { equals: normalizedGtin, mode: "insensitive" },
+  },
+  select: { id: true, brand: true },
+});
 
     if (gtinMatch) {
       // Optional sanity check: if both have brand, they should roughly match
