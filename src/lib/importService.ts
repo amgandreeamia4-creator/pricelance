@@ -407,7 +407,8 @@ export async function importNormalizedListings(
       const fastDelivery =
         typeof row.fastDelivery === "boolean" ? row.fastDelivery : null;
 
-      const existingListing = await prisma.listing.findFirst({
+      // Relax Prisma typing for new metadata fields
+      const existingListing = await (prisma.listing.findFirst as any)({
         where: {
           productId,
           storeName: { equals: storeName, mode: "insensitive" },
@@ -426,7 +427,7 @@ export async function importNormalizedListings(
           typeof existingListing.price === "number" ? existingListing.price : 0;
         const priceChanged = previousPrice !== price;
 
-        await prisma.listing.update({
+        await (prisma.listing.update as any)({
           where: { id: existingListing.id },
           data: {
             price,
@@ -460,7 +461,7 @@ export async function importNormalizedListings(
           });
         }
       } else {
-        await prisma.listing.create({
+        await (prisma.listing.create as any)({
           data: {
             productId,
             storeName,

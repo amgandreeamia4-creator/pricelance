@@ -51,7 +51,8 @@ export async function GET(req: NextRequest, context: RouteContext) {
       );
     }
 
-    const listings = await prisma.listing.findMany({
+    // Relax Prisma typing for new metadata fields
+    const listings = await (prisma.listing.findMany as any)({
       where: { productId },
       select: {
         id: true,
@@ -205,7 +206,8 @@ export async function POST(req: NextRequest, context: RouteContext) {
       typeof body.countryCode === "string" ? body.countryCode.trim().toUpperCase() : "";
     const countryCode = rawCountryCode || defaultCountryForStore(storeId, "RO") || "RO";
 
-    const listing = await prisma.listing.create({
+    // Relax Prisma typing for new metadata fields
+    const listing = await (prisma.listing.create as any)({
       data: {
         id: randomUUID(),
         productId,
