@@ -59,7 +59,9 @@ export async function GET(req: NextRequest) {
     if (isUnknownCategory) {
       return NextResponse.json({
         products: [],
-        warning: `Unknown category "${category}". Valid categories: ${CANONICAL_CATEGORIES.join(", ")}`,
+        warning: `Unknown category "${category}". Valid categories: ${CANONICAL_CATEGORIES.join(
+          ", "
+        )}`,
       });
     }
 
@@ -124,11 +126,13 @@ export async function GET(req: NextRequest) {
     for (const p of dbProducts) {
       const rawListings = Array.isArray(p.listings) ? p.listings : [];
 
+      // ⬇⬇⬇ CHANGED: include affiliate listings by default
       const filteredBySource = rawListings.filter((l: any) => {
         if (includeLegacy) return true;
         const src = (l as any).source;
-        return src === "manual" || src === "sheet";
+        return src === "manual" || src === "sheet" || src === "affiliate";
       });
+      // ⬆⬆⬆
 
       // Map each listing to the expected response shape
       let listings: ListingResponse[] = filteredBySource.map((l) => ({
