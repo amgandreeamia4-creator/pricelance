@@ -323,7 +323,8 @@ export async function importCsvString(csvContent: string): Promise<ImportSummary
       });
 
       if (existingListing) {
-        await prisma.listing.update({
+        // Relax Prisma typing for new metadata fields
+        await (prisma.listing.update as any)({
           where: { id: existingListing.id },
           data: {
             price,
@@ -336,7 +337,8 @@ export async function importCsvString(csvContent: string): Promise<ImportSummary
         summary.listingsUpdated++;
         console.log(`[importCsvString] Listing UPDATED: ${storeName} @ ${price} ${currency}`);
       } else {
-        await prisma.listing.create({
+        // Relax Prisma typing for new metadata fields
+        await (prisma.listing.create as any)({
           data: {
             id: randomUUID(),
             productId,

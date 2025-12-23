@@ -120,7 +120,8 @@ export async function ingestProducts(payload: IngestPayload): Promise<IngestResu
         await prisma.listing.deleteMany({ where: { productId: product.id } });
 
         for (const l of p.listings) {
-          await prisma.listing.create({
+          // Relax Prisma typing for new metadata fields
+          await (prisma.listing.create as any)({
             data: {
               id: l.id ?? undefined,
               productId: product.id,
