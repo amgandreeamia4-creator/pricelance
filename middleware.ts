@@ -1,80 +1,66 @@
 // middleware.ts
-// HTTP Basic Auth for /admin/* routes in production.
+// HTTP Basic Auth for /admin/* routes.
 // API routes (/api/admin/*) use x-admin-token header instead (handled in route handlers).
 
 import { NextRequest, NextResponse } from "next/server";
 
-// Read admin credentials from env with fallbacks
-const ADMIN_USER =
-  process.env.ADMIN_USER ||
-  process.env.BASIC_AUTH_USER ||
-  "admin";
+const REALM = 'Basic realm="Restricted Area"';
 
-const ADMIN_PASS =
-  process.env.ADMIN_PASSWORD ||
-  process.env.ADMIN_SECRET ||
-  process.env.ADMIN_TOKEN ||
-  process.env.BASIC_AUTH_PASSWORD ||
-  "";
-
-/**
- * Middleware runs on matched routes before the page/API is rendered.
- */
-export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
-
-  // Only protect /admin pages (not /api/admin which uses x-admin-token)
-  if (pathname.startsWith("/admin")) {
-    // Skip Basic Auth if no password is configured (dev mode safety)
-    if (!ADMIN_PASS) {
-      return NextResponse.next();
-    }
-
-    const authHeader = request.headers.get("authorization");
-
-    if (!authHeader || !authHeader.startsWith("Basic ")) {
-      return unauthorizedResponse();
-    }
-
-    // Decode Base64 credentials
-    const base64Credentials = authHeader.slice(6); // Remove "Basic "
-    let credentials: string;
-    try {
-      credentials = atob(base64Credentials);
-    } catch {
-      return unauthorizedResponse();
-    }
-
-    const [user, pass] = credentials.split(":");
-
-    if (user !== ADMIN_USER || pass !== ADMIN_PASS) {
-      return unauthorizedResponse();
-    }
-
-    // Credentials valid, proceed
-    return NextResponse.next();
-  }
-
-  // For all other routes, just proceed
-  return NextResponse.next();
-}
-
-/**
- * Return a 401 response with WWW-Authenticate header for Basic Auth prompt.
- */
-function unauthorizedResponse(): NextResponse {
-  return new NextResponse("Unauthorized", {
+function unauthorized(message = "Unauthorized"): NextResponse {
+  return new NextResponse(message, {
     status: 401,
     headers: {
-      "WWW-Authenticate": 'Basic realm="Restricted"',
+      "WWW-Authenticate": REALM,
     },
   });
 }
 
-/**
- * Configure which routes the middleware applies to.
- * We only need it for /admin/* pages.
- */
+export function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  // Only protect /admin pages (not /api/admin which uses x-admin-token)
+  if (!pathname.startsWith("/admin")) {
+    return NextResponse.next();
+  }
+
+  const expectedUser = process.env.ADMIN_USER;
+  const expectedPassword = process.env.ADMIN_PASSWORD;
+
+  // If these aren't configured, fail loudly so we don't get accidental open or broken auth.
+  if (!expectedUser || !expectedPassword) {
+    return new NextResponse(
+      "Server configuration error: ADMIN_USER or ADMIN_PASSWORD is not set.",
+      { status: 500 },
+    );
+  }
+
+  const authHeader = request.headers.get("authorization");
+
+  if (!authHeader || !authHeader.startsWith("Basic ")) {
+    return unauthorized("Authentication required");
+  }
+
+  const base64Credentials = authHeader.slice("Basic ".length).trim();
+
+  let decoded: string;
+  try {
+    decoded = atob(base64Credentials);
+  } catch {
+    return unauthorized("Invalid authentication header");
+  }
+
+  // decoded is "username:password"
+  const [username, ...rest] = decoded.split(":");
+  const password = rest.join(":");
+
+  if (username === expectedUser && password === expectedPassword) {
+    return NextResponse.next();
+  }
+
+  return unauthorized("Invalid credentials");
+}
+
+// Configure which routes the middleware applies to.
 export const config = {
   matcher: ["/admin/:path*"],
 };
