@@ -30,7 +30,8 @@ export type ProfitshareImportResult = {
   createdListings: number;
   updatedListings: number;
   skippedMissingFields: number;
-  errors: { row: number; message: string }[];
+  failedRows: number;
+  errors: { rowNumber: number; message: string; code: string | null }[];
 };
 
 /**

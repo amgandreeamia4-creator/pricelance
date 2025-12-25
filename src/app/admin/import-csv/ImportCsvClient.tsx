@@ -13,7 +13,8 @@ type ImportResult = {
   createdListings: number;
   updatedListings: number;
   skippedMissingFields: number;
-  errors?: { row: number; message: string }[];
+  failedRows: number;
+  errors?: { rowNumber: number; message: string; code: string | null }[];
   error?: string;
 };
 
@@ -187,13 +188,13 @@ export default function ImportCsvClient() {
           </div>
         )}
 
-        {/* Import Summary */}
-        {result && result.ok && (
+        {/* Import Summary - show even with partial failures */}
+        {result && (result.ok || result.processedRows > 0) && (
           <div className="p-4 border border-slate-300 dark:border-slate-700 rounded-2xl bg-white dark:bg-slate-800">
             <h2 className="text-lg font-semibold mb-4">Import Results</h2>
 
             {/* Overview stats */}
-            <div className="grid grid-cols-3 gap-3 mb-4 text-center">
+            <div className="grid grid-cols-4 gap-3 mb-4 text-center">
               <div className="p-2 bg-slate-100 dark:bg-slate-700/50 rounded-lg">
                 <div className="text-lg font-bold text-slate-700 dark:text-slate-200">
                   {result.totalRows}
@@ -216,6 +217,14 @@ export default function ImportCsvClient() {
                 </div>
                 <div className="text-[10px] text-slate-500 dark:text-slate-400">
                   Skipped
+                </div>
+              </div>
+              <div className="p-2 bg-red-50 dark:bg-red-900/20 rounded-lg">
+                <div className="text-lg font-bold text-red-600 dark:text-red-400">
+                  {result.failedRows}
+                </div>
+                <div className="text-[10px] text-slate-500 dark:text-slate-400">
+                  Failed
                 </div>
               </div>
             </div>
@@ -263,9 +272,10 @@ export default function ImportCsvClient() {
                   Errors ({result.errors.length})
                 </h3>
                 <div className="max-h-48 overflow-y-auto bg-slate-50 dark:bg-slate-900 rounded-lg p-2 space-y-1">
-                  {result.errors.map((err: { row: number; message: string }, i: number) => (
+                  {result.errors.map((err: { rowNumber: number; message: string; code: string | null }, i: number) => (
                     <div key={i} className="text-xs text-red-600 dark:text-red-400">
-                      <span className="font-medium">Row {err.row}:</span> {err.message}
+                      <span className="font-medium">Row {err.rowNumber}:</span> {err.message}
+                      {err.code && <span className="ml-1 text-slate-400">({err.code})</span>}
                     </div>
                   ))}
                 </div>

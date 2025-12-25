@@ -144,7 +144,8 @@ async function upsertListing(
 }
 
 /**
- * Process a batch of rows in a transaction.
+ * Process a batch of rows. Each row is wrapped in try/catch so one failure
+ * doesn't abort the entire import.
  */
 async function processBatch(
   rows: ProfitshareRow[],
@@ -154,13 +155,15 @@ async function processBatch(
   updatedProducts: number;
   createdListings: number;
   updatedListings: number;
-  errors: { row: number; message: string }[];
+  failedRows: number;
+  errors: { rowNumber: number; message: string; code: string | null }[];
 }> {
   let createdProducts = 0;
   let updatedProducts = 0;
   let createdListings = 0;
   let updatedListings = 0;
-  const errors: { row: number; message: string }[] = [];
+  let failedRows = 0;
+  const errors: { rowNumber: number; message: string; code: string | null }[] = [];
 
   for (let i = 0; i < rows.length; i++) {
     const row = rows[i];
@@ -186,7 +189,9 @@ async function processBatch(
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unknown error";
-      errors.push({ row: rowNum, message });
+      const code = (err as any)?.code ?? null;
+      errors.push({ rowNumber: rowNum, message, code });
+      failedRows++;
       console.error(`[import-csv] Row ${rowNum} error:`, err);
     }
   }
@@ -196,6 +201,7 @@ async function processBatch(
     updatedProducts,
     createdListings,
     updatedListings,
+    failedRows,
     errors,
   };
 }
@@ -275,6 +281,7 @@ export async function POST(req: NextRequest) {
           createdListings: 0,
           updatedListings: 0,
           skippedMissingFields,
+          failedRows: 0,
           errors: [],
         } satisfies ProfitshareImportResult,
         { status: 200 }
@@ -291,6 +298,7 @@ export async function POST(req: NextRequest) {
       createdListings: 0,
       updatedListings: 0,
       skippedMissingFields,
+      failedRows: 0,
       errors: [],
     };
 
@@ -302,6 +310,7 @@ export async function POST(req: NextRequest) {
       result.updatedProducts += batchResult.updatedProducts;
       result.createdListings += batchResult.createdListings;
       result.updatedListings += batchResult.updatedListings;
+      result.failedRows += batchResult.failedRows;
       result.errors.push(...batchResult.errors);
     }
 
@@ -309,6 +318,9 @@ export async function POST(req: NextRequest) {
     if (result.errors.length > 50) {
       result.errors = result.errors.slice(0, 50);
     }
+
+    // Set ok to false if there were any failed rows
+    result.ok = result.failedRows === 0;
 
     return NextResponse.json(result, { status: 200 });
   } catch (error) {
