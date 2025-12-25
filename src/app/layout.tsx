@@ -18,6 +18,9 @@ export default function RootLayout({
 
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <meta name='profitshareid' content='ef16e2643bedf2876e19640f297c5e9a' />
+      </head>
       <body className="min-h-screen antialiased selection:bg-blue-600/40 selection:text-white">
         <ThemeProvider>
           <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-neutral-950">
