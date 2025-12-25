@@ -322,6 +322,8 @@ export async function importCsvString(csvContent: string): Promise<ImportSummary
         select: { id: true },
       });
 
+      const now = new Date();
+
       if (existingListing) {
         // Relax Prisma typing for new metadata fields
         await (prisma.listing.update as any)({
@@ -332,6 +334,7 @@ export async function importCsvString(csvContent: string): Promise<ImportSummary
             deliveryTimeDays: deliveryDays,
             fastDelivery,
             inStock: inStock ?? true,
+            priceLastSeenAt: now,
           },
         });
         summary.listingsUpdated++;
@@ -349,6 +352,7 @@ export async function importCsvString(csvContent: string): Promise<ImportSummary
             deliveryTimeDays: deliveryDays,
             fastDelivery,
             inStock: inStock ?? true,
+            priceLastSeenAt: now,
           },
         });
         summary.listingsCreated++;

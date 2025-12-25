@@ -18,6 +18,7 @@ type Listing = {
   // New: affiliate metadata (optional)
   source?: string | null;
   affiliateProvider?: string | null;
+  priceLastSeenAt?: string | null;
 };
 
 type Product = {
@@ -44,12 +45,39 @@ type OfferRow = {
 
 function isValidImageUrl(url: string | null | undefined): url is string {
   if (!url || typeof url !== "string") return false;
+
   try {
     const parsed = new URL(url);
     return parsed.protocol === "https:" || parsed.protocol === "http:";
   } catch {
     return false;
   }
+}
+
+function formatFreshnessAge(date: string | Date | null | undefined): string | null {
+  if (!date) return null;
+  const d = typeof date === "string" ? new Date(date) : date;
+  if (Number.isNaN(d.getTime())) return null;
+
+  const now = new Date();
+  const diffMs = now.getTime() - d.getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffDays <= 0) return "updated today";
+  if (diffDays === 1) return "updated yesterday";
+  if (diffDays < 14) return `updated ${diffDays} days ago`;
+  if (diffDays < 30) return `updated over ${diffDays} days ago`;
+  return "updated over 30 days ago";
+}
+
+function isStale(date: string | Date | null | undefined): boolean {
+  if (!date) return false;
+  const d = typeof date === "string" ? new Date(date) : date;
+  if (Number.isNaN(d.getTime())) return false;
+  const now = new Date();
+  const diffMs = now.getTime() - d.getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  return diffDays >= 14;
 }
 
 export default function ProductList({
@@ -71,9 +99,7 @@ export default function ProductList({
   return (
     <div className="flex flex-col gap-3">
       <p className="text-[10px] text-slate-500 dark:text-slate-400">
-        Offers marked as <span className="font-semibold">Affiliate</span> may
-        use affiliate links. If you buy through them, PriceLance may earn a
-        small commission at no extra cost to you.
+        Some store links are affiliate links. They help support PriceLance, but don&apos;t change the prices you pay.
       </p>
       {rows.map(({ product, listing }) => {
         const isSelected =
@@ -81,6 +107,9 @@ export default function ProductList({
         const isFavorite = favoriteIds.includes(product.id);
         const hasUrl =
           typeof listing.url === "string" && listing.url.trim().length > 0;
+
+        const freshnessText = formatFreshnessAge(listing.priceLastSeenAt ?? null);
+        const isPriceStale = isStale(listing.priceLastSeenAt ?? null);
 
         const cardClasses =
           "relative flex items-center gap-3 rounded-xl border border-[var(--pl-card-border)] bg-[var(--pl-card)] p-3 shadow-sm transition hover:border-blue-500/50 " +
@@ -191,6 +220,18 @@ export default function ProductList({
               {listing.fastDelivery && (
                 <span className="text-[10px] text-emerald-400 mt-0.5">
                   Fast delivery
+                </span>
+              )}
+
+              {freshnessText && (
+                <span className="text-[10px] text-[var(--pl-text-subtle)] mt-0.5">
+                  Price {freshnessText}
+                </span>
+              )}
+
+              {isPriceStale && (
+                <span className="text-[10px] text-amber-400 mt-0.5">
+                  May be outdated – please double-check on the store.
                 </span>
               )}
             </div>

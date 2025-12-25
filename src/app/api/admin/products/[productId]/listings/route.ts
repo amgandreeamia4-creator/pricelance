@@ -69,6 +69,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
         countryCode: true,
         createdAt: true,
         updatedAt: true,
+        priceLastSeenAt: true,
       },
       orderBy: { createdAt: "desc" },
     });
@@ -222,6 +223,7 @@ export async function POST(req: NextRequest, context: RouteContext) {
         location,
         countryCode,
         storeLogoUrl,
+        priceLastSeenAt: new Date(),
       },
     });
 
@@ -240,6 +242,7 @@ export async function POST(req: NextRequest, context: RouteContext) {
           shippingCost: listing.shippingCost,
           location: listing.location,
           countryCode: listing.countryCode,
+          priceLastSeenAt: listing.priceLastSeenAt,
           createdAt: listing.createdAt,
         },
       },

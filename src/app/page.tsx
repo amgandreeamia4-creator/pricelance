@@ -477,13 +477,10 @@ export default function Page() {
             PRICELANCE
           </div>
           <p className="mt-3 text-[12px] text-[var(--pl-text-muted)] leading-relaxed">
-            PriceLance is an early prototype that uses curated sample data to
-            explore real-time price comparison ideas. Prices are illustrative
-            and may not match current store prices.
+            PriceLance is an informational service that compares tech prices from multiple online retailers. Prices come from manually curated data, official feeds, and affiliate feeds where available — no scraping.
           </p>
           <p className="mt-1 text-[11px] text-[var(--pl-text-subtle)]">
-            Real-time price comparison from live providers. If we can't find it,
-            we'll tell you — no fake products, no demo data.
+            Coverage is continuously expanding, starting from Romania and extending deeper into the EU. Always verify the final price, delivery costs, and product details on the retailer&apos;s website before buying.
           </p>
         </div>
 
@@ -504,22 +501,6 @@ export default function Page() {
           </span>
         </div>
       </header>
-
-      {/* INTRO */}
-      <section className="w-full px-6 mt-4">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-3xl font-semibold mb-3 text-slate-900 dark:text-slate-100">
-            Find real tech prices in one place
-          </h1>
-          <p className="text-sm text-gray-700 dark:text-gray-200 mb-4">
-            PriceLance compares prices for tech products like phones and laptops from
-            Romanian stores such as eMAG, Altex, and others. Data is curated and
-            comes from official feeds where possible &mdash; no scraping. Always
-            double-check the final price, delivery costs, and details on the
-            retailer&apos;s website before buying.
-          </p>
-        </div>
-      </section>
 
       {/* SEARCH BAR */}
       <div className="w-full px-6 mt-2">
@@ -579,7 +560,7 @@ export default function Page() {
             </div>
 
             {/* FILTERS */}
-            <div className={`${cardStyle} p-4`}>
+            <div className={`${cardStyle} p-4 overflow-x-hidden`}>
               <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-slate-700 dark:text-slate-200 mb-3">
                 Filters
               </h3>
@@ -589,62 +570,70 @@ export default function Page() {
                   <span className="text-xs leading-relaxed text-slate-700 dark:text-slate-300 w-10">
                     Sort
                   </span>
-                  <select
-                    value={sortBy}
-                    onChange={(e) =>
-                      setSortBy(
-                        e.target.value as
-                          | "relevance"
-                          | "price-asc"
-                          | "price-desc",
-                      )
-                    }
-                    className="flex-1 px-2 py-1.5 rounded-lg bg-[var(--pl-bg)] border border-[var(--pl-card-border)] text-[11px] text-[var(--pl-text)] focus:outline-none"
-                  >
-                    <option value="relevance">Relevance</option>
-                    <option value="price-asc">Price ↑</option>
-                    <option value="price-desc">Price ↓</option>
-                  </select>
+                  <div className="flex-1 min-w-0">
+                    <select
+                      value={sortBy}
+                      onChange={(e) =>
+                        setSortBy(
+                          e.target.value as
+                            | "relevance"
+                            | "price-asc"
+                            | "price-desc",
+                        )
+                      }
+                      className="w-full max-w-full px-2 py-1.5 rounded-lg bg-[var(--pl-bg)] border border-[var(--pl-card-border)] text-[11px] text-[var(--pl-text)] truncate overflow-hidden text-ellipsis focus:outline-none"
+                    >
+                      <option value="relevance">Relevance</option>
+                      <option value="price-asc">Price ↑</option>
+                      <option value="price-desc">Price ↓</option>
+                    </select>
+                  </div>
                 </div>
 
-                {/* Category */}
-                <div className="flex items-center gap-2">
-                  <span className="text-xs leading-relaxed text-slate-700 dark:text-slate-300 w-10">
-                    Category
-                  </span>
-                  <select
-                    value={categoryFilter}
-                    onChange={(e) => setCategoryFilter(e.target.value)}
-                    className="flex-1 px-2 py-1.5 rounded-lg bg-[var(--pl-bg)] border border-[var(--pl-card-border)] text-[11px] text-[var(--pl-text)] focus:outline-none"
-                  >
-                    <option value="all">All categories</option>
-                    {categories.map((cat) => (
-                      <option key={cat} value={cat}>
-                        {cat}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                {/* Category (temporarily hidden to avoid layout bugs; keep logic for later) */}
+                {false && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs leading-relaxed text-slate-700 dark:text-slate-300 w-10">
+                      Category
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <select
+                        value={categoryFilter}
+                        onChange={(e) => setCategoryFilter(e.target.value)}
+                        className="w-full max-w-full px-2 py-1.5 rounded-lg bg-[var(--pl-bg)] border border-[var(--pl-card-border)] text-[11px] text-[var(--pl-text)] truncate overflow-hidden text-ellipsis focus:outline-none"
+                      >
+                        <option value="all">All categories</option>
+                        {categories.map((cat) => (
+                          <option key={cat} value={cat}>
+                            {cat}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                )}
 
                 {/* Store */}
                 <div className="flex items-center gap-2">
                   <span className="text-xs leading-relaxed text-slate-700 dark:text-slate-300 w-10">
                     Store
                   </span>
-                  <select
-                    value={storeFilter}
-                    onChange={(e) =>
-                      setStoreFilter(e.target.value as StoreId | "all")
-                    }
-                    className="flex-1 px-2 py-1.5 rounded-lg bg-[var(--pl-bg)] border border-[var(--pl-card-border)] text-[11px] text-[var(--pl-text)] focus:outline-none"
-                  >
-                    <option value="all">All stores</option>
-                    {STORES.map((store) => (
-                      <option key={store.id} value={store.id}>
-                        {store.label}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="flex-1 min-w-0">
+                    <select
+                      value={storeFilter}
+                      onChange={(e) =>
+                        setStoreFilter(e.target.value as StoreId | "all")
+                      }
+                      className="w-full max-w-full px-2 py-1.5 rounded-lg bg-[var(--pl-bg)] border border-[var(--pl-card-border)] text-[11px] text-[var(--pl-text)] truncate overflow-hidden text-ellipsis focus:outline-none"
+                    >
+                      <option value="all">All stores</option>
+                      {STORES.map((store) => (
+                        <option key={store.id} value={store.id}>
+                          {store.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
 
                 {/* Fast shipping */}
@@ -797,7 +786,7 @@ export default function Page() {
       <footer className="w-full px-6 py-4 border-t border-[var(--pl-card-border)]">
         <div className="max-w-6xl mx-auto text-center">
           <p className="text-[10px] text-[var(--pl-text-subtle)] leading-relaxed">
-            PriceLance may use affiliate links. If you buy through some of our links, we might earn a commission, at no extra cost to you.
+            Some links on PriceLance are affiliate links. If you buy through one of these links, we may earn a small commission from the retailer, at no extra cost to you. Prices and availability can change; always check the retailer site.
           </p>
         </div>
       </footer>

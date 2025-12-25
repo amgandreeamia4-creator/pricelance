@@ -48,6 +48,7 @@ model Listing {
   imageUrl              String?
   price                 Float
   priceCents            Int?
+  priceLastSeenAt       DateTime?
   currency              String   @default("USD")
   source                ListingSource @default(seed)
   shippingCost          Float?

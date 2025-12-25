@@ -117,6 +117,7 @@ export async function POST(req: NextRequest) {
         deliveryTimeDays,
         countryCode,
         source: "manual", // Mark as manually created via admin UI
+        priceLastSeenAt: new Date(),
       },
     });
 

@@ -135,6 +135,8 @@ export async function ingestProducts(payload: IngestPayload): Promise<IngestResu
               priceCents:
                 typeof l.price === "number" ? Math.round(l.price * 100) : 0,
               currency: l.currency ?? "USD",
+              priceLastSeenAt:
+                typeof l.price === "number" ? new Date() : null,
 
               shippingCost:
                 typeof l.shippingCost === "number" ? l.shippingCost : null,

@@ -52,6 +52,16 @@ All store names and logos remain trademarks of their respective owners.
 
 See `docs/maintenance.md` for a suggested weekly / monthly / quarterly maintenance routine for PriceLance.
 
+## Seeding laptop products
+
+To seed a small curated set of laptop models into the `Product` table, run:
+
+```bash
+npm run seed:laptops
+```
+
+This creates or updates a small list of laptop products that can later be linked to listings from multiple stores.
+
 ## Deploy on Vercel
 
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.

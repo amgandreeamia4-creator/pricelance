@@ -16,7 +16,8 @@
     "dev:seed-catalog": "tsx scripts/seedCatalog.ts",
     "dev:migrate-catalog": "tsx scripts/migrateCatalogToDB.ts",
     "fix-db-url": "node scripts/fix-database-url.mjs",
-    "db:seed": "prisma db seed"
+    "db:seed": "prisma db seed",
+    "seed:laptops": "tsx scripts/seed-laptops.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.19.0",

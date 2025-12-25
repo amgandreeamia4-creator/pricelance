@@ -422,6 +422,8 @@ export async function importNormalizedListings(
         },
       });
 
+      const now = new Date();
+
       if (existingListing) {
         const previousPrice =
           typeof existingListing.price === "number" ? existingListing.price : 0;
@@ -441,6 +443,7 @@ export async function importNormalizedListings(
             inStock,
             countryCode: countryCode ?? null,
             source: options.source,
+            priceLastSeenAt: now,
             // Affiliate metadata (only set if provided)
             ...(affiliateProvider && { affiliateProvider }),
             ...(affiliateProgram && { affiliateProgram }),
@@ -477,6 +480,7 @@ export async function importNormalizedListings(
             inStock,
             countryCode: countryCode ?? null,
             source: options.source,
+            priceLastSeenAt: now,
             // Affiliate metadata (only set if provided)
             ...(affiliateProvider && { affiliateProvider }),
             ...(affiliateProgram && { affiliateProgram }),
