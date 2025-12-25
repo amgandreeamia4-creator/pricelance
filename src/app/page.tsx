@@ -485,6 +485,9 @@ export default function Page() {
         </div>
 
         <div className="absolute right-6 top-6 flex items-center gap-3">
+          <div className="hidden lg:block rounded-full border border-[var(--pl-card-border)] bg-[var(--pl-card)] px-3 py-1 text-[9px] text-[var(--pl-text-subtle)] whitespace-nowrap">
+            Ad slot preview · Header banner 776x90
+          </div>
           <ThemeToggle />
           <button
             type="button"
@@ -493,12 +496,6 @@ export default function Page() {
           >
             AI Assistant
           </button>
-        </div>
-
-        <div className="absolute right-6 top-[72px] text-[9px] text-[var(--pl-text-subtle)]">
-          <span className="px-2 py-1 rounded bg-[var(--pl-card)] border border-[var(--pl-card-border)]">
-            Ad slot preview · Header banner 776x90
-          </span>
         </div>
       </header>
 
