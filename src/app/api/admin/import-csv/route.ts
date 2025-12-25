@@ -15,7 +15,7 @@ import {
 export const dynamic = "force-dynamic";
 
 const BATCH_SIZE = 100;
-const MAX_ROWS_PER_IMPORT = 1000;
+const MAX_IMPORT_ROWS = 300;
 
 /**
  * Find or create a Product by URL first, then by SKU if available.
@@ -272,14 +272,13 @@ export async function POST(req: NextRequest) {
     }
 
     // Cap rows to avoid timeout
-    const totalRows = totalDataRows;
-    const validRows = rows.length;
-    const limitedRows = rows.slice(0, MAX_ROWS_PER_IMPORT);
-    const isCapped = validRows > MAX_ROWS_PER_IMPORT;
+    const totalRows = rows.length;
+    const limitedRows = rows.slice(0, MAX_IMPORT_ROWS);
+    const isCapped = totalRows > MAX_IMPORT_ROWS;
 
     console.log(
-      `[import-csv] Starting import: totalRows=${totalRows}, validRows=${validRows}, ` +
-      `processedRows=${limitedRows.length}, MAX_ROWS_PER_IMPORT=${MAX_ROWS_PER_IMPORT}, capped=${isCapped}`
+      `[import-csv] Starting import: totalRows=${totalRows}, processedRows=${limitedRows.length}, ` +
+      `MAX_IMPORT_ROWS=${MAX_IMPORT_ROWS}, capped=${isCapped}`
     );
 
     if (limitedRows.length === 0) {
@@ -298,7 +297,7 @@ export async function POST(req: NextRequest) {
           truncated: false,
           message: null,
           capped: isCapped,
-          maxRowsPerImport: MAX_ROWS_PER_IMPORT,
+          maxRowsPerImport: MAX_IMPORT_ROWS,
         },
         { status: 200 }
       );
@@ -359,7 +358,7 @@ export async function POST(req: NextRequest) {
         truncated: isCapped,
         message,
         capped: isCapped,
-        maxRowsPerImport: MAX_ROWS_PER_IMPORT,
+        maxRowsPerImport: MAX_IMPORT_ROWS,
       },
       { status: 200 }
     );
