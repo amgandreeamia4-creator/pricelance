@@ -15,7 +15,7 @@ import {
 export const dynamic = "force-dynamic";
 
 const BATCH_SIZE = 100;
-const MAX_ROWS_PER_IMPORT = 500; // Cap to avoid Vercel timeout (~5min limit)
+const MAX_ROWS_PER_IMPORT = 1000;
 
 /**
  * Find or create a Product by URL first, then by SKU if available.
@@ -272,21 +272,22 @@ export async function POST(req: NextRequest) {
     }
 
     // Cap rows to avoid timeout
-    const totalValidRows = rows.length;
-    const truncated = totalValidRows > MAX_ROWS_PER_IMPORT;
-    const rowsToProcess = truncated ? rows.slice(0, MAX_ROWS_PER_IMPORT) : rows;
+    const totalRows = totalDataRows;
+    const validRows = rows.length;
+    const limitedRows = rows.slice(0, MAX_ROWS_PER_IMPORT);
+    const isCapped = validRows > MAX_ROWS_PER_IMPORT;
 
     console.log(
-      `[import-csv] Starting import: totalRows=${totalDataRows}, validRows=${totalValidRows}, ` +
-      `processedRows=${rowsToProcess.length}, MAX_ROWS_PER_IMPORT=${MAX_ROWS_PER_IMPORT}, truncated=${truncated}`
+      `[import-csv] Starting import: totalRows=${totalRows}, validRows=${validRows}, ` +
+      `processedRows=${limitedRows.length}, MAX_ROWS_PER_IMPORT=${MAX_ROWS_PER_IMPORT}, capped=${isCapped}`
     );
 
-    if (rowsToProcess.length === 0) {
+    if (limitedRows.length === 0) {
       return NextResponse.json(
         {
           ok: true,
-          totalRows: totalDataRows,
-          processedRows: 0,
+          totalRows,
+          processedRows: limitedRows.length,
           createdProducts: 0,
           updatedProducts: 0,
           createdListings: 0,
@@ -296,6 +297,8 @@ export async function POST(req: NextRequest) {
           errors: [],
           truncated: false,
           message: null,
+          capped: isCapped,
+          maxRowsPerImport: MAX_ROWS_PER_IMPORT,
         },
         { status: 200 }
       );
@@ -312,8 +315,8 @@ export async function POST(req: NextRequest) {
     let failedRows = 0;
     let errors: { rowNumber: number; message: string; code: string | null }[] = [];
 
-    for (let i = 0; i < rowsToProcess.length; i += BATCH_SIZE) {
-      const batch = rowsToProcess.slice(i, i + BATCH_SIZE);
+    for (let i = 0; i < limitedRows.length; i += BATCH_SIZE) {
+      const batch = limitedRows.slice(i, i + BATCH_SIZE);
       const batchResult = await processBatch(batch, i);
 
       createdProducts += batchResult.createdProducts;
@@ -327,7 +330,7 @@ export async function POST(req: NextRequest) {
     // End timing
     const durationMs = Date.now() - startTime;
     console.log(
-      `[import-csv] Import complete: processedRows=${rowsToProcess.length}, ` +
+      `[import-csv] Import complete: processedRows=${limitedRows.length}, ` +
       `created=${createdProducts}/${createdListings}, updated=${updatedProducts}/${updatedListings}, ` +
       `failed=${failedRows}, duration=${durationMs}ms`
     );
@@ -337,16 +340,15 @@ export async function POST(req: NextRequest) {
       errors = errors.slice(0, 50);
     }
 
-    // Build truncation message
-    const message = truncated
-      ? `Processed first ${rowsToProcess.length} rows out of ${totalValidRows}. Split your CSV and re-upload remaining rows.`
+    const message = isCapped
+      ? `Processed first ${limitedRows.length} rows out of ${totalRows}. Split your CSV and re-upload remaining rows.`
       : null;
 
     return NextResponse.json(
       {
         ok: failedRows === 0,
-        totalRows: totalDataRows,
-        processedRows: rowsToProcess.length,
+        totalRows,
+        processedRows: limitedRows.length,
         createdProducts,
         updatedProducts,
         createdListings,
@@ -354,8 +356,10 @@ export async function POST(req: NextRequest) {
         skippedMissingFields,
         failedRows,
         errors,
-        truncated,
+        truncated: isCapped,
         message,
+        capped: isCapped,
+        maxRowsPerImport: MAX_ROWS_PER_IMPORT,
       },
       { status: 200 }
     );
