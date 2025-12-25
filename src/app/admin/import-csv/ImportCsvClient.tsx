@@ -16,6 +16,8 @@ type ImportResult = {
   failedRows: number;
   errors?: { rowNumber: number; message: string; code: string | null }[];
   error?: string;
+  truncated?: boolean;
+  message?: string | null;
 };
 
 export default function ImportCsvClient() {
@@ -282,10 +284,22 @@ export default function ImportCsvClient() {
               </div>
             )}
 
-            {(!result.errors || result.errors.length === 0) && (
+            {(!result.errors || result.errors.length === 0) && !result.truncated && (
               <p className="text-sm text-green-600 dark:text-green-400">
                 Import completed with no errors
               </p>
+            )}
+
+            {/* Truncation Notice */}
+            {result.truncated && (
+              <div className="mt-4 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-300 dark:border-amber-700 rounded-lg">
+                <p className="text-sm text-amber-700 dark:text-amber-300">
+                  <strong>Partial Import:</strong> {result.message || `Imported first ${result.processedRows} of ${result.totalRows} rows.`}
+                </p>
+                <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+                  To import the remaining rows, split your CSV and upload the rest separately.
+                </p>
+              </div>
             )}
           </div>
         )}

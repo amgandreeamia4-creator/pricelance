@@ -15,6 +15,7 @@ import {
 export const dynamic = "force-dynamic";
 
 const BATCH_SIZE = 100;
+const MAX_ROWS_PER_IMPORT = 500; // Cap to avoid Vercel timeout (~5min limit)
 
 /**
  * Find or create a Product by URL first, then by SKU if available.
@@ -270,7 +271,17 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (rows.length === 0) {
+    // Cap rows to avoid timeout
+    const totalValidRows = rows.length;
+    const truncated = totalValidRows > MAX_ROWS_PER_IMPORT;
+    const rowsToProcess = truncated ? rows.slice(0, MAX_ROWS_PER_IMPORT) : rows;
+
+    console.log(
+      `[import-csv] Starting import: totalRows=${totalDataRows}, validRows=${totalValidRows}, ` +
+      `processedRows=${rowsToProcess.length}, MAX_ROWS_PER_IMPORT=${MAX_ROWS_PER_IMPORT}, truncated=${truncated}`
+    );
+
+    if (rowsToProcess.length === 0) {
       return NextResponse.json(
         {
           ok: true,
@@ -283,46 +294,71 @@ export async function POST(req: NextRequest) {
           skippedMissingFields,
           failedRows: 0,
           errors: [],
-        } satisfies ProfitshareImportResult,
+          truncated: false,
+          message: null,
+        },
         { status: 200 }
       );
     }
 
-    // Process in batches
-    const result: ProfitshareImportResult = {
-      ok: true,
-      totalRows: totalDataRows,
-      processedRows: rows.length,
-      createdProducts: 0,
-      updatedProducts: 0,
-      createdListings: 0,
-      updatedListings: 0,
-      skippedMissingFields,
-      failedRows: 0,
-      errors: [],
-    };
+    // Start timing
+    const startTime = Date.now();
 
-    for (let i = 0; i < rows.length; i += BATCH_SIZE) {
-      const batch = rows.slice(i, i + BATCH_SIZE);
+    // Process in batches
+    let createdProducts = 0;
+    let updatedProducts = 0;
+    let createdListings = 0;
+    let updatedListings = 0;
+    let failedRows = 0;
+    let errors: { rowNumber: number; message: string; code: string | null }[] = [];
+
+    for (let i = 0; i < rowsToProcess.length; i += BATCH_SIZE) {
+      const batch = rowsToProcess.slice(i, i + BATCH_SIZE);
       const batchResult = await processBatch(batch, i);
 
-      result.createdProducts += batchResult.createdProducts;
-      result.updatedProducts += batchResult.updatedProducts;
-      result.createdListings += batchResult.createdListings;
-      result.updatedListings += batchResult.updatedListings;
-      result.failedRows += batchResult.failedRows;
-      result.errors.push(...batchResult.errors);
+      createdProducts += batchResult.createdProducts;
+      updatedProducts += batchResult.updatedProducts;
+      createdListings += batchResult.createdListings;
+      updatedListings += batchResult.updatedListings;
+      failedRows += batchResult.failedRows;
+      errors.push(...batchResult.errors);
     }
+
+    // End timing
+    const durationMs = Date.now() - startTime;
+    console.log(
+      `[import-csv] Import complete: processedRows=${rowsToProcess.length}, ` +
+      `created=${createdProducts}/${createdListings}, updated=${updatedProducts}/${updatedListings}, ` +
+      `failed=${failedRows}, duration=${durationMs}ms`
+    );
 
     // Limit errors in response to prevent huge payloads
-    if (result.errors.length > 50) {
-      result.errors = result.errors.slice(0, 50);
+    if (errors.length > 50) {
+      errors = errors.slice(0, 50);
     }
 
-    // Set ok to false if there were any failed rows
-    result.ok = result.failedRows === 0;
+    // Build truncation message
+    const message = truncated
+      ? `Processed first ${rowsToProcess.length} rows out of ${totalValidRows}. Split your CSV and re-upload remaining rows.`
+      : null;
 
-    return NextResponse.json(result, { status: 200 });
+    return NextResponse.json(
+      {
+        ok: failedRows === 0,
+        totalRows: totalDataRows,
+        processedRows: rowsToProcess.length,
+        createdProducts,
+        updatedProducts,
+        createdListings,
+        updatedListings,
+        skippedMissingFields,
+        failedRows,
+        errors,
+        truncated,
+        message,
+      },
+      { status: 200 }
+    );
   } catch (error) {
     console.error("[admin/import-csv] POST error:", error);
     return NextResponse.json(
