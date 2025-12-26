@@ -207,7 +207,6 @@ export default function Page() {
     return result;
   }, [products, storeFilter, fastOnly, sortBy, location]);
 
-  // Keep selected product in sync with visible list
   useEffect(() => {
     if (!selectedProductId) return;
 
@@ -221,7 +220,6 @@ export default function Page() {
     }
   }, [visibleProducts, selectedProductId]);
 
-  // Choose product for trend view
   useEffect(() => {
     if (!visibleProducts.length) {
       setTrendProductId(null);
@@ -238,7 +236,6 @@ export default function Page() {
     setTrendProductId(base.id);
   }, [visibleProducts, selectedProductId]);
 
-  // Load price history for trend chart
   useEffect(() => {
     if (!trendProductId) {
       setTrendHistory([]);
@@ -251,8 +248,6 @@ export default function Page() {
 
     const loadHistory = async () => {
       setIsTrendLoading(true);
-      setTrendError(null);
-
       try {
         const params = new URLSearchParams({ productId: trendProductId });
         const res = await fetch(`/api/price-history?${params.toString()}`, {
@@ -272,8 +267,7 @@ export default function Page() {
 
         if (cancelled) return;
 
-        // Expecting { ok: boolean; points: { date, price, currency }[] }
-        if (data?.ok && Array.isArray(data.points) && data.points.length > 0) {
+        if (data?.ok && Array.isArray(data.points)) {
           setTrendHistory(data.points);
           setTrendError(null);
         } else {
@@ -445,7 +439,7 @@ export default function Page() {
       ?.scrollIntoView({ behavior: "smooth", block: "center" });
   }
 
-  // Unified card style - single navy card background
+  // Unified card style
   const cardStyle =
     "rounded-2xl bg-[var(--pl-card)] border border-[var(--pl-card-border)]";
 
@@ -535,10 +529,10 @@ export default function Page() {
 
       {/* MAIN RESULTS LAYOUT */}
       <section className="w-full mt-6 pb-16">
-        <div className="mx-auto w-full max-w-6xl px-4 lg:px-6 xl:px-8 pb-16">
+        <div className="mx-auto w-full max-w-7xl px-4 lg:px-6 xl:px-8 pb-16">
           <div className="grid gap-6 lg:grid-cols-12 items-start">
-            {/* LEFT SIDEBAR: location, filters, ad */}
-            <aside className="space-y-4 lg:space-y-6 lg:col-span-3 lg:sticky lg:top-24">
+            {/* LEFT SIDEBAR */}
+            <aside className="space-y-4 lg:space-y-6 lg:col-span-2 lg:sticky lg:top-24">
               {/* LOCATION */}
               <div className={`${cardStyle} p-4`}>
                 <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-slate-700 dark:text-slate-200 mb-3">
@@ -594,7 +588,7 @@ export default function Page() {
                     </div>
                   </div>
 
-                  {/* Category (kept in logic, hidden in UI for now) */}
+                  {/* Category (hidden for now) */}
                   {false && (
                     <div className="flex items-center gap-2">
                       <span className="text-xs leading-relaxed text-slate-700 dark:text-slate-300 w-10">
@@ -682,7 +676,7 @@ export default function Page() {
             {/* CENTER RESULTS COLUMN */}
             <section
               aria-label="Search results"
-              className="space-y-4 lg:space-y-6 lg:col-span-6"
+              className="space-y-4 lg:space-y-6 lg:col-span-8"
             >
               <div className={`${cardStyle} p-5 min-h-[180px]`}>
                 {visibleProducts.length === 0 ? (
@@ -696,7 +690,7 @@ export default function Page() {
                   </div>
                 ) : (
                   <ProductList
-                    products={visibleProducts as any}
+                    products={visibleProducts}
                     selectedProductId={selectedProductId}
                     onSelectProduct={(id: string) => setSelectedProductId(id)}
                     favoriteIds={favoriteIds}
@@ -762,8 +756,8 @@ export default function Page() {
               </div>
             </section>
 
-            {/* RIGHT SIDEBAR: best options, trend, assistant */}
-            <aside className="space-y-4 lg:space-y-6 lg:col-span-3 lg:sticky lg:top-24">
+            {/* RIGHT SIDEBAR */}
+            <aside className="space-y-4 lg:space-y-6 lg:col-span-2 lg:sticky lg:top-24">
               <ProductSummary
                 product={activeProduct as any}
                 selectedProductId={selectedProductId}

@@ -9,7 +9,6 @@ type Listing = {
   currency: string;
   inStock?: boolean | null;
   fastDelivery?: boolean | null;
-  imageUrl?: string | null; // ← NEW: listing-level image
 };
 
 type Product = {
@@ -17,8 +16,7 @@ type Product = {
   name: string;
   displayName?: string | null;
   brand?: string | null;
-  imageUrl?: string | null;     // main image
-  thumbnailUrl?: string | null; // fallback thumbnail from API/DB
+  imageUrl?: string | null;
   listings: Listing[];
 };
 
@@ -35,9 +33,7 @@ function formatPrice(price: number, currency: string) {
   return `${price.toFixed(2)} ${currency || ""}`.trim();
 }
 
-function getBestListing(
-  listings: Listing[] | undefined | null,
-): Listing | null {
+function getBestListing(listings: Listing[] | undefined | null): Listing | null {
   if (!listings || listings.length === 0) return null;
   return listings.reduce((best, l) => (l.price < best.price ? l : best));
 }
@@ -54,18 +50,11 @@ const ProductList: React.FC<ProductListProps> = ({
   }
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2">
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       {products.map((product) => {
         const isSelected = selectedProductId === product.id;
         const bestListing = getBestListing(product.listings);
         const isFavorite = favoriteIds.includes(product.id);
-
-        // Choose the best image we have:
-        const productImage =
-          product.imageUrl ||
-          product.thumbnailUrl ||
-          bestListing?.imageUrl ||
-          null;
 
         const cardBase =
           "relative flex h-full flex-col rounded-2xl border bg-[var(--pl-card)] border-[var(--pl-card-border)] transition-all cursor-pointer";
@@ -93,10 +82,10 @@ const ProductList: React.FC<ProductListProps> = ({
             <div className="flex flex-1 gap-3 p-3">
               {/* Image */}
               <div className="flex-shrink-0 w-[64px] h-[64px] rounded-xl bg-[var(--pl-bg)] border border-[var(--pl-card-border)] flex items-center justify-center text-[10px] text-[var(--pl-text-subtle)] overflow-hidden">
-                {productImage ? (
+                {product.imageUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
-                    src={productImage}
+                    src={product.imageUrl}
                     alt={product.displayName || product.name}
                     className="w-full h-full object-contain"
                   />
