@@ -1,23 +1,14 @@
 "use client";
 
 import React from "react";
-import type { StoreId } from "@/config/catalog";
 
 type Listing = {
   id: string;
-  storeId?: StoreId | string;
   storeName: string;
-  storeLogoUrl?: string | null;
   price: number;
   currency: string;
-  url?: string | null;
-  fastDelivery?: boolean | null;
-  deliveryDays?: number | null;
   inStock?: boolean | null;
-  deliveryTimeDays?: number | null;
-
-  source?: string | null;
-  affiliateProvider?: string | null;
+  fastDelivery?: boolean | null;
 };
 
 type Product = {
@@ -29,22 +20,24 @@ type Product = {
   listings: Listing[];
 };
 
-interface ProductListProps {
+type ProductListProps = {
   products: Product[];
   selectedProductId: string | null;
   onSelectProduct: (id: string) => void;
   favoriteIds: string[];
   onToggleFavorite: (id: string) => void;
+};
+
+function formatPrice(price: number, currency: string) {
+  if (!Number.isFinite(price)) return "No price";
+  return `${price.toFixed(2)} ${currency || ""}`.trim();
 }
 
-function getBestListing(listings: Listing[] | undefined): Listing | null {
+function getBestListing(listings: Listing[] | undefined | null): Listing | null {
   if (!listings || listings.length === 0) return null;
-
-  return listings.reduce<Listing | null>((best, l) => {
-    if (!best) return l;
-    if (l.price < best.price) return l;
-    return best;
-  }, null);
+  return listings.reduce((best, l) =>
+    l.price < best.price ? l : best
+  );
 }
 
 const ProductList: React.FC<ProductListProps> = ({
@@ -54,107 +47,137 @@ const ProductList: React.FC<ProductListProps> = ({
   favoriteIds,
   onToggleFavorite,
 }) => {
-  if (!products.length) {
+  if (!products || products.length === 0) {
     return null;
   }
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+    <div className="grid gap-4 sm:grid-cols-2">
       {products.map((product) => {
-        const isSelected = product.id === selectedProductId;
-        const isFavorite = favoriteIds.includes(product.id);
+        const isSelected = selectedProductId === product.id;
         const bestListing = getBestListing(product.listings);
-        const offerCount = product.listings?.length ?? 0;
+        const isFavorite = favoriteIds.includes(product.id);
 
-        const cardClasses = [
-          "group relative flex flex-col justify-between rounded-2xl border bg-[var(--pl-card)] border-[var(--pl-card-border)] px-3.5 py-3 text-left transition-all",
-          "hover:shadow-[0_0_18px_rgba(0,0,0,0.08)] hover:border-[var(--pl-primary)]",
-          isSelected ? "ring-1 ring-[var(--pl-primary)] shadow-[0_0_22px_var(--pl-primary-glow)]" : "",
-        ]
-          .filter(Boolean)
-          .join(" ");
+        const cardBase =
+          "relative flex h-full flex-col rounded-2xl border bg-[var(--pl-card)] border-[var(--pl-card-border)] transition-all cursor-pointer";
+        const cardSelected =
+          "ring-1 ring-[var(--pl-primary)] shadow-[0_0_18px_var(--pl-primary-glow)]";
+        const cardHover =
+          "hover:border-[var(--pl-primary)] hover:shadow-[0_0_15px_var(--pl-primary-glow)]";
 
         return (
-          <button
+          <div
             key={product.id}
-            type="button"
+            role="button"
+            tabIndex={0}
+            className={`${cardBase} ${cardHover} ${
+              isSelected ? cardSelected : ""
+            }`}
             onClick={() => onSelectProduct(product.id)}
-            className={cardClasses}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                onSelectProduct(product.id);
+              }
+            }}
           >
-            {/* Header: name + brand */}
-            <div className="flex items-start gap-2">
-              <div className="flex-1">
-                <h3 className="text-[12px] font-semibold text-[var(--pl-text)] leading-snug line-clamp-2">
-                  {product.displayName || product.name}
-                </h3>
-                {product.brand && (
-                  <p className="mt-0.5 text-[10px] text-[var(--pl-text-subtle)]">
-                    {product.brand}
-                  </p>
+            <div className="flex flex-1 gap-3 p-3">
+              {/* Image */}
+              <div className="flex-shrink-0 w-[64px] h-[64px] rounded-xl bg-[var(--pl-bg)] border border-[var(--pl-card-border)] flex items-center justify-center text-[10px] text-[var(--pl-text-subtle)] overflow-hidden">
+                {product.imageUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={product.imageUrl}
+                    alt={product.displayName || product.name}
+                    className="w-full h-full object-contain"
+                  />
+                ) : (
+                  <span>No img</span>
                 )}
               </div>
 
-              {/* Favorite star */}
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onToggleFavorite(product.id);
-                }}
-                className="ml-1 inline-flex h-6 w-6 items-center justify-center rounded-full border border-[var(--pl-card-border)] bg-[var(--pl-bg)] text-[10px] text-[var(--pl-text-subtle)] hover:text-yellow-400 hover:border-yellow-400 transition-colors"
-                aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
-              >
-                {isFavorite ? "★" : "☆"}
-              </button>
-            </div>
-
-            {/* Center: price & store */}
-            <div className="mt-2">
-              {bestListing ? (
-                <>
-                  <div className="inline-flex items-center gap-1 rounded-full bg-[var(--pl-primary-soft)] px-2 py-0.5 text-[9px] font-medium text-[var(--pl-primary-strong)]">
-                    Best price
-                    {bestListing.fastDelivery && (
-                      <span className="ml-1 rounded-full bg-[var(--pl-primary)] px-1 py-[1px] text-[8px] text-white">
-                        Fast
-                      </span>
+              {/* Content */}
+              <div className="flex-1 min-w-0 flex flex-col gap-1">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <h3 className="text-[12px] font-medium text-[var(--pl-text)] leading-snug line-clamp-2">
+                      {product.displayName || product.name}
+                    </h3>
+                    {product.brand && (
+                      <p className="mt-0.5 text-[11px] text-[var(--pl-text-subtle)]">
+                        {product.brand}
+                      </p>
                     )}
                   </div>
-                  <div className="mt-1 flex items-baseline gap-1.5">
-                    <span className="text-[15px] font-semibold text-[var(--pl-text)] leading-none">
-                      {bestListing.price.toFixed(2)}
+
+                  {/* Favorite star — real <button>, but NOT nested in another <button> anymore */}
+                  <button
+                    type="button"
+                    aria-label={
+                      isFavorite ? "Remove from favourites" : "Add to favourites"
+                    }
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onToggleFavorite(product.id);
+                    }}
+                    className={`flex h-7 w-7 items-center justify-center rounded-full border text-[11px] transition-colors ${
+                      isFavorite
+                        ? "bg-[var(--pl-primary)] text-white border-[var(--pl-primary)] shadow-[0_0_12px_var(--pl-primary-glow)]"
+                        : "bg-[var(--pl-bg)] text-[var(--pl-text-subtle)] border-[var(--pl-card-border)] hover:text-[var(--pl-primary)] hover:border-[var(--pl-primary)]"
+                    }`}
+                  >
+                    ★
+                  </button>
+                </div>
+
+                {/* Price row */}
+                <div className="mt-1 flex items-baseline justify-between gap-2">
+                  {bestListing ? (
+                    <>
+                      <div className="flex flex-col">
+                        <span className="text-[11px] text-[var(--pl-text-subtle)]">
+                          Best price
+                        </span>
+                        <span className="text-[13px] font-semibold text-[var(--pl-text)]">
+                          {formatPrice(bestListing.price, bestListing.currency)}
+                        </span>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-[11px] text-[var(--pl-text-subtle)]">
+                          at{" "}
+                          <span className="font-medium">
+                            {bestListing.storeName}
+                          </span>
+                        </p>
+                        <p className="text-[10px] text-[var(--pl-text-subtle)]">
+                          {product.listings.length} offers
+                        </p>
+                      </div>
+                    </>
+                  ) : (
+                    <span className="text-[11px] text-[var(--pl-text-subtle)]">
+                      No offers available yet.
                     </span>
-                    <span className="text-[11px] text-[var(--pl-text-subtle)] leading-none">
-                      {bestListing.currency}
-                    </span>
-                  </div>
-                  <p className="mt-1 text-[10px] text-[var(--pl-text-subtle)] leading-snug line-clamp-2">
-                    from{" "}
-                    <span className="font-medium text-[var(--pl-text)]">
-                      {bestListing.storeName}
-                    </span>
-                    {offerCount > 1 && ` · ${offerCount} offers`}
-                  </p>
-                </>
-              ) : (
-                <p className="mt-1 text-[10px] text-[var(--pl-text-subtle)]">
-                  No price available yet.
-                </p>
-              )}
+                  )}
+                </div>
+              </div>
             </div>
 
-            {/* Bottom: small meta row */}
-            <div className="mt-3 flex items-center justify-between text-[9px] text-[var(--pl-text-subtle)]">
-              <span>
-                {product.listings?.some((l) => l.inStock === false)
-                  ? "Some offers out of stock"
-                  : "In stock at listed stores"}
-              </span>
-              <span className="rounded-full border border-[var(--pl-card-border)] px-2 py-[2px] text-[9px]">
-                View details
-              </span>
-            </div>
-          </button>
+            {/* Bottom ribbon for “best overall” highlight */}
+            {bestListing && (
+              <div className="flex items-center justify-between px-3 pb-2 pt-1 text-[10px] text-[var(--pl-text-subtle)] border-t border-[var(--pl-card-border)] bg-[color-mix(in_srgb,var(--pl-card)_88%,var(--pl-primary)_12%)]">
+                <span className="uppercase tracking-[0.12em] font-semibold">
+                  Highlight
+                </span>
+                <span>
+                  From{" "}
+                  <span className="font-medium">
+                    {bestListing.storeName}
+                  </span>
+                </span>
+              </div>
+            )}
+          </div>
         );
       })}
     </div>
