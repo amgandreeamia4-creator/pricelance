@@ -67,13 +67,14 @@ const COLUMN_MAPPINGS: Record<string, keyof ProfitshareRow> = {
   tracking_link: "affiliateUrl",
   
   // Image URL variations
-  image_url: "imageUrl",
-  image: "imageUrl",
-  img: "imageUrl",
-  imagine: "imageUrl",
-  poza: "imageUrl",
-  product_picture: "imageUrl",
-  product_image: "imageUrl",
+image_url: "imageUrl",
+image: "imageUrl",
+img: "imageUrl",
+imagine: "imageUrl",
+poza: "imageUrl",
+// important for your feed:
+product_picture: "imageUrl",
+product_image: "imageUrl",
   
   // Price variations
   price: "price",

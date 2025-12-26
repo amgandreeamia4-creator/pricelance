@@ -1,66 +1,64 @@
 // middleware.ts
-// HTTP Basic Auth for /admin/* routes.
-// API routes (/api/admin/*) use x-admin-token header instead (handled in route handlers).
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
-import { NextRequest, NextResponse } from "next/server";
+const BASIC_AUTH_USER = process.env.ADMIN_BASIC_USER;
+const BASIC_AUTH_PASS = process.env.ADMIN_BASIC_PASS;
 
-const REALM = 'Basic realm="Restricted Area"';
+export function middleware(req: NextRequest) {
+  const url = req.nextUrl;
+  const { pathname, hostname } = url;
 
-function unauthorized(message = "Unauthorized"): NextResponse {
-  return new NextResponse(message, {
-    status: 401,
-    headers: {
-      "WWW-Authenticate": REALM,
-    },
-  });
-}
+  // 🔓 1) Completely skip auth for localhost/dev
+  // This unblocks you while we debug envs; production stays protected.
+  if (hostname === "localhost" || hostname === "127.0.0.1") {
+    return NextResponse.next();
+  }
 
-export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
-
-  // Only protect /admin pages (not /api/admin which uses x-admin-token)
+  // 🔒 2) Only protect /admin on real domains (Vercel / custom)
   if (!pathname.startsWith("/admin")) {
     return NextResponse.next();
   }
 
-  const expectedUser = process.env.ADMIN_USER;
-  const expectedPassword = process.env.ADMIN_PASSWORD;
-
-  // If these aren't configured, fail loudly so we don't get accidental open or broken auth.
-  if (!expectedUser || !expectedPassword) {
-    return new NextResponse(
-      "Server configuration error: ADMIN_USER or ADMIN_PASSWORD is not set.",
-      { status: 500 },
-    );
-  }
-
-  const authHeader = request.headers.get("authorization");
+  const authHeader = req.headers.get("authorization");
 
   if (!authHeader || !authHeader.startsWith("Basic ")) {
-    return unauthorized("Authentication required");
+    return new Response("Authentication required", {
+      status: 401,
+      headers: {
+        "WWW-Authenticate": 'Basic realm="Admin Area"',
+      },
+    });
   }
 
-  const base64Credentials = authHeader.slice("Basic ".length).trim();
+  const base64 = authHeader.split(" ")[1] ?? "";
+  const [user, pass] = Buffer.from(base64, "base64")
+    .toString("utf8")
+    .split(":");
 
-  let decoded: string;
-  try {
-    decoded = atob(base64Credentials);
-  } catch {
-    return unauthorized("Invalid authentication header");
+  // If envs are missing in prod, fail closed (401)
+  if (!BASIC_AUTH_USER || !BASIC_AUTH_PASS) {
+    return new Response("Admin credentials not configured", {
+      status: 401,
+      headers: {
+        "WWW-Authenticate": 'Basic realm="Admin Area"',
+      },
+    });
   }
 
-  // decoded is "username:password"
-  const [username, ...rest] = decoded.split(":");
-  const password = rest.join(":");
-
-  if (username === expectedUser && password === expectedPassword) {
-    return NextResponse.next();
+  if (user !== BASIC_AUTH_USER || pass !== BASIC_AUTH_PASS) {
+    return new Response("Invalid credentials", {
+      status: 401,
+      headers: {
+        "WWW-Authenticate": 'Basic realm="Admin Area"',
+      },
+    });
   }
 
-  return unauthorized("Invalid credentials");
+  return NextResponse.next();
 }
 
-// Configure which routes the middleware applies to.
+// Only run middleware on /admin paths
 export const config = {
   matcher: ["/admin/:path*"],
 };
