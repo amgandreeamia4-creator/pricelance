@@ -227,14 +227,20 @@ export async function POST(req: NextRequest) {
 
   try {
     const formData = await req.formData();
-    const file = formData.get("file");
 
-    if (!file || !(file instanceof File)) {
-      return NextResponse.json(
-        { ok: false, error: "Missing CSV file" },
-        { status: 400 }
-      );
-    }
+    // IMPORTANT: support both "file" and "csvFile" (legacy) field names
+    const fileEntry =
+      formData.get("file") ?? formData.get("csvFile") ?? formData.get("csv");
+
+    if (!fileEntry || !(fileEntry instanceof File)) {
+  console.error("[admin/import-csv] Missing CSV file in formData");
+  return NextResponse.json(
+    { ok: false, error: "Missing CSV file" },
+    { status: 400 }
+  );
+}
+
+    const file = fileEntry as File;
 
     if (!file.name.toLowerCase().endsWith(".csv")) {
       return NextResponse.json(
