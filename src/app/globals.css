@@ -2,105 +2,168 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   PRICELANCE THEME - Unified navy color palette
-   ═══════════════════════════════════════════════════════════════════════════ */
+/* ---------- THEME TOKENS ---------- */
+@layer base {
+  :root {
+    /* Core light theme */
+    --pl-bg: #e7f0ff;
+    --pl-bg-soft: #f2f6ff;
+    --pl-card: rgba(255, 255, 255, 0.9);
+    --pl-card-border: rgba(148, 163, 184, 0.35);
 
-:root,
-:root[data-theme="dark"] {
-  /* Core backgrounds - softer, calming navy */
-  --pl-bg: #050a1f;
-  --pl-card: #07122f;
-  --pl-card-border: #1a2750;
-  /* Text colors */
-  --pl-text: #e2e8f0;
-  --pl-text-muted: #64748b;
-  --pl-text-subtle: #475569;
-  /* Primary blue for buttons */
-  --pl-primary: #3b82f6;
-  --pl-primary-glow: rgba(59, 130, 246, 0.5);
-  /* Teal for AI assistant */
-  --pl-teal: #2dd4bf;
-  --pl-teal-glow: rgba(45, 212, 191, 0.4);
-}
+    --pl-text: #0f172a;
+    --pl-text-muted: #64748b;
 
-:root[data-theme="light"] {
-  /* Core backgrounds - clean light */
-  --pl-bg: #f1f5f9;
-  --pl-card: #ffffff;
-  --pl-card-border: #cbd5e1;
-  /* Text colors */
-  --pl-text: #0f172a;
-  --pl-text-muted: #475569;
-  --pl-text-subtle: #94a3b8;
-  /* Primary blue for buttons */
-  --pl-primary: #2563eb;
-  --pl-primary-glow: rgba(37, 99, 235, 0.4);
-  /* Teal for AI assistant */
-  --pl-teal: #14b8a6;
-  --pl-teal-glow: rgba(20, 184, 166, 0.35);
-}
+    --pl-primary: #2563eb;
+    --pl-primary-soft: rgba(37, 99, 235, 0.12);
+    --pl-primary-glow: rgba(56, 189, 248, 0.7);
 
-html,
-body {
-  background-color: var(--pl-bg);
-  color: var(--pl-text);
-  margin: 0;
-  padding: 0;
-}
-
-/* ── Starfield background for dark mode ─────────────────────────────────── */
-
-@keyframes starsScroll {
-  from {
-    background-position: 0 0;
+    /* You can re-add any other tokens you already use here:
+       --pl-danger, --pl-success, etc. */
   }
-  to {
-    background-position: 0 1000px;
+
+  .dark {
+    /* Core dark theme */
+    --pl-bg: #020617; /* very deep navy */
+    --pl-bg-soft: #02081f;
+    --pl-card: rgba(15, 23, 42, 0.9);
+    --pl-card-border: rgba(148, 163, 184, 0.4);
+
+    --pl-text: #e5e7eb;
+    --pl-text-muted: #9ca3af;
+
+    --pl-primary: #60a5fa;
+    --pl-primary-soft: rgba(56, 189, 248, 0.16);
+    --pl-primary-glow: rgba(56, 189, 248, 0.9);
+  }
+
+  html,
+  body {
+    height: 100%;
+  }
+
+  body {
+    margin: 0;
+    color: var(--pl-text);
+    background-color: var(--pl-bg);
+
+    /* Light mode: soft cloudy / radial sky behind everything */
+    background-image:
+      radial-gradient(circle at 0% 0%, rgba(255, 255, 255, 0.9), transparent 55%),
+      radial-gradient(circle at 100% 0%, rgba(191, 219, 254, 0.9), transparent 60%),
+      radial-gradient(circle at 50% 100%, rgba(219, 234, 254, 0.9), transparent 60%);
+    background-repeat: no-repeat;
+    background-size: 160% 160%, 150% 150%, 180% 180%;
+    background-attachment: fixed;
+
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
+      "Segoe UI", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Dark mode: starry night with subtle radial light */
+  .dark body {
+    color: var(--pl-text);
+    background-color: var(--pl-bg);
+
+    /* Starfield: create /public/bg-stars.svg ~600x600px, dark navy
+       with soft blue/white stars so it tiles cleanly. */
+    background-image:
+      radial-gradient(circle at 0% 0%, rgba(59, 130, 246, 0.35), transparent 55%),
+      radial-gradient(circle at 100% 0%, rgba(37, 99, 235, 0.35), transparent 60%),
+      url("/bg-stars.svg");
+    background-repeat: no-repeat, no-repeat, repeat;
+    background-size: 180% 180%, 160% 160%, 600px 600px;
+    background-attachment: fixed;
+    background-position: top left, top right, center;
+  }
+
+  #__next,
+  body > div {
+    min-height: 100%;
   }
 }
 
-/* Use whatever tile you dropped into /public (file.svg, stars.svg, etc.) */
-.dark body {
-  background-color: var(--pl-bg);
-  background-image: url("/file.svg");
-  background-repeat: repeat;
-  background-size: auto;
-  animation: starsScroll 60s linear infinite;
+/* ---------- SCROLLBARS ---------- */
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.6) transparent;
 }
-
-/* ── Twinkle animation for small sparkles ───────────────────────────────── */
-
-@keyframes twinkle {
-  0%,
-  100% {
-    opacity: 0.9;
-  }
-  50% {
-    opacity: 0.2;
-  }
-}
-
-.twinkle {
-  animation: twinkle 2s infinite;
-}
-
-/* Scrollbar styling for dark theme */
 
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--pl-bg);
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--pl-card-border);
-  border-radius: 3px;
+  background-color: rgba(148, 163, 184, 0.65);
+  border-radius: 9999px;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: var(--pl-text-subtle);
+.dark ::-webkit-scrollbar-thumb {
+  background-color: rgba(148, 163, 184, 0.9);
+}
+
+/* ---------- FLIP CARD HELPERS ---------- */
+
+.backface-hidden {
+  backface-visibility: hidden;
+}
+
+.transform-style-preserve-3d {
+  transform-style: preserve-3d;
+}
+
+.rotate-y-180 {
+  transform: rotateY(180deg);
+}
+
+/* ---------- ANIMATIONS ---------- */
+
+@keyframes fade-in-up {
+  0% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.45s ease-out both;
+}
+
+/* Optional twinkle for small sparkles/badges */
+@keyframes twinkle {
+  0%,
+  100% {
+    opacity: 0.4;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+}
+
+.animate-twinkle {
+  animation: twinkle 2.4s ease-in-out infinite alternate;
+}
+
+/* ---------- SMALL UTILITY TOUCHES ---------- */
+
+.glass-border {
+  border: 1px solid var(--pl-card-border);
+}
+
+.text-muted {
+  color: var(--pl-text-muted);
 }

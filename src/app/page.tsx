@@ -441,7 +441,7 @@ export default function Page() {
 
   // Unified card style
   const cardStyle =
-    "rounded-2xl bg-[var(--pl-card)] border border-[var(--pl-card-border)]";
+    "rounded-2xl bg-[var(--pl-card)]/60 backdrop-blur-md shadow-inner border border-[var(--pl-card-border)]";
 
   const activeProduct =
     visibleProducts.find((p) => p.id === selectedProductId) ??
@@ -481,7 +481,7 @@ export default function Page() {
             <button
               type="button"
               onClick={scrollToAssistant}
-              className="px-4 py-2 rounded-full bg-[var(--pl-primary)] text-white text-xs font-medium shadow-[0_0_16px_var(--pl-primary-glow)] hover:brightness-110 transition-all"
+              className="px-4 py-2 rounded-full bg-[var(--pl-primary)] text-white text-xs font-medium shadow-[0_0_20px_var(--pl-primary-glow)] hover:brightness-110 transition-all"
             >
               AI Assistant
             </button>
@@ -517,7 +517,7 @@ export default function Page() {
       {/* MAIN GRID */}
       <section className="w-full max-w-7xl mx-auto px-4 py-8 grid grid-cols-1 md:grid-cols-12 gap-6">
         {/* LEFT SIDEBAR */}
-        <aside className="md:col-span-3 space-y-6">
+        <aside className="md:col-span-3 space-y-6 bg-[var(--pl-card)]/60 backdrop-blur-md shadow-inner border border-[var(--pl-card-border)] rounded-2xl p-4">
           {/* LOCATION */}
           <div className={`${cardStyle} p-4`}>
             <h3 className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--pl-text-subtle)] mb-3">
@@ -536,7 +536,7 @@ export default function Page() {
             <button
               type="button"
               onClick={handleUseLocation}
-              className="mt-3 w-full py-2.5 rounded-lg bg-[var(--pl-primary)] text-[12px] font-medium text-white shadow-[0_0_15px_var(--pl-primary-glow)] hover:brightness-110 transition-all"
+              className="mt-3 w-full py-2.5 rounded-lg bg-[var(--pl-primary)] text-[12px] font-medium text-white shadow-[0_0_20px_var(--pl-primary-glow)] hover:brightness-110 transition-all"
             >
               Use my location (stub)
             </button>
@@ -630,7 +630,7 @@ export default function Page() {
         </div>
 
         {/* RIGHT SIDEBAR */}
-        <aside className="md:col-span-3 space-y-6">
+        <aside className="md:col-span-3 space-y-4 bg-[var(--pl-card)]/60 backdrop-blur-md shadow-inner border border-[var(--pl-card-border)] rounded-2xl p-4">
           <ProductSummary
             product={activeProduct as any}
             selectedProductId={selectedProductId}
@@ -644,7 +644,7 @@ export default function Page() {
             error={trendError}
           />
 
-          <div id="ai-assistant-panel">
+          <div id="ai-assistant-panel" className="animate-fade-in-up">
             <ChatAssistant
               products={visibleProducts}
               searchQuery={query}
@@ -668,38 +668,44 @@ export default function Page() {
       </footer>
 
       {/* BOTTOM NAV */}
-      <footer className="w-full fixed bottom-0 left-0 border-t border-[var(--pl-card-border)] bg-[var(--pl-card)] py-2 px-6 flex justify-around text-[11px] z-50">
+      <footer className="w-full fixed bottom-0 left-0 border-t border-[var(--pl-card-border)] bg-[var(--pl-card)]/80 backdrop-blur-xl py-2 px-6 flex justify-around text-[11px] z-50">
         <a
           href="#"
-          className="text-[var(--pl-text-subtle)] hover:text-[var(--pl-primary)] transition-colors"
+          className="flex flex-col items-center justify-center gap-1 px-3 py-2 text-xs text-[var(--pl-text-muted)] hover:text-[var(--pl-primary)] transition-colors"
         >
-          🏠 Home
+          <span>🏠</span>
+          <span>Home</span>
         </a>
         <a
           href="#filters"
-          className="text-[var(--pl-text-subtle)] hover:text-[var(--pl-primary)] transition-colors"
+          className="flex flex-col items-center justify-center gap-1 px-3 py-2 text-xs text-[var(--pl-text-muted)] hover:text-[var(--pl-primary)] transition-colors"
         >
-          🎛️ Filters
+          <span>🎛️</span>
+          <span>Filters</span>
         </a>
         <a
           href="#search"
-          className="text-[var(--pl-text-subtle)] hover:text-[var(--pl-primary)] transition-colors"
+          className="flex flex-col items-center justify-center gap-1 px-3 py-2 text-xs text-[var(--pl-text-muted)] hover:text-[var(--pl-primary)] transition-colors"
         >
-          🔍 Search
+          <span>🔍</span>
+          <span>Search</span>
         </a>
         <a
           href="#"
-          className="text-[var(--pl-text-subtle)] hover:text-[var(--pl-primary)] transition-colors"
+          className="flex flex-col items-center justify-center gap-1 px-3 py-2 text-xs text-[var(--pl-text-muted)] hover:text-[var(--pl-primary)] transition-colors"
         >
-          🕘 Recent
+          <span>🕘</span>
+          <span>Recent</span>
         </a>
         <a
           href="#"
-          className="text-[var(--pl-text-subtle)] hover:text-[var(--pl-primary)] transition-colors"
+          className="flex flex-col items-center justify-center gap-1 px-3 py-2 text-xs text-[var(--pl-text-muted)] hover:text-[var(--pl-primary)] transition-colors"
         >
-          👤 Profile
+          <span>👤</span>
+          <span>Profile</span>
         </a>
       </footer>
+
     </main>
   );
 }
