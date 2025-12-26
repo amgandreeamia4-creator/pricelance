@@ -207,6 +207,7 @@ export default function Page() {
     return result;
   }, [products, storeFilter, fastOnly, sortBy, location]);
 
+  // Keep selected product in sync with visible list
   useEffect(() => {
     if (!selectedProductId) return;
 
@@ -220,6 +221,7 @@ export default function Page() {
     }
   }, [visibleProducts, selectedProductId]);
 
+  // Choose product for trend view
   useEffect(() => {
     if (!visibleProducts.length) {
       setTrendProductId(null);
@@ -236,6 +238,7 @@ export default function Page() {
     setTrendProductId(base.id);
   }, [visibleProducts, selectedProductId]);
 
+  // Load price history for trend chart
   useEffect(() => {
     if (!trendProductId) {
       setTrendHistory([]);
@@ -248,6 +251,8 @@ export default function Page() {
 
     const loadHistory = async () => {
       setIsTrendLoading(true);
+      setTrendError(null);
+
       try {
         const params = new URLSearchParams({ productId: trendProductId });
         const res = await fetch(`/api/price-history?${params.toString()}`, {
@@ -267,7 +272,8 @@ export default function Page() {
 
         if (cancelled) return;
 
-        if (data?.ok && Array.isArray(data.points)) {
+        // Expecting { ok: boolean; points: { date, price, currency }[] }
+        if (data?.ok && Array.isArray(data.points) && data.points.length > 0) {
           setTrendHistory(data.points);
           setTrendError(null);
         } else {
@@ -527,12 +533,12 @@ export default function Page() {
         </div>
       </div>
 
-      {/* THREE-COLUMN LAYOUT */}
+      {/* MAIN RESULTS LAYOUT */}
       <section className="w-full mt-6 pb-16">
-        <div className="mx-auto max-w-6xl px-4 pb-16">
-          <div className="grid gap-6 lg:grid-cols-[280px,minmax(0,1fr),320px] items-start">
-            {/* LEFT COLUMN */}
-            <div className="space-y-4 lg:space-y-6 sticky top-28">
+        <div className="mx-auto w-full max-w-6xl px-4 lg:px-6 xl:px-8 pb-16">
+          <div className="grid gap-6 lg:grid-cols-12 items-start">
+            {/* LEFT SIDEBAR: location, filters, ad */}
+            <aside className="space-y-4 lg:space-y-6 lg:col-span-3 lg:sticky lg:top-24">
               {/* LOCATION */}
               <div className={`${cardStyle} p-4`}>
                 <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-slate-700 dark:text-slate-200 mb-3">
@@ -588,7 +594,7 @@ export default function Page() {
                     </div>
                   </div>
 
-                  {/* Category (temporarily hidden to avoid layout bugs; keep logic for later) */}
+                  {/* Category (kept in logic, hidden in UI for now) */}
                   {false && (
                     <div className="flex items-center gap-2">
                       <span className="text-xs leading-relaxed text-slate-700 dark:text-slate-300 w-10">
@@ -671,10 +677,13 @@ export default function Page() {
                   </span>
                 </div>
               </div>
-            </div>
+            </aside>
 
-            {/* CENTER COLUMN */}
-            <div className="space-y-4 lg:space-y-6">
+            {/* CENTER RESULTS COLUMN */}
+            <section
+              aria-label="Search results"
+              className="space-y-4 lg:space-y-6 lg:col-span-6"
+            >
               <div className={`${cardStyle} p-5 min-h-[180px]`}>
                 {visibleProducts.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-6 text-center">
@@ -687,7 +696,7 @@ export default function Page() {
                   </div>
                 ) : (
                   <ProductList
-                    products={visibleProducts}
+                    products={visibleProducts as any}
                     selectedProductId={selectedProductId}
                     onSelectProduct={(id: string) => setSelectedProductId(id)}
                     favoriteIds={favoriteIds}
@@ -751,10 +760,10 @@ export default function Page() {
                   </div>
                 )}
               </div>
-            </div>
+            </section>
 
-            {/* RIGHT COLUMN */}
-            <div className="space-y-4 lg:space-y-6 sticky top-28">
+            {/* RIGHT SIDEBAR: best options, trend, assistant */}
+            <aside className="space-y-4 lg:space-y-6 lg:col-span-3 lg:sticky lg:top-24">
               <ProductSummary
                 product={activeProduct as any}
                 selectedProductId={selectedProductId}
@@ -776,7 +785,7 @@ export default function Page() {
                   disabled={visibleProducts.length === 0}
                 />
               </div>
-            </div>
+            </aside>
           </div>
         </div>
       </section>
