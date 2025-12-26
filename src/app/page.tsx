@@ -528,252 +528,256 @@ export default function Page() {
       </div>
 
       {/* THREE-COLUMN LAYOUT */}
-      <main className="w-full px-6 mt-6 pb-6">
-        <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-[260px_1fr_260px] gap-5 items-start">
-          {/* LEFT COLUMN */}
-          <div className="flex flex-col gap-4">
-            {/* LOCATION */}
-            <div className={`${cardStyle} p-4`}>
-              <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-slate-700 dark:text-slate-200 mb-3">
-                Your Location
-              </h3>
-              <select
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg bg-[var(--pl-bg)] border border-[var(--pl-card-border)] text-[12px] text-[var(--pl-text)] focus:outline-none focus:border-blue-500 appearance-none cursor-pointer"
-              >
-                <option value="Not set">Not set</option>
-                <option value="Romania">Romania</option>
-                <option value="United States">United States</option>
-                <option value="Germany">Germany</option>
-                <option value="United Kingdom">United Kingdom</option>
-              </select>
-              <button
-                onClick={handleUseLocation}
-                className="mt-3 w-full py-2 rounded-lg bg-[var(--pl-primary)] hover:brightness-110 text-sm font-medium text-white shadow-[0_0_15px_var(--pl-primary-glow)] transition-all"
-              >
-                Use my location (stub)
-              </button>
-            </div>
-
-            {/* FILTERS */}
-            <div className={`${cardStyle} p-4 overflow-x-hidden`}>
-              <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-slate-700 dark:text-slate-200 mb-3">
-                Filters
-              </h3>
-              <div className="flex flex-col gap-3">
-                {/* Sort */}
-                <div className="flex items-center gap-2">
-                  <span className="text-xs leading-relaxed text-slate-700 dark:text-slate-300 w-10">
-                    Sort
-                  </span>
-                  <div className="flex-1 min-w-0">
-                    <select
-                      value={sortBy}
-                      onChange={(e) =>
-                        setSortBy(
-                          e.target.value as
-                            | "relevance"
-                            | "price-asc"
-                            | "price-desc",
-                        )
-                      }
-                      className="w-full max-w-full px-2 py-1.5 rounded-lg bg-[var(--pl-bg)] border border-[var(--pl-card-border)] text-[11px] text-[var(--pl-text)] truncate overflow-hidden text-ellipsis focus:outline-none"
-                    >
-                      <option value="relevance">Relevance</option>
-                      <option value="price-asc">Price ↑</option>
-                      <option value="price-desc">Price ↓</option>
-                    </select>
-                  </div>
-                </div>
-
-                {/* Category (temporarily hidden to avoid layout bugs; keep logic for later) */}
-                {false && (
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs leading-relaxed text-slate-700 dark:text-slate-300 w-10">
-                      Category
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <select
-                        value={categoryFilter}
-                        onChange={(e) => setCategoryFilter(e.target.value)}
-                        className="w-full max-w-full px-2 py-1.5 rounded-lg bg-[var(--pl-bg)] border border-[var(--pl-card-border)] text-[11px] text-[var(--pl-text)] truncate overflow-hidden text-ellipsis focus:outline-none"
-                      >
-                        <option value="all">All categories</option>
-                        {categories.map((cat) => (
-                          <option key={cat} value={cat}>
-                            {cat}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-                )}
-
-                {/* Store */}
-                <div className="flex items-center gap-2">
-                  <span className="text-xs leading-relaxed text-slate-700 dark:text-slate-300 w-10">
-                    Store
-                  </span>
-                  <div className="flex-1 min-w-0">
-                    <select
-                      value={storeFilter}
-                      onChange={(e) =>
-                        setStoreFilter(e.target.value as StoreId | "all")
-                      }
-                      className="w-full max-w-full px-2 py-1.5 rounded-lg bg-[var(--pl-bg)] border border-[var(--pl-card-border)] text-[11px] text-[var(--pl-text)] truncate overflow-hidden text-ellipsis focus:outline-none"
-                    >
-                      <option value="all">All stores</option>
-                      {STORES.map((store) => (
-                        <option key={store.id} value={store.id}>
-                          {store.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                {/* Fast shipping */}
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={fastOnly}
-                    onChange={(e) => setFastOnly(e.target.checked)}
-                    className="w-3.5 h-3.5 rounded border-[var(--pl-card-border)] bg-[var(--pl-bg)] text-blue-500 focus:ring-blue-500"
-                  />
-                  <span className="text-xs leading-relaxed text-slate-700 dark:text-slate-300">
-                    Fast shipping only
-                  </span>
-                </label>
-              </div>
-              <button
-                disabled={!query.trim()}
-                className="mt-3 w-full py-2.5 text-sm font-medium text-[var(--pl-text)] disabled:opacity-40 hover:brightness-110 transition-all"
-              >
-                Save this search
-              </button>
-            </div>
-
-            {/* Sidebar ad preview */}
-            <div className={`${cardStyle} p-3`}>
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[11px] font-semibold tracking-[0.15em] uppercase text-slate-700 dark:text-slate-200">
-                  Ad
-                </span>
-                <span className="text-[11px] font-semibold tracking-[0.15em] uppercase text-slate-700 dark:text-slate-200">
-                  Sidebar ad preview
-                </span>
-              </div>
-              <div className="w-full h-[150px] rounded-lg bg-[var(--pl-bg)] border border-[var(--pl-card-border)] flex items-center justify-center">
-                <span className="text-xs leading-relaxed text-slate-700 dark:text-slate-300">
-                  300 × 250
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* CENTER COLUMN */}
-          <div className="flex flex-col gap-4">
-            <div className={`${cardStyle} p-5 min-h-[180px]`}>
-              {visibleProducts.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-6 text-center">
-                  <h3 className="text-[13px] font-medium text-[var(--pl-text)] mb-1">
-                    No results found
+      <main className="w-full mt-6 pb-6">
+        <div className="w-full bg-sky-50/10">
+          <div className="mx-auto max-w-6xl px-4 lg:px-6 xl:max-w-7xl">
+            <div className="grid gap-6 lg:gap-8 lg:grid-cols-[minmax(260px,280px)_minmax(0,1.6fr)_minmax(260px,320px)] items-start">
+              {/* LEFT COLUMN */}
+              <div className="space-y-4 lg:space-y-6 sticky top-28">
+                {/* LOCATION */}
+                <div className={`${cardStyle} p-4`}>
+                  <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-slate-700 dark:text-slate-200 mb-3">
+                    Your Location
                   </h3>
-                  <p className="text-xs leading-relaxed text-slate-700 dark:text-slate-300">
-                    Try searching for a product above to see matching items.
-                  </p>
-                </div>
-              ) : (
-                <ProductList
-                  products={visibleProducts}
-                  selectedProductId={selectedProductId}
-                  onSelectProduct={(id: string) => setSelectedProductId(id)}
-                  favoriteIds={favoriteIds}
-                  onToggleFavorite={toggleFavorite}
-                />
-              )}
-            </div>
-
-            {/* Saved searches */}
-            <div className={`${cardStyle} p-4`}>
-              <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-slate-700 dark:text-slate-200 mb-2">
-                Saved Searches
-              </h3>
-              <div className="max-h-[140px] overflow-y-auto pr-1 space-y-0.5">
-                {savedSearches.map((s, i) => (
-                  <div
-                    key={i}
-                    className="flex items-center justify-between py-0.5 group"
+                  <select
+                    value={location}
+                    onChange={(e) => setLocation(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg bg-[var(--pl-bg)] border border-[var(--pl-card-border)] text-[12px] text-[var(--pl-text)] focus:outline-none focus:border-blue-500 appearance-none cursor-pointer"
                   >
-                    <span
-                      onClick={() => runSearch(s)}
-                      className="text-xs leading-relaxed text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 cursor-pointer transition-colors"
-                    >
-                      {s}
-                    </span>
-                    <button className="text-[10px] text-[var(--pl-text-subtle)] hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity">
-                      ×
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Favorites */}
-            <div className={`${cardStyle} p-4`}>
-              <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-slate-700 dark:text-slate-200 mb-1.5">
-                My Favorites
-              </h3>
-              {favoriteRows.length === 0 ? (
-                <p className="text-xs leading-relaxed text-slate-700 dark:text-slate-300">
-                  No favorites yet. Tap the ★ on a product to save it.
-                </p>
-              ) : (
-                <div className="max-h-[160px] overflow-y-auto pr-1 space-y-1">
-                  {favoriteRows.map((row) => (
-                    <div
-                      key={row.key}
-                      className="flex items-center justify-between text-xs py-0.5"
-                    >
-                      <span className="line-clamp-1 text-[var(--pl-text)]">
-                        {row.productName}
-                      </span>
-                      <span className="ml-2 text-[10px] text-[var(--pl-text-subtle)]">
-                        {row.price != null
-                          ? `${row.price} ${row.currency ?? ""}` 
-                          : "No price"}
-                        {row.storeName ? ` · ${row.storeName}` : ""}
-                      </span>
-                    </div>
-                  ))}
+                    <option value="Not set">Not set</option>
+                    <option value="Romania">Romania</option>
+                    <option value="United States">United States</option>
+                    <option value="Germany">Germany</option>
+                    <option value="United Kingdom">United Kingdom</option>
+                  </select>
+                  <button
+                    onClick={handleUseLocation}
+                    className="mt-3 w-full py-2 rounded-lg bg-[var(--pl-primary)] hover:brightness-110 text-sm font-medium text-white shadow-[0_0_15px_var(--pl-primary-glow)] transition-all"
+                  >
+                    Use my location (stub)
+                  </button>
                 </div>
-              )}
-            </div>
-          </div>
 
-          {/* RIGHT COLUMN */}
-          <div className="space-y-4 lg:space-y-5">
-            <ProductSummary
-              product={activeProduct as any}
-              selectedProductId={selectedProductId}
-              totalProducts={totalProducts}
-              totalOffers={totalOffers}
-            />
+                {/* FILTERS */}
+                <div className={`${cardStyle} p-4 overflow-x-hidden`}>
+                  <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-slate-700 dark:text-slate-200 mb-3">
+                    Filters
+                  </h3>
+                  <div className="flex flex-col gap-3">
+                    {/* Sort */}
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs leading-relaxed text-slate-700 dark:text-slate-300 w-10">
+                        Sort
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <select
+                          value={sortBy}
+                          onChange={(e) =>
+                            setSortBy(
+                              e.target.value as
+                                | "relevance"
+                                | "price-asc"
+                                | "price-desc",
+                            )
+                          }
+                          className="w-full max-w-full px-2 py-1.5 rounded-lg bg-[var(--pl-bg)] border border-[var(--pl-card-border)] text-[11px] text-[var(--pl-text)] truncate overflow-hidden text-ellipsis focus:outline-none"
+                        >
+                          <option value="relevance">Relevance</option>
+                          <option value="price-asc">Price ↑</option>
+                          <option value="price-desc">Price ↓</option>
+                        </select>
+                      </div>
+                    </div>
 
-            <PriceTrendChart
-              points={trendHistory}
-              isLoading={isTrendLoading}
-              error={trendError}
-            />
+                    {/* Category (temporarily hidden to avoid layout bugs; keep logic for later) */}
+                    {false && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs leading-relaxed text-slate-700 dark:text-slate-300 w-10">
+                          Category
+                        </span>
+                        <div className="flex-1 min-w-0">
+                          <select
+                            value={categoryFilter}
+                            onChange={(e) => setCategoryFilter(e.target.value)}
+                            className="w-full max-w-full px-2 py-1.5 rounded-lg bg-[var(--pl-bg)] border border-[var(--pl-card-border)] text-[11px] text-[var(--pl-text)] truncate overflow-hidden text-ellipsis focus:outline-none"
+                          >
+                            <option value="all">All categories</option>
+                            {categories.map((cat) => (
+                              <option key={cat} value={cat}>
+                                {cat}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                    )}
 
-            <div id="ai-assistant-panel">
-              <ChatAssistant
-                products={visibleProducts}
-                searchQuery={query}
-                location={location}
-                disabled={visibleProducts.length === 0}
-              />
+                    {/* Store */}
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs leading-relaxed text-slate-700 dark:text-slate-300 w-10">
+                        Store
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <select
+                          value={storeFilter}
+                          onChange={(e) =>
+                            setStoreFilter(e.target.value as StoreId | "all")
+                          }
+                          className="w-full max-w-full px-2 py-1.5 rounded-lg bg-[var(--pl-bg)] border border-[var(--pl-card-border)] text-[11px] text-[var(--pl-text)] truncate overflow-hidden text-ellipsis focus:outline-none"
+                        >
+                          <option value="all">All stores</option>
+                          {STORES.map((store) => (
+                            <option key={store.id} value={store.id}>
+                              {store.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* Fast shipping */}
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={fastOnly}
+                        onChange={(e) => setFastOnly(e.target.checked)}
+                        className="w-3.5 h-3.5 rounded border-[var(--pl-card-border)] bg-[var(--pl-bg)] text-blue-500 focus:ring-blue-500"
+                      />
+                      <span className="text-xs leading-relaxed text-slate-700 dark:text-slate-300">
+                        Fast shipping only
+                      </span>
+                    </label>
+                  </div>
+                  <button
+                    disabled={!query.trim()}
+                    className="mt-3 w-full py-2.5 text-sm font-medium text-[var(--pl-text)] disabled:opacity-40 hover:brightness-110 transition-all"
+                  >
+                    Save this search
+                  </button>
+                </div>
+
+                {/* Sidebar ad preview */}
+                <div className={`${cardStyle} p-3`}>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-[11px] font-semibold tracking-[0.15em] uppercase text-slate-700 dark:text-slate-200">
+                      Ad
+                    </span>
+                    <span className="text-[11px] font-semibold tracking-[0.15em] uppercase text-slate-700 dark:text-slate-200">
+                      Sidebar ad preview
+                    </span>
+                  </div>
+                  <div className="w-full h-[150px] rounded-lg bg-[var(--pl-bg)] border border-[var(--pl-card-border)] flex items-center justify-center">
+                    <span className="text-xs leading-relaxed text-slate-700 dark:text-slate-300">
+                      300 × 250
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* CENTER COLUMN */}
+              <div className="space-y-4 lg:space-y-6">
+                <div className={`${cardStyle} p-5 min-h-[180px]`}>
+                  {visibleProducts.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-6 text-center">
+                      <h3 className="text-[13px] font-medium text-[var(--pl-text)] mb-1">
+                        No results found
+                      </h3>
+                      <p className="text-xs leading-relaxed text-slate-700 dark:text-slate-300">
+                        Try searching for a product above to see matching items.
+                      </p>
+                    </div>
+                  ) : (
+                    <ProductList
+                      products={visibleProducts}
+                      selectedProductId={selectedProductId}
+                      onSelectProduct={(id: string) => setSelectedProductId(id)}
+                      favoriteIds={favoriteIds}
+                      onToggleFavorite={toggleFavorite}
+                    />
+                  )}
+                </div>
+
+                {/* Saved searches */}
+                <div className={`${cardStyle} p-4`}>
+                  <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-slate-700 dark:text-slate-200 mb-2">
+                    Saved Searches
+                  </h3>
+                  <div className="max-h-[140px] overflow-y-auto pr-1 space-y-0.5">
+                    {savedSearches.map((s, i) => (
+                      <div
+                        key={i}
+                        className="flex items-center justify-between py-0.5 group"
+                      >
+                        <span
+                          onClick={() => runSearch(s)}
+                          className="text-xs leading-relaxed text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 cursor-pointer transition-colors"
+                        >
+                          {s}
+                        </span>
+                        <button className="text-[10px] text-[var(--pl-text-subtle)] hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Favorites */}
+                <div className={`${cardStyle} p-4`}>
+                  <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-slate-700 dark:text-slate-200 mb-1.5">
+                    My Favorites
+                  </h3>
+                  {favoriteRows.length === 0 ? (
+                    <p className="text-xs leading-relaxed text-slate-700 dark:text-slate-300">
+                      No favorites yet. Tap the ★ on a product to save it.
+                    </p>
+                  ) : (
+                    <div className="max-h-[160px] overflow-y-auto pr-1 space-y-1">
+                      {favoriteRows.map((row) => (
+                        <div
+                          key={row.key}
+                          className="flex items-center justify-between text-xs py-0.5"
+                        >
+                          <span className="line-clamp-1 text-[var(--pl-text)]">
+                            {row.productName}
+                          </span>
+                          <span className="ml-2 text-[10px] text-[var(--pl-text-subtle)]">
+                            {row.price != null
+                              ? `${row.price} ${row.currency ?? ""}`
+                              : "No price"}
+                            {row.storeName ? ` · ${row.storeName}` : ""}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* RIGHT COLUMN */}
+              <div className="space-y-4 lg:space-y-6 sticky top-28">
+                <ProductSummary
+                  product={activeProduct as any}
+                  selectedProductId={selectedProductId}
+                  totalProducts={totalProducts}
+                  totalOffers={totalOffers}
+                />
+
+                <PriceTrendChart
+                  points={trendHistory}
+                  isLoading={isTrendLoading}
+                  error={trendError}
+                />
+
+                <div id="ai-assistant-panel">
+                  <ChatAssistant
+                    products={visibleProducts}
+                    searchQuery={query}
+                    location={location}
+                    disabled={visibleProducts.length === 0}
+                  />
+                </div>
+              </div>
             </div>
           </div>
         </div>
