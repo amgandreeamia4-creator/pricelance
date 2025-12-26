@@ -1,6 +1,7 @@
 // src/app/api/admin/import-csv/route.ts
 // CSV bulk import for Products + Listings (file upload)
-// Supports Profitshare.ro CSV feeds
+// Safe, schema-light version: only uses fields we know exist,
+// and adds product.imageUrl so the UI can finally show images.
 
 import { NextRequest, NextResponse } from "next/server";
 import { validateAdminToken } from "@/lib/adminAuth";
@@ -16,71 +17,67 @@ export const dynamic = "force-dynamic";
 const BATCH_SIZE = 100;
 const MAX_IMPORT_ROWS = 300;
 
-// Use a loose-typed handle to silence TS while schema/types are in flux.
+// Use loose typing to avoid TS complaining if schema drifts
 const db: any = prisma;
 
 /**
- * Upsert a Product for a Profitshare row using (source, externalId) identity.
- * Returns the product ID and whether it was newly created.
+ * Find or create a Product based on name (and optional category).
+ * This version does NOT use externalId/source — it’s intentionally simple
+ * so it works against your current DB schema.
  */
 async function findOrCreateProduct(
   row: ProfitshareRow,
-  source: string,
-  externalId: string
 ): Promise<{ productId: string; isNew: boolean }> {
-  // Check if product already exists by (source, externalId)
-  const existing = await db.product.findUnique({
+  const existing = await db.product.findFirst({
     where: {
-      source_externalId: {
-        source,
-        externalId,
-      },
+      name: row.name,
     },
     select: { id: true },
   });
 
-  const product = await db.product.upsert({
-    where: {
-      source_externalId: {
-        source,
-        externalId,
+  if (!existing) {
+    const created = await db.product.create({
+      data: {
+        name: row.name,
+        displayName: row.name,
+        category: row.categoryRaw || null,
+        brand: null,
+        imageUrl: row.imageUrl || null,
+        thumbnailUrl: row.imageUrl || null,
+        gtin: row.gtin || null,
       },
-    },
-    create: {
-      name: row.name,
-      displayName: row.name,
-      category: row.categoryRaw || null,
-      brand: null,
-      imageUrl: row.imageUrl || null,
-      thumbnailUrl: row.imageUrl || null,
-      gtin: row.gtin || null,
-      source,
-      externalId,
-    },
-    update: {
-      ...(row.imageUrl && { imageUrl: row.imageUrl, thumbnailUrl: row.imageUrl }),
+      select: { id: true },
+    });
+    return { productId: created.id, isNew: true };
+  }
+
+  const updated = await db.product.update({
+    where: { id: existing.id },
+    data: {
+      ...(row.imageUrl && {
+        imageUrl: row.imageUrl,
+        thumbnailUrl: row.imageUrl,
+      }),
       ...(row.categoryRaw && { category: row.categoryRaw }),
       ...(row.gtin && { gtin: row.gtin }),
     },
     select: { id: true },
   });
 
-  return { productId: product.id, isNew: !existing };
+  return { productId: updated.id, isNew: false };
 }
 
 /**
  * Find or create a Listing for a product.
- * Identifies by (productId, storeName, affiliateUrl) combination.
- * Also stores imageUrl coming from the feed.
+ * Identifies by (productId, storeName, url).
+ * Only uses very safe fields: price, priceCents, currency, inStock, storeName, url.
  */
 async function upsertListing(
   productId: string,
-  row: ProfitshareRow
+  row: ProfitshareRow,
 ): Promise<{ isNew: boolean }> {
   const inStock = parseAvailability(row.availability);
-  const now = new Date();
 
-  // Try to find existing listing by productId + storeName + affiliate URL
   const existing = await db.listing.findFirst({
     where: {
       productId,
@@ -98,17 +95,11 @@ async function upsertListing(
         priceCents: Math.round(row.price * 100),
         currency: row.currency,
         inStock,
-        source: "affiliate",
-        affiliateProvider: "profitshare",
-        priceLastSeenAt: now,
-        ...(row.imageUrl && { imageUrl: row.imageUrl }),
       },
     });
-
     return { isNew: false };
   }
 
-  // Create new listing
   await db.listing.create({
     data: {
       productId,
@@ -118,11 +109,6 @@ async function upsertListing(
       priceCents: Math.round(row.price * 100),
       currency: row.currency,
       inStock,
-      source: "affiliate",
-      affiliateProvider: "profitshare",
-      countryCode: "RO",
-      priceLastSeenAt: now,
-      imageUrl: row.imageUrl || null,
     },
   });
 
@@ -130,18 +116,17 @@ async function upsertListing(
 }
 
 /**
- * Process a batch of rows. Each row is wrapped in try/catch so one failure
- * doesn't abort the entire import.
+ * Process a batch of rows – errors are collected per row.
  */
 async function processBatch(
   rows: ProfitshareRow[],
-  startIdx: number
+  startIdx: number,
 ): Promise<{
   createdProducts: number;
   updatedProducts: number;
   createdListings: number;
   updatedListings: number;
-  skippedMissingExternalId: number;
+  skippedMissingExternalId: number; // kept for summary compat; always 0 here
   failedRows: number;
   errors: { rowNumber: number; message: string; code: string | null }[];
 }> {
@@ -149,53 +134,31 @@ async function processBatch(
   let updatedProducts = 0;
   let createdListings = 0;
   let updatedListings = 0;
-  let skippedMissingExternalId = 0;
   let failedRows = 0;
   const errors: { rowNumber: number; message: string; code: string | null }[] =
     [];
 
   for (let i = 0; i < rows.length; i++) {
     const row = rows[i];
-    const rowNum = startIdx + i + 2; // +2 for 1-indexed and header row
+    const rowNum = startIdx + i + 2; // +2 for header + 1-index
 
     try {
-      const source = "profitshare";
+      // 1) Product
+      const { productId, isNew: isNewProduct } = await findOrCreateProduct(row);
+      if (isNewProduct) createdProducts++;
+      else updatedProducts++;
 
-      // We treat feed "Product code" (mapped to row.sku) as externalId.
-      const productCodeRaw = row.sku;
-      const externalId = productCodeRaw ? String(productCodeRaw).trim() : "";
-
-      if (!externalId) {
-        skippedMissingExternalId++;
-        continue;
-      }
-
-      // Product
-      const { productId, isNew: isNewProduct } = await findOrCreateProduct(
-        row,
-        source,
-        externalId
-      );
-
-      if (isNewProduct) {
-        createdProducts++;
-      } else {
-        updatedProducts++;
-      }
-
-      // Listing
+      // 2) Listing
       const { isNew: isNewListing } = await upsertListing(productId, row);
-
-      if (isNewListing) {
-        createdListings++;
-      } else {
-        updatedListings++;
-      }
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Unknown error";
-      const code = (err as any)?.code ?? null;
-      errors.push({ rowNumber: rowNum, message, code });
+      if (isNewListing) createdListings++;
+      else updatedListings++;
+    } catch (err: any) {
       failedRows++;
+      errors.push({
+        rowNumber: rowNum,
+        message: err?.message || "Unknown error",
+        code: err?.code ?? null,
+      });
       console.error(`[import-csv] Row ${rowNum} error:`, err);
     }
   }
@@ -205,7 +168,7 @@ async function processBatch(
     updatedProducts,
     createdListings,
     updatedListings,
-    skippedMissingExternalId,
+    skippedMissingExternalId: 0,
     failedRows,
     errors,
   };
@@ -213,52 +176,44 @@ async function processBatch(
 
 /**
  * POST /api/admin/import-csv
- * Bulk import products and listings from a Profitshare CSV file.
  */
 export async function POST(req: NextRequest) {
-  // Validate admin token
+  // 1) Admin token
   const authError = validateAdminToken(req.headers.get("x-admin-token"));
   if (authError) {
     return NextResponse.json(
       { ok: false, error: authError.error },
-      { status: authError.status }
+      { status: authError.status },
     );
   }
 
   try {
     const formData = await req.formData();
+    const file = formData.get("file");
 
-    // IMPORTANT: support both "file" and "csvFile" (legacy) field names
-    const fileEntry =
-      formData.get("file") ?? formData.get("csvFile") ?? formData.get("csv");
-
-    if (!fileEntry || !(fileEntry instanceof File)) {
-  console.error("[admin/import-csv] Missing CSV file in formData");
-  return NextResponse.json(
-    { ok: false, error: "Missing CSV file" },
-    { status: 400 }
-  );
-}
-
-    const file = fileEntry as File;
+    if (!file || !(file instanceof File)) {
+      return NextResponse.json(
+        { ok: false, error: "Missing CSV file" },
+        { status: 400 },
+      );
+    }
 
     if (!file.name.toLowerCase().endsWith(".csv")) {
       return NextResponse.json(
         { ok: false, error: "File must be a CSV file" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     const content = await file.text();
-
     if (!content.trim()) {
       return NextResponse.json(
         { ok: false, error: "CSV file is empty" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
-    // Parse CSV
+    // 2) Parse CSV
     let parseResult;
     try {
       parseResult = parseProfitshareCsv(content);
@@ -266,7 +221,7 @@ export async function POST(req: NextRequest) {
       console.error("[admin/import-csv] CSV parse error:", err);
       return NextResponse.json(
         { ok: false, error: "Failed to parse CSV" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -276,7 +231,7 @@ export async function POST(req: NextRequest) {
     if (headerError) {
       return NextResponse.json(
         { ok: false, error: headerError },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -285,8 +240,7 @@ export async function POST(req: NextRequest) {
     const isCapped = totalRows > MAX_IMPORT_ROWS;
 
     console.log(
-      `[import-csv] Starting import: totalRows=${totalRows}, processedRows=${limitedRows.length}, ` +
-        `MAX_IMPORT_ROWS=${MAX_IMPORT_ROWS}, capped=${isCapped}`
+      `[import-csv] Starting import: totalRows=${totalRows}, processedRows=${limitedRows.length}, capped=${isCapped}`,
     );
 
     if (limitedRows.length === 0) {
@@ -312,17 +266,16 @@ export async function POST(req: NextRequest) {
           capped: isCapped,
           maxRowsPerImport: MAX_IMPORT_ROWS,
         },
-        { status: 200 }
+        { status: 200 },
       );
     }
 
-    // Process in batches
+    // 3) Process in batches
     let createdProducts = 0;
     let updatedProducts = 0;
     let createdListings = 0;
     let updatedListings = 0;
     let failedRows = 0;
-    let skippedMissingExternalId = 0;
     let errors: { rowNumber: number; message: string; code: string | null }[] =
       [];
 
@@ -337,15 +290,12 @@ export async function POST(req: NextRequest) {
       createdListings += batchResult.createdListings;
       updatedListings += batchResult.updatedListings;
       failedRows += batchResult.failedRows;
-      skippedMissingExternalId += batchResult.skippedMissingExternalId;
       errors.push(...batchResult.errors);
     }
 
     const durationMs = Date.now() - startTime;
     console.log(
-      `[import-csv] Import complete: processedRows=${limitedRows.length}, ` +
-        `created=${createdProducts}/${createdListings}, updated=${updatedProducts}/${updatedListings}, ` +
-        `failed=${failedRows}, duration=${durationMs}ms`
+      `[import-csv] Import complete: processedRows=${limitedRows.length}, created=${createdProducts}/${createdListings}, updated=${updatedProducts}/${updatedListings}, failed=${failedRows}, duration=${durationMs}ms`,
     );
 
     if (errors.length > 50) {
@@ -356,7 +306,7 @@ export async function POST(req: NextRequest) {
       ? `Processed first ${limitedRows.length} rows out of ${totalRows}. Split your CSV and re-upload remaining rows.`
       : null;
 
-    const skippedRows = skippedMissingFields + skippedMissingExternalId;
+    const skippedRows = skippedMissingFields; // externalId skipping is always 0 now
 
     return NextResponse.json(
       {
@@ -370,7 +320,7 @@ export async function POST(req: NextRequest) {
         createdListings,
         updatedListings,
         skippedMissingFields,
-        skippedMissingExternalId,
+        skippedMissingExternalId: 0,
         failedRows,
         failed: failedRows,
         errors,
@@ -379,13 +329,13 @@ export async function POST(req: NextRequest) {
         capped: isCapped,
         maxRowsPerImport: MAX_IMPORT_ROWS,
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     console.error("[admin/import-csv] POST error:", error);
     return NextResponse.json(
       { ok: false, error: "Failed to process CSV import" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

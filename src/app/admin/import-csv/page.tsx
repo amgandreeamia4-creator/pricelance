@@ -1,6 +1,8 @@
-// Auth is handled by middleware (HTTP Basic Auth in production)
+// src/app/admin/import-csv/page.tsx
+// Auth is handled by middleware (HTTP Basic)
+
 import ImportCsvClient from "./ImportCsvClient";
 
-export default async function ImportCsvPage() {
+export default function ImportCsvPage() {
   return <ImportCsvClient />;
 }

@@ -4,7 +4,6 @@ import React, { useState } from "react";
 
 // These are inlined at build time by Next.js
 const DEFAULT_FEED_URL = process.env.NEXT_PUBLIC_MASTER_FEED_URL || "";
-const ADMIN_TOKEN = process.env.NEXT_PUBLIC_ADMIN_TOKEN || "";
 
 type ImportStatus = "idle" | "loading" | "success" | "error";
 
@@ -33,9 +32,7 @@ export default function ImportFeedsClient() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          // Short-term: use public token so the browser can authenticate.
-          // This is acceptable because /admin/* is already behind Basic Auth.
-          ...(ADMIN_TOKEN ? { "x-admin-token": ADMIN_TOKEN } : {}),
+          // Auth: handled by middleware (Basic Auth + x-admin-token)
         },
         body: JSON.stringify({
           url: feedUrl,

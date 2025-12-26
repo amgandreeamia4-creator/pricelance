@@ -9,17 +9,31 @@ export function middleware(req: NextRequest) {
   const url = req.nextUrl;
   const { pathname, hostname } = url;
 
-  // 🔓 1) Completely skip auth for localhost/dev
-  // This unblocks you while we debug envs; production stays protected.
+  const isAdminPage = pathname.startsWith("/admin");
+  const isAdminApi = pathname.startsWith("/api/admin");
+
+  // Only guard admin pages and admin API routes
+  if (!isAdminPage && !isAdminApi) {
+    return NextResponse.next();
+  }
+
+  const requestHeaders = new Headers(req.headers);
+  const adminToken = process.env.ADMIN_TOKEN;
+
+  // In local dev, skip Basic Auth but still attach admin token if present
   if (hostname === "localhost" || hostname === "127.0.0.1") {
-    return NextResponse.next();
+    if (adminToken) {
+      requestHeaders.set("x-admin-token", adminToken);
+    }
+
+    return NextResponse.next({
+      request: {
+        headers: requestHeaders,
+      },
+    });
   }
 
-  // 🔒 2) Only protect /admin on real domains (Vercel / custom)
-  if (!pathname.startsWith("/admin")) {
-    return NextResponse.next();
-  }
-
+  // Production / non-localhost: enforce Basic Auth
   const authHeader = req.headers.get("authorization");
 
   if (!authHeader || !authHeader.startsWith("Basic ")) {
@@ -55,10 +69,18 @@ export function middleware(req: NextRequest) {
     });
   }
 
-  return NextResponse.next();
+  if (adminToken) {
+    requestHeaders.set("x-admin-token", adminToken);
+  }
+
+  return NextResponse.next({
+    request: {
+      headers: requestHeaders,
+    },
+  });
 }
 
-// Only run middleware on /admin paths
+// Run middleware on admin pages and admin API routes
 export const config = {
-  matcher: ["/admin/:path*"],
+  matcher: ["/admin/:path*", "/api/admin/:path*"],
 };
