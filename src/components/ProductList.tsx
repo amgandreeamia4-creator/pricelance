@@ -9,6 +9,7 @@ type Listing = {
   currency: string;
   inStock?: boolean | null;
   fastDelivery?: boolean | null;
+  imageUrl?: string | null; // ← NEW: listing-level image
 };
 
 type Product = {
@@ -16,7 +17,8 @@ type Product = {
   name: string;
   displayName?: string | null;
   brand?: string | null;
-  imageUrl?: string | null;
+  imageUrl?: string | null;     // main image
+  thumbnailUrl?: string | null; // fallback thumbnail from API/DB
   listings: Listing[];
 };
 
@@ -33,11 +35,11 @@ function formatPrice(price: number, currency: string) {
   return `${price.toFixed(2)} ${currency || ""}`.trim();
 }
 
-function getBestListing(listings: Listing[] | undefined | null): Listing | null {
+function getBestListing(
+  listings: Listing[] | undefined | null,
+): Listing | null {
   if (!listings || listings.length === 0) return null;
-  return listings.reduce((best, l) =>
-    l.price < best.price ? l : best
-  );
+  return listings.reduce((best, l) => (l.price < best.price ? l : best));
 }
 
 const ProductList: React.FC<ProductListProps> = ({
@@ -57,6 +59,13 @@ const ProductList: React.FC<ProductListProps> = ({
         const isSelected = selectedProductId === product.id;
         const bestListing = getBestListing(product.listings);
         const isFavorite = favoriteIds.includes(product.id);
+
+        // Choose the best image we have:
+        const productImage =
+          product.imageUrl ||
+          product.thumbnailUrl ||
+          bestListing?.imageUrl ||
+          null;
 
         const cardBase =
           "relative flex h-full flex-col rounded-2xl border bg-[var(--pl-card)] border-[var(--pl-card-border)] transition-all cursor-pointer";
@@ -84,10 +93,10 @@ const ProductList: React.FC<ProductListProps> = ({
             <div className="flex flex-1 gap-3 p-3">
               {/* Image */}
               <div className="flex-shrink-0 w-[64px] h-[64px] rounded-xl bg-[var(--pl-bg)] border border-[var(--pl-card-border)] flex items-center justify-center text-[10px] text-[var(--pl-text-subtle)] overflow-hidden">
-                {product.imageUrl ? (
+                {productImage ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
-                    src={product.imageUrl}
+                    src={productImage}
                     alt={product.displayName || product.name}
                     className="w-full h-full object-contain"
                   />
@@ -110,11 +119,13 @@ const ProductList: React.FC<ProductListProps> = ({
                     )}
                   </div>
 
-                  {/* Favorite star — real <button>, but NOT nested in another <button> anymore */}
+                  {/* Favorite star */}
                   <button
                     type="button"
                     aria-label={
-                      isFavorite ? "Remove from favourites" : "Add to favourites"
+                      isFavorite
+                        ? "Remove from favourites"
+                        : "Add to favourites"
                     }
                     onClick={(e) => {
                       e.stopPropagation();
@@ -139,7 +150,10 @@ const ProductList: React.FC<ProductListProps> = ({
                           Best price
                         </span>
                         <span className="text-[13px] font-semibold text-[var(--pl-text)]">
-                          {formatPrice(bestListing.price, bestListing.currency)}
+                          {formatPrice(
+                            bestListing.price,
+                            bestListing.currency,
+                          )}
                         </span>
                       </div>
                       <div className="text-right">
@@ -163,7 +177,7 @@ const ProductList: React.FC<ProductListProps> = ({
               </div>
             </div>
 
-            {/* Bottom ribbon for “best overall” highlight */}
+            {/* Bottom ribbon for “highlight” */}
             {bestListing && (
               <div className="flex items-center justify-between px-3 pb-2 pt-1 text-[10px] text-[var(--pl-text-subtle)] border-t border-[var(--pl-card-border)] bg-[color-mix(in_srgb,var(--pl-card)_88%,var(--pl-primary)_12%)]">
                 <span className="uppercase tracking-[0.12em] font-semibold">
