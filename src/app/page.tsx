@@ -528,10 +528,9 @@ export default function Page() {
       </div>
 
       {/* THREE-COLUMN LAYOUT */}
-      <main className="w-full mt-6 pb-6">
-        <div className="w-full bg-sky-50/10">
-          <div className="mx-auto max-w-6xl px-4 lg:px-6 xl:max-w-7xl">
-            <div className="grid gap-6 lg:gap-8 lg:grid-cols-[minmax(260px,280px)_minmax(0,1.6fr)_minmax(260px,320px)] items-start">
+      <main className="w-full mt-6 pb-16">
+        <div className="mx-auto max-w-6xl px-4 pb-16">
+          <div className="grid gap-6 lg:grid-cols-[280px,minmax(0,1fr),320px] items-start">
               {/* LEFT COLUMN */}
               <div className="space-y-4 lg:space-y-6 sticky top-28">
                 {/* LOCATION */}
