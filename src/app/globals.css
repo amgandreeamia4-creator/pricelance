@@ -41,14 +41,52 @@
   --pl-teal-glow: rgba(20, 184, 166, 0.35);
 }
 
-html, body {
+html,
+body {
   background-color: var(--pl-bg);
   color: var(--pl-text);
   margin: 0;
   padding: 0;
 }
 
+/* ── Starfield background for dark mode ─────────────────────────────────── */
+
+@keyframes starsScroll {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: 0 1000px;
+  }
+}
+
+/* Use whatever tile you dropped into /public (file.svg, stars.svg, etc.) */
+.dark body {
+  background-color: var(--pl-bg);
+  background-image: url("/file.svg");
+  background-repeat: repeat;
+  background-size: auto;
+  animation: starsScroll 60s linear infinite;
+}
+
+/* ── Twinkle animation for small sparkles ───────────────────────────────── */
+
+@keyframes twinkle {
+  0%,
+  100% {
+    opacity: 0.9;
+  }
+  50% {
+    opacity: 0.2;
+  }
+}
+
+.twinkle {
+  animation: twinkle 2s infinite;
+}
+
 /* Scrollbar styling for dark theme */
+
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;

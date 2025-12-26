@@ -469,328 +469,236 @@ export default function Page() {
   );
 
   return (
-    <main className="min-h-screen w-full">
+    <main className="min-h-screen w-full bg-[var(--pl-bg)] text-[var(--pl-text)]">
       {/* HEADER */}
-      <header className="relative w-full pt-6 pb-4 px-6">
-        <div className="max-w-5xl mx-auto text-center">
-          <div className="inline-block px-5 py-1.5 rounded-full border border-[var(--pl-card-border)] bg-[var(--pl-card)] text-[12px] font-semibold tracking-[0.2em] uppercase text-[var(--pl-text)]">
+      <header className="w-full px-6 py-4 border-b border-[var(--pl-card-border)] bg-[var(--pl-bg)]">
+        <div className="flex justify-between items-center max-w-7xl mx-auto">
+          <div className="text-lg font-bold tracking-[0.35em] uppercase">
             PRICELANCE
           </div>
-          <p className="mt-3 text-[12px] text-[var(--pl-text-muted)] leading-relaxed">
-            PriceLance is an informational service that compares tech prices from multiple online retailers. Prices come from manually curated data, official feeds, and affiliate feeds where available — no scraping.
-          </p>
-          <p className="mt-1 text-[11px] text-[var(--pl-text-subtle)]">
-            Coverage is continuously expanding, starting from Romania and extending deeper into the EU. Always verify the final price, delivery costs, and product details on the retailer&apos;s website before buying.
-          </p>
-        </div>
-
-        <div className="absolute right-6 top-6 flex items-center gap-3">
-          <div className="hidden lg:block rounded-full border border-[var(--pl-card-border)] bg-[var(--pl-card)] px-3 py-1 text-[9px] text-[var(--pl-text-subtle)] whitespace-nowrap">
-            Ad slot preview · Header banner 776x90
+          <div className="flex items-center gap-4">
+            <ThemeToggle />
+            <button
+              type="button"
+              onClick={scrollToAssistant}
+              className="px-4 py-2 rounded-full bg-[var(--pl-primary)] text-white text-xs font-medium shadow-[0_0_16px_var(--pl-primary-glow)] hover:brightness-110 transition-all"
+            >
+              AI Assistant
+            </button>
           </div>
-          <ThemeToggle />
-          <button
-            type="button"
-            onClick={scrollToAssistant}
-            className="px-4 py-2 rounded-full bg-[var(--pl-primary)] hover:brightness-110 text-[12px] font-medium text-white shadow-[0_0_20px_var(--pl-primary-glow)] transition-all"
-          >
-            AI Assistant
-          </button>
         </div>
       </header>
 
       {/* SEARCH BAR */}
-      <div className="w-full px-6 mt-2">
-        <div className="max-w-4xl mx-auto">
-          <div className="flex items-center gap-3">
-            <div className="flex-1 relative">
-              <input
-                type="text"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && runSearch(query)}
-                placeholder='Search products (e.g. "iphone 15", "nescafe", "dior sauvage")'
-                className="w-full px-5 py-3 rounded-2xl bg-[var(--pl-card)] border border-[var(--pl-card-border)] text-[12px] text-[var(--pl-text)] placeholder:text-[var(--pl-text-subtle)] focus:outline-none focus:border-blue-500 focus:shadow-[0_0_15px_var(--pl-primary-glow)] transition-all"
-              />
-            </div>
-            <button
-              onClick={() => runSearch(query)}
-              disabled={isSearching}
-              className="px-7 py-3 rounded-2xl bg-[var(--pl-primary)] hover:brightness-110 text-[12px] font-semibold text-white shadow-[0_0_20px_var(--pl-primary-glow)] disabled:opacity-50 transition-all"
-            >
-              {isSearching ? "Searching..." : "Search"}
-            </button>
-          </div>
-          <p className="mt-2 text-[10px] text-[var(--pl-text-subtle)] italic">
-            Debug: no enrichment data for last search.
-          </p>
+      <div className="w-full bg-[var(--pl-bg)] py-4 px-6 border-b border-[var(--pl-card-border)]">
+        <div
+          id="search"
+          className="max-w-4xl mx-auto flex items-center gap-3"
+        >
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && runSearch(query)}
+            placeholder='Search products (e.g. "laptop", "mouse", "nescafe")'
+            className="flex-1 px-4 py-2.5 rounded-xl border border-[var(--pl-card-border)] bg-[var(--pl-card)] text-sm text-[var(--pl-text)] placeholder:text-[var(--pl-text-subtle)] focus:outline-none focus:ring-2 focus:ring-[var(--pl-primary)] focus:border-[var(--pl-primary)] shadow-[0_0_12px_rgba(15,23,42,0.6)]"
+          />
+          <button
+            type="button"
+            onClick={() => runSearch(query)}
+            disabled={isSearching}
+            className="px-6 py-2.5 rounded-xl bg-[var(--pl-primary)] text-white text-sm font-semibold shadow-[0_0_20px_var(--pl-primary-glow)] hover:brightness-110 disabled:opacity-60 transition-all"
+          >
+            {isSearching ? "Searching..." : "Search"}
+          </button>
         </div>
       </div>
 
-      {/* MAIN RESULTS LAYOUT */}
-      <section className="w-full mt-6 pb-16">
-        <div className="mx-auto w-full max-w-7xl px-4 lg:px-6 xl:px-8 pb-16">
-          <div className="grid gap-6 lg:grid-cols-12 items-start">
-            {/* LEFT SIDEBAR */}
-            <aside className="space-y-4 lg:space-y-6 lg:col-span-2 lg:sticky lg:top-24">
-              {/* LOCATION */}
-              <div className={`${cardStyle} p-4`}>
-                <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-slate-700 dark:text-slate-200 mb-3">
-                  Your Location
-                </h3>
-                <select
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg bg-[var(--pl-bg)] border border-[var(--pl-card-border)] text-[12px] text-[var(--pl-text)] focus:outline-none focus:border-blue-500 appearance-none cursor-pointer"
-                >
-                  <option value="Not set">Not set</option>
-                  <option value="Romania">Romania</option>
-                  <option value="United States">United States</option>
-                  <option value="Germany">Germany</option>
-                  <option value="United Kingdom">United Kingdom</option>
-                </select>
-                <button
-                  onClick={handleUseLocation}
-                  className="mt-3 w-full py-2 rounded-lg bg-[var(--pl-primary)] hover:brightness-110 text-sm font-medium text-white shadow-[0_0_15px_var(--pl-primary-glow)] transition-all"
-                >
-                  Use my location (stub)
-                </button>
-              </div>
-
-              {/* FILTERS */}
-              <div className={`${cardStyle} p-4 overflow-x-hidden`}>
-                <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-slate-700 dark:text-slate-200 mb-3">
-                  Filters
-                </h3>
-                <div className="flex flex-col gap-3">
-                  {/* Sort */}
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs leading-relaxed text-slate-700 dark:text-slate-300 w-10">
-                      Sort
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <select
-                        value={sortBy}
-                        onChange={(e) =>
-                          setSortBy(
-                            e.target.value as
-                              | "relevance"
-                              | "price-asc"
-                              | "price-desc",
-                          )
-                        }
-                        className="w-full max-w-full px-2 py-1.5 rounded-lg bg-[var(--pl-bg)] border border-[var(--pl-card-border)] text-[11px] text-[var(--pl-text)] truncate overflow-hidden text-ellipsis focus:outline-none"
-                      >
-                        <option value="relevance">Relevance</option>
-                        <option value="price-asc">Price ↑</option>
-                        <option value="price-desc">Price ↓</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  {/* Category (hidden for now) */}
-                  {false && (
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs leading-relaxed text-slate-700 dark:text-slate-300 w-10">
-                        Category
-                      </span>
-                      <div className="flex-1 min-w-0">
-                        <select
-                          value={categoryFilter}
-                          onChange={(e) => setCategoryFilter(e.target.value)}
-                          className="w-full max-w-full px-2 py-1.5 rounded-lg bg-[var(--pl-bg)] border border-[var(--pl-card-border)] text-[11px] text-[var(--pl-text)] truncate overflow-hidden text-ellipsis focus:outline-none"
-                        >
-                          <option value="all">All categories</option>
-                          {categories.map((cat) => (
-                            <option key={cat} value={cat}>
-                              {cat}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Store */}
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs leading-relaxed text-slate-700 dark:text-slate-300 w-10">
-                      Store
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <select
-                        value={storeFilter}
-                        onChange={(e) =>
-                          setStoreFilter(e.target.value as StoreId | "all")
-                        }
-                        className="w-full max-w-full px-2 py-1.5 rounded-lg bg-[var(--pl-bg)] border border-[var(--pl-card-border)] text-[11px] text-[var(--pl-text)] truncate overflow-hidden text-ellipsis focus:outline-none"
-                      >
-                        <option value="all">All stores</option>
-                        {STORES.map((store) => (
-                          <option key={store.id} value={store.id}>
-                            {store.label}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-
-                  {/* Fast shipping */}
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={fastOnly}
-                      onChange={(e) => setFastOnly(e.target.checked)}
-                      className="w-3.5 h-3.5 rounded border-[var(--pl-card-border)] bg-[var(--pl-bg)] text-blue-500 focus:ring-blue-500"
-                    />
-                    <span className="text-xs leading-relaxed text-slate-700 dark:text-slate-300">
-                      Fast shipping only
-                    </span>
-                  </label>
-                </div>
-                <button
-                  disabled={!query.trim()}
-                  className="mt-3 w-full py-2.5 text-sm font-medium text-[var(--pl-text)] disabled:opacity-40 hover:brightness-110 transition-all"
-                >
-                  Save this search
-                </button>
-              </div>
-
-              {/* Sidebar ad preview */}
-              <div className={`${cardStyle} p-3`}>
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-[11px] font-semibold tracking-[0.15em] uppercase text-slate-700 dark:text-slate-200">
-                    Ad
-                  </span>
-                  <span className="text-[11px] font-semibold tracking-[0.15em] uppercase text-slate-700 dark:text-slate-200">
-                    Sidebar ad preview
-                  </span>
-                </div>
-                <div className="w-full h-[150px] rounded-lg bg-[var(--pl-bg)] border border-[var(--pl-card-border)] flex items-center justify-center">
-                  <span className="text-xs leading-relaxed text-slate-700 dark:text-slate-300">
-                    300 × 250
-                  </span>
-                </div>
-              </div>
-            </aside>
-
-            {/* CENTER RESULTS COLUMN */}
-            <section
-              aria-label="Search results"
-              className="space-y-4 lg:space-y-6 lg:col-span-8"
+      {/* MAIN GRID */}
+      <section className="w-full max-w-7xl mx-auto px-4 py-8 grid grid-cols-1 md:grid-cols-12 gap-6">
+        {/* LEFT SIDEBAR */}
+        <aside className="md:col-span-3 space-y-6">
+          {/* LOCATION */}
+          <div className={`${cardStyle} p-4`}>
+            <h3 className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--pl-text-subtle)] mb-3">
+              Your location
+            </h3>
+            <select
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              className="w-full p-2.5 rounded-lg border border-[var(--pl-card-border)] bg-[var(--pl-bg)] text-[12px] text-[var(--pl-text)] focus:outline-none focus:border-[var(--pl-primary)]"
             >
-              <div className={`${cardStyle} p-5 min-h-[180px]`}>
-                {visibleProducts.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-6 text-center">
-                    <h3 className="text-[13px] font-medium text-[var(--pl-text)] mb-1">
-                      No results found
-                    </h3>
-                    <p className="text-xs leading-relaxed text-slate-700 dark:text-slate-300">
-                      Try searching for a product above to see matching items.
-                    </p>
-                  </div>
-                ) : (
-                  <ProductList
-                    products={visibleProducts}
-                    selectedProductId={selectedProductId}
-                    onSelectProduct={(id: string) => setSelectedProductId(id)}
-                    favoriteIds={favoriteIds}
-                    onToggleFavorite={toggleFavorite}
-                  />
-                )}
-              </div>
-
-              {/* Saved searches */}
-              <div className={`${cardStyle} p-4`}>
-                <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-slate-700 dark:text-slate-200 mb-2">
-                  Saved Searches
-                </h3>
-                <div className="max-h-[140px] overflow-y-auto pr-1 space-y-0.5">
-                  {savedSearches.map((s, i) => (
-                    <div
-                      key={i}
-                      className="flex items-center justify-between py-0.5 group"
-                    >
-                      <span
-                        onClick={() => runSearch(s)}
-                        className="text-xs leading-relaxed text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 cursor-pointer transition-colors"
-                      >
-                        {s}
-                      </span>
-                      <button className="text-[10px] text-[var(--pl-text-subtle)] hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity">
-                        ×
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Favorites */}
-              <div className={`${cardStyle} p-4`}>
-                <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-slate-700 dark:text-slate-200 mb-1.5">
-                  My Favorites
-                </h3>
-                {favoriteRows.length === 0 ? (
-                  <p className="text-xs leading-relaxed text-slate-700 dark:text-slate-300">
-                    No favorites yet. Tap the ★ on a product to save it.
-                  </p>
-                ) : (
-                  <div className="max-h-[160px] overflow-y-auto pr-1 space-y-1">
-                    {favoriteRows.map((row) => (
-                      <div
-                        key={row.key}
-                        className="flex items-center justify-between text-xs py-0.5"
-                      >
-                        <span className="line-clamp-1 text-[var(--pl-text)]">
-                          {row.productName}
-                        </span>
-                        <span className="ml-2 text-[10px] text-[var(--pl-text-subtle)]">
-                          {row.price != null
-                            ? `${row.price} ${row.currency ?? ""}`
-                            : "No price"}
-                          {row.storeName ? ` · ${row.storeName}` : ""}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </section>
-
-            {/* RIGHT SIDEBAR */}
-            <aside className="space-y-4 lg:space-y-6 lg:col-span-2 lg:sticky lg:top-24">
-              <ProductSummary
-                product={activeProduct as any}
-                selectedProductId={selectedProductId}
-                totalProducts={totalProducts}
-                totalOffers={totalOffers}
-              />
-
-              <PriceTrendChart
-                points={trendHistory}
-                isLoading={isTrendLoading}
-                error={trendError}
-              />
-
-              <div id="ai-assistant-panel">
-                <ChatAssistant
-                  products={visibleProducts}
-                  searchQuery={query}
-                  location={location}
-                  disabled={visibleProducts.length === 0}
-                />
-              </div>
-            </aside>
+              <option value="Not set">Not set</option>
+              <option value="Romania">Romania</option>
+              <option value="Germany">Germany</option>
+              <option value="United Kingdom">United Kingdom</option>
+            </select>
+            <button
+              type="button"
+              onClick={handleUseLocation}
+              className="mt-3 w-full py-2.5 rounded-lg bg-[var(--pl-primary)] text-[12px] font-medium text-white shadow-[0_0_15px_var(--pl-primary-glow)] hover:brightness-110 transition-all"
+            >
+              Use my location (stub)
+            </button>
           </div>
+
+          {/* FILTERS */}
+          <div id="filters" className={`${cardStyle} p-4`}>
+            <h3 className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--pl-text-subtle)] mb-3">
+              Filters
+            </h3>
+
+            {/* Sort */}
+            <div className="mb-3">
+              <label className="block text-[11px] font-medium text-[var(--pl-text)] mb-1">
+                Sort
+              </label>
+              <select
+                value={sortBy}
+                onChange={(e) =>
+                  setSortBy(
+                    e.target.value as "relevance" | "price-asc" | "price-desc",
+                  )
+                }
+                className="w-full p-2 rounded-lg border border-[var(--pl-card-border)] bg-[var(--pl-bg)] text-[12px] text-[var(--pl-text)] focus:outline-none focus:border-[var(--pl-primary)]"
+              >
+                <option value="relevance">Relevance</option>
+                <option value="price-asc">Price ↑</option>
+                <option value="price-desc">Price ↓</option>
+              </select>
+            </div>
+
+            {/* Store */}
+            <div className="mb-3">
+              <label className="block text-[11px] font-medium text-[var(--pl-text)] mb-1">
+                Store
+              </label>
+              <select
+                value={storeFilter}
+                onChange={(e) =>
+                  setStoreFilter(e.target.value as StoreId | "all")
+                }
+                className="w-full p-2 rounded-lg border border-[var(--pl-card-border)] bg-[var(--pl-bg)] text-[12px] text-[var(--pl-text)] focus:outline-none focus:border-[var(--pl-primary)]"
+              >
+                <option value="all">All stores</option>
+                {STORES.map((store) => (
+                  <option key={store.id} value={store.id}>
+                    {store.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Fast shipping */}
+            <label className="flex items-center gap-2 text-[12px] cursor-pointer">
+              <input
+                type="checkbox"
+                checked={fastOnly}
+                onChange={(e) => setFastOnly(e.target.checked)}
+                className="w-3.5 h-3.5 rounded border-[var(--pl-card-border)] bg-[var(--pl-bg)] text-[var(--pl-primary)] focus:ring-[var(--pl-primary)]"
+              />
+              <span className="text-[var(--pl-text)]">Fast shipping only</span>
+            </label>
+          </div>
+        </aside>
+
+        {/* CENTER GRID */}
+        <div className="md:col-span-6 space-y-6">
+          {/* PRODUCT GRID */}
+          <div className={`${cardStyle} p-4`}>
+            {visibleProducts.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-8 text-center">
+                <h3 className="text-[13px] font-medium text-[var(--pl-text)] mb-1">
+                  No results found
+                </h3>
+                <p className="text-[11px] text-[var(--pl-text-subtle)]">
+                  Try searching for a product above to see matching items.
+                </p>
+              </div>
+            ) : (
+              <ProductList
+                products={visibleProducts}
+                selectedProductId={selectedProductId}
+                onSelectProduct={(id: string) => setSelectedProductId(id)}
+                favoriteIds={favoriteIds}
+                onToggleFavorite={toggleFavorite}
+              />
+            )}
+          </div>
+
+          {/* You can re-add Saved Searches / Favorites UI here later if you want */}
         </div>
+
+        {/* RIGHT SIDEBAR */}
+        <aside className="md:col-span-3 space-y-6">
+          <ProductSummary
+            product={activeProduct as any}
+            selectedProductId={selectedProductId}
+            totalProducts={totalProducts}
+            totalOffers={totalOffers}
+          />
+
+          <PriceTrendChart
+            points={trendHistory}
+            isLoading={isTrendLoading}
+            error={trendError}
+          />
+
+          <div id="ai-assistant-panel">
+            <ChatAssistant
+              products={visibleProducts}
+              searchQuery={query}
+              location={location}
+              disabled={visibleProducts.length === 0}
+            />
+          </div>
+        </aside>
       </section>
 
       {/* Affiliate Disclosure Footer */}
-      <footer className="w-full px-6 py-4 border-t border-[var(--pl-card-border)]">
+      <footer className="w-full px-6 py-4 border-t border-[var(--pl-card-border)] mt-8">
         <div className="max-w-6xl mx-auto text-center">
           <p className="text-[10px] text-[var(--pl-text-subtle)] leading-relaxed">
-            Some links on PriceLance are affiliate links. If you buy through one of these links, we may earn a small commission from the retailer, at no extra cost to you. Prices and availability can change; always check the retailer site.
+            Some links on PriceLance are affiliate links. If you buy through one
+            of these links, we may earn a small commission from the retailer, at
+            no extra cost to you. Prices and availability can change; always
+            check the retailer site.
           </p>
         </div>
+      </footer>
+
+      {/* BOTTOM NAV */}
+      <footer className="w-full fixed bottom-0 left-0 border-t border-[var(--pl-card-border)] bg-[var(--pl-card)] py-2 px-6 flex justify-around text-[11px] z-50">
+        <a
+          href="#"
+          className="text-[var(--pl-text-subtle)] hover:text-[var(--pl-primary)] transition-colors"
+        >
+          🏠 Home
+        </a>
+        <a
+          href="#filters"
+          className="text-[var(--pl-text-subtle)] hover:text-[var(--pl-primary)] transition-colors"
+        >
+          🎛️ Filters
+        </a>
+        <a
+          href="#search"
+          className="text-[var(--pl-text-subtle)] hover:text-[var(--pl-primary)] transition-colors"
+        >
+          🔍 Search
+        </a>
+        <a
+          href="#"
+          className="text-[var(--pl-text-subtle)] hover:text-[var(--pl-primary)] transition-colors"
+        >
+          🕘 Recent
+        </a>
+        <a
+          href="#"
+          className="text-[var(--pl-text-subtle)] hover:text-[var(--pl-primary)] transition-colors"
+        >
+          👤 Profile
+        </a>
       </footer>
     </main>
   );
