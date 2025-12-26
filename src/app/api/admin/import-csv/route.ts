@@ -9,13 +9,15 @@ import {
   parseProfitshareCsv,
   parseAvailability,
   type ProfitshareRow,
-  type ProfitshareImportResult,
 } from "@/lib/affiliates/profitshare";
 
 export const dynamic = "force-dynamic";
 
 const BATCH_SIZE = 100;
 const MAX_IMPORT_ROWS = 300;
+
+// Use a loose-typed handle to silence TS while schema/types are in flux.
+const db: any = prisma;
 
 /**
  * Upsert a Product for a Profitshare row using (source, externalId) identity.
@@ -26,7 +28,8 @@ async function findOrCreateProduct(
   source: string,
   externalId: string
 ): Promise<{ productId: string; isNew: boolean }> {
-  const existing = await (prisma.product.findUnique as any)({
+  // Check if product already exists by (source, externalId)
+  const existing = await db.product.findUnique({
     where: {
       source_externalId: {
         source,
@@ -36,7 +39,7 @@ async function findOrCreateProduct(
     select: { id: true },
   });
 
-  const product = await (prisma.product.upsert as any)({
+  const product = await db.product.upsert({
     where: {
       source_externalId: {
         source,
@@ -45,14 +48,17 @@ async function findOrCreateProduct(
     },
     create: {
       name: row.name,
+      displayName: row.name,
       category: row.categoryRaw || null,
+      brand: null,
       imageUrl: row.imageUrl || null,
+      thumbnailUrl: row.imageUrl || null,
       gtin: row.gtin || null,
       source,
       externalId,
     },
     update: {
-      ...(row.imageUrl && { imageUrl: row.imageUrl }),
+      ...(row.imageUrl && { imageUrl: row.imageUrl, thumbnailUrl: row.imageUrl }),
       ...(row.categoryRaw && { category: row.categoryRaw }),
       ...(row.gtin && { gtin: row.gtin }),
     },
@@ -65,6 +71,7 @@ async function findOrCreateProduct(
 /**
  * Find or create a Listing for a product.
  * Identifies by (productId, storeName, affiliateUrl) combination.
+ * Also stores imageUrl coming from the feed.
  */
 async function upsertListing(
   productId: string,
@@ -74,7 +81,7 @@ async function upsertListing(
   const now = new Date();
 
   // Try to find existing listing by productId + storeName + affiliate URL
-  const existing = await (prisma.listing.findFirst as any)({
+  const existing = await db.listing.findFirst({
     where: {
       productId,
       storeName: { equals: row.storeName, mode: "insensitive" },
@@ -84,8 +91,7 @@ async function upsertListing(
   });
 
   if (existing) {
-    // Update existing listing
-    await (prisma.listing.update as any)({
+    await db.listing.update({
       where: { id: existing.id },
       data: {
         price: row.price,
@@ -98,11 +104,12 @@ async function upsertListing(
         ...(row.imageUrl && { imageUrl: row.imageUrl }),
       },
     });
+
     return { isNew: false };
   }
 
   // Create new listing
-  await (prisma.listing.create as any)({
+  await db.listing.create({
     data: {
       productId,
       storeName: row.storeName,
@@ -144,7 +151,8 @@ async function processBatch(
   let updatedListings = 0;
   let skippedMissingExternalId = 0;
   let failedRows = 0;
-  const errors: { rowNumber: number; message: string; code: string | null }[] = [];
+  const errors: { rowNumber: number; message: string; code: string | null }[] =
+    [];
 
   for (let i = 0; i < rows.length; i++) {
     const row = rows[i];
@@ -152,6 +160,8 @@ async function processBatch(
 
     try {
       const source = "profitshare";
+
+      // We treat feed "Product code" (mapped to row.sku) as externalId.
       const productCodeRaw = row.sku;
       const externalId = productCodeRaw ? String(productCodeRaw).trim() : "";
 
@@ -160,7 +170,7 @@ async function processBatch(
         continue;
       }
 
-      // Find or create product
+      // Product
       const { productId, isNew: isNewProduct } = await findOrCreateProduct(
         row,
         source,
@@ -173,7 +183,7 @@ async function processBatch(
         updatedProducts++;
       }
 
-      // Upsert listing
+      // Listing
       const { isNew: isNewListing } = await upsertListing(productId, row);
 
       if (isNewListing) {
@@ -219,7 +229,6 @@ export async function POST(req: NextRequest) {
     const formData = await req.formData();
     const file = formData.get("file");
 
-    // Validate file presence
     if (!file || !(file instanceof File)) {
       return NextResponse.json(
         { ok: false, error: "Missing CSV file" },
@@ -255,9 +264,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { rows, skippedMissingFields, totalDataRows, headerError } = parseResult;
+    const { rows, skippedMissingFields, totalDataRows, headerError } =
+      parseResult;
 
-    // Return error if required columns are missing from header
     if (headerError) {
       return NextResponse.json(
         { ok: false, error: headerError },
@@ -265,14 +274,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Cap rows to avoid timeout
     const totalRows = rows.length;
     const limitedRows = rows.slice(0, MAX_IMPORT_ROWS);
     const isCapped = totalRows > MAX_IMPORT_ROWS;
 
     console.log(
       `[import-csv] Starting import: totalRows=${totalRows}, processedRows=${limitedRows.length}, ` +
-      `MAX_IMPORT_ROWS=${MAX_IMPORT_ROWS}, capped=${isCapped}`
+        `MAX_IMPORT_ROWS=${MAX_IMPORT_ROWS}, capped=${isCapped}`
     );
 
     if (limitedRows.length === 0) {
@@ -281,7 +289,7 @@ export async function POST(req: NextRequest) {
         {
           ok: true,
           totalRows,
-          processedRows: limitedRows.length,
+          processedRows: 0,
           skippedRows,
           skipped: skippedRows,
           createdProducts: 0,
@@ -302,9 +310,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Start timing
-    const startTime = Date.now();
-
     // Process in batches
     let createdProducts = 0;
     let updatedProducts = 0;
@@ -312,7 +317,10 @@ export async function POST(req: NextRequest) {
     let updatedListings = 0;
     let failedRows = 0;
     let skippedMissingExternalId = 0;
-    let errors: { rowNumber: number; message: string; code: string | null }[] = [];
+    let errors: { rowNumber: number; message: string; code: string | null }[] =
+      [];
+
+    const startTime = Date.now();
 
     for (let i = 0; i < limitedRows.length; i += BATCH_SIZE) {
       const batch = limitedRows.slice(i, i + BATCH_SIZE);
@@ -327,15 +335,13 @@ export async function POST(req: NextRequest) {
       errors.push(...batchResult.errors);
     }
 
-    // End timing
     const durationMs = Date.now() - startTime;
     console.log(
       `[import-csv] Import complete: processedRows=${limitedRows.length}, ` +
-      `created=${createdProducts}/${createdListings}, updated=${updatedProducts}/${updatedListings}, ` +
-      `failed=${failedRows}, duration=${durationMs}ms`
+        `created=${createdProducts}/${createdListings}, updated=${updatedProducts}/${updatedListings}, ` +
+        `failed=${failedRows}, duration=${durationMs}ms`
     );
 
-    // Limit errors in response to prevent huge payloads
     if (errors.length > 50) {
       errors = errors.slice(0, 50);
     }
