@@ -24,15 +24,20 @@ model Product {
   description  String?
   category     String?
   brand        String?
-  gtin         String?
   imageUrl     String?
   thumbnailUrl String?
+  gtin         String?
   createdAt    DateTime              @default(now())
   updatedAt    DateTime              @updatedAt
+
+  source       String?
+  externalId   String?
 
   listings     Listing[]
   priceHistory ProductPriceHistory[]
   favorites    Favorite[]
+
+  @@unique([source, externalId], map: "product_source_externalid_unique")
 }
 
 // Listing: represents a product offer from a specific store/merchant.

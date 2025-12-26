@@ -18,70 +18,48 @@ const BATCH_SIZE = 100;
 const MAX_IMPORT_ROWS = 300;
 
 /**
- * Find or create a Product by URL first, then by SKU if available.
+ * Upsert a Product for a Profitshare row using (source, externalId) identity.
  * Returns the product ID and whether it was newly created.
  */
 async function findOrCreateProduct(
-  row: ProfitshareRow
+  row: ProfitshareRow,
+  source: string,
+  externalId: string
 ): Promise<{ productId: string; isNew: boolean }> {
-  // Strategy 1: Try to find by product URL
-  const existingByUrl = await (prisma.product.findFirst as any)({
+  const existing = await (prisma.product.findUnique as any)({
     where: {
-      listings: {
-        some: {
-          url: row.productUrl,
-        },
+      source_externalId: {
+        source,
+        externalId,
       },
     },
     select: { id: true },
   });
 
-  if (existingByUrl) {
-    // Update product fields if provided
-    if (row.imageUrl || row.categoryRaw) {
-      await (prisma.product.update as any)({
-        where: { id: existingByUrl.id },
-        data: {
-          ...(row.imageUrl && { imageUrl: row.imageUrl }),
-          ...(row.categoryRaw && { category: row.categoryRaw }),
-        },
-      });
-    }
-    return { productId: existingByUrl.id, isNew: false };
-  }
-
-  // Strategy 2: Try to find by name (case-insensitive)
-  const existingByName = await (prisma.product.findFirst as any)({
+  const product = await (prisma.product.upsert as any)({
     where: {
-      name: { equals: row.name, mode: "insensitive" },
+      source_externalId: {
+        source,
+        externalId,
+      },
+    },
+    create: {
+      name: row.name,
+      category: row.categoryRaw || null,
+      imageUrl: row.imageUrl || null,
+      gtin: row.gtin || null,
+      source,
+      externalId,
+    },
+    update: {
+      ...(row.imageUrl && { imageUrl: row.imageUrl }),
+      ...(row.categoryRaw && { category: row.categoryRaw }),
+      ...(row.gtin && { gtin: row.gtin }),
     },
     select: { id: true },
   });
 
-  if (existingByName) {
-    // Update product fields if provided
-    if (row.imageUrl || row.categoryRaw) {
-      await (prisma.product.update as any)({
-        where: { id: existingByName.id },
-        data: {
-          ...(row.imageUrl && !existingByName.imageUrl && { imageUrl: row.imageUrl }),
-          ...(row.categoryRaw && { category: row.categoryRaw }),
-        },
-      });
-    }
-    return { productId: existingByName.id, isNew: false };
-  }
-
-  // Strategy 3: Create new product
-  const created = await (prisma.product.create as any)({
-    data: {
-      name: row.name,
-      category: row.categoryRaw || null,
-      imageUrl: row.imageUrl || null,
-    },
-  });
-
-  return { productId: created.id, isNew: true };
+  return { productId: product.id, isNew: !existing };
 }
 
 /**
@@ -137,7 +115,7 @@ async function upsertListing(
       affiliateProvider: "profitshare",
       countryCode: "RO",
       priceLastSeenAt: now,
-      ...(row.imageUrl && { imageUrl: row.imageUrl }),
+      imageUrl: row.imageUrl || null,
     },
   });
 
@@ -156,6 +134,7 @@ async function processBatch(
   updatedProducts: number;
   createdListings: number;
   updatedListings: number;
+  skippedMissingExternalId: number;
   failedRows: number;
   errors: { rowNumber: number; message: string; code: string | null }[];
 }> {
@@ -163,6 +142,7 @@ async function processBatch(
   let updatedProducts = 0;
   let createdListings = 0;
   let updatedListings = 0;
+  let skippedMissingExternalId = 0;
   let failedRows = 0;
   const errors: { rowNumber: number; message: string; code: string | null }[] = [];
 
@@ -171,8 +151,21 @@ async function processBatch(
     const rowNum = startIdx + i + 2; // +2 for 1-indexed and header row
 
     try {
+      const source = "profitshare";
+      const productCodeRaw = row.sku;
+      const externalId = productCodeRaw ? String(productCodeRaw).trim() : "";
+
+      if (!externalId) {
+        skippedMissingExternalId++;
+        continue;
+      }
+
       // Find or create product
-      const { productId, isNew: isNewProduct } = await findOrCreateProduct(row);
+      const { productId, isNew: isNewProduct } = await findOrCreateProduct(
+        row,
+        source,
+        externalId
+      );
 
       if (isNewProduct) {
         createdProducts++;
@@ -202,6 +195,7 @@ async function processBatch(
     updatedProducts,
     createdListings,
     updatedListings,
+    skippedMissingExternalId,
     failedRows,
     errors,
   };
@@ -282,17 +276,22 @@ export async function POST(req: NextRequest) {
     );
 
     if (limitedRows.length === 0) {
+      const skippedRows = skippedMissingFields;
       return NextResponse.json(
         {
           ok: true,
           totalRows,
           processedRows: limitedRows.length,
+          skippedRows,
+          skipped: skippedRows,
           createdProducts: 0,
           updatedProducts: 0,
           createdListings: 0,
           updatedListings: 0,
           skippedMissingFields,
+          skippedMissingExternalId: 0,
           failedRows: 0,
+          failed: 0,
           errors: [],
           truncated: false,
           message: null,
@@ -312,6 +311,7 @@ export async function POST(req: NextRequest) {
     let createdListings = 0;
     let updatedListings = 0;
     let failedRows = 0;
+    let skippedMissingExternalId = 0;
     let errors: { rowNumber: number; message: string; code: string | null }[] = [];
 
     for (let i = 0; i < limitedRows.length; i += BATCH_SIZE) {
@@ -323,6 +323,7 @@ export async function POST(req: NextRequest) {
       createdListings += batchResult.createdListings;
       updatedListings += batchResult.updatedListings;
       failedRows += batchResult.failedRows;
+      skippedMissingExternalId += batchResult.skippedMissingExternalId;
       errors.push(...batchResult.errors);
     }
 
@@ -343,17 +344,23 @@ export async function POST(req: NextRequest) {
       ? `Processed first ${limitedRows.length} rows out of ${totalRows}. Split your CSV and re-upload remaining rows.`
       : null;
 
+    const skippedRows = skippedMissingFields + skippedMissingExternalId;
+
     return NextResponse.json(
       {
         ok: failedRows === 0,
         totalRows,
         processedRows: limitedRows.length,
+        skippedRows,
+        skipped: skippedRows,
         createdProducts,
         updatedProducts,
         createdListings,
         updatedListings,
         skippedMissingFields,
+        skippedMissingExternalId,
         failedRows,
+        failed: failedRows,
         errors,
         truncated: isCapped,
         message,

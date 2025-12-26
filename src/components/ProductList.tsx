@@ -97,8 +97,8 @@ export default function ProductList({
   if (rows.length === 0) return null;
 
   return (
-    <div className="flex flex-col gap-3">
-      <p className="text-[10px] text-slate-500 dark:text-slate-400">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <p className="col-span-full text-[10px] text-slate-500 dark:text-slate-400">
         Some store links are affiliate links. They help support PriceLance, but don&apos;t change the prices you pay.
       </p>
       {rows.map(({ product, listing }) => {

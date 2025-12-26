@@ -14,6 +14,7 @@ export type ProfitshareRow = {
   currency: string;
   categoryRaw?: string;
   sku?: string;
+  gtin?: string;
   availability?: string;
   storeName: string;
 };
@@ -25,12 +26,16 @@ export type ProfitshareImportResult = {
   ok: boolean;
   totalRows: number;
   processedRows: number;
+  skippedRows: number;
+  skipped: number;
   createdProducts: number;
   updatedProducts: number;
   createdListings: number;
   updatedListings: number;
   skippedMissingFields: number;
+  skippedMissingExternalId: number;
   failedRows: number;
+  failed: number;
   errors: { rowNumber: number; message: string; code: string | null }[];
 };
 
@@ -67,6 +72,8 @@ const COLUMN_MAPPINGS: Record<string, keyof ProfitshareRow> = {
   img: "imageUrl",
   imagine: "imageUrl",
   poza: "imageUrl",
+  product_picture: "imageUrl",
+  product_image: "imageUrl",
   
   // Price variations
   price: "price",
@@ -92,6 +99,12 @@ const COLUMN_MAPPINGS: Record<string, keyof ProfitshareRow> = {
   code: "sku",
   id: "sku",
   product_id: "sku",
+  
+  // GTIN / barcode variations
+  gtin: "gtin",
+  ean: "gtin",
+  ean13: "gtin",
+  barcode: "gtin",
   
   // Availability variations
   availability: "availability",
@@ -332,6 +345,7 @@ export function parseProfitshareCsv(content: string): {
     const imageUrl = getCell(rawRow, headerMap, "imageUrl") || undefined;
     const categoryRaw = getCell(rawRow, headerMap, "categoryRaw") || undefined;
     const sku = getCell(rawRow, headerMap, "sku") || undefined;
+    const gtin = getCell(rawRow, headerMap, "gtin") || undefined;
     const availability = getCell(rawRow, headerMap, "availability") || undefined;
     
     rows.push({
@@ -343,6 +357,7 @@ export function parseProfitshareCsv(content: string): {
       currency: currency.toUpperCase(),
       categoryRaw,
       sku,
+      gtin,
       availability,
       storeName,
     });
