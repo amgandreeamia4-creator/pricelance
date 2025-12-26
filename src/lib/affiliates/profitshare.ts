@@ -238,6 +238,22 @@ function buildHeaderMap(headerRow: string[]): Map<keyof ProfitshareRow, number> 
     }
   }
   
+  // Fallback: auto-detect an image column if none was mapped explicitly
+  if (!map.has("imageUrl")) {
+    for (let i = 0; i < headerRow.length; i++) {
+      const normalized = normalizeHeader(headerRow[i]);
+      if (
+        normalized.includes("image") ||
+        normalized.includes("picture") ||
+        normalized.includes("poza") ||
+        normalized.includes("imagine")
+      ) {
+        map.set("imageUrl", i);
+        break;
+      }
+    }
+  }
+  
   return map;
 }
 
