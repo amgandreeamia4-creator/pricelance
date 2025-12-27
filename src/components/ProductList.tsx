@@ -3,6 +3,8 @@
 import React from 'react';
 import { getStoreDisplayName } from '@/lib/stores/registry';
 import clsx from 'clsx';
+import { motion } from 'framer-motion';
+import { Star } from 'lucide-react';
 
 type Listing = {
   price: number;
@@ -28,7 +30,7 @@ type ProductListProps = {
   onSelectProduct: (id: string) => void;
   favoriteIds: string[];
   onToggleFavorite: (id: string) => void;
-  isLoading: boolean; // ✅ added prop
+  isLoading: boolean; // added prop
 };
 
 function getBestListing(listings: Listing[] | undefined | null): Listing | null {
@@ -42,12 +44,47 @@ export default function ProductList({
   onSelectProduct,
   favoriteIds,
   onToggleFavorite,
-  isLoading, // ✅ new
+  isLoading, // new
 }: ProductListProps) {
   if (isLoading) {
+    const skeletonItems = Array.from({ length: 8 });
+
     return (
-      <div className="w-full text-center py-10 text-sm text-muted-foreground">
-        Loading products...
+      <div className="w-full md:overflow-x-auto md:pb-4 md:px-4">
+        <div className="grid grid-cols-2 gap-4 w-full md:grid md:grid-rows-2 md:grid-flow-col md:auto-cols-[minmax(190px,210px)] md:gap-4 md:justify-start">
+          {skeletonItems.map((_, idx) => (
+            <div
+              key={idx}
+              className="relative flex flex-col items-center rounded-3xl bg-white/60 p-4 shadow-sm overflow-hidden animate-pulse"
+            >
+              {/* top label skeleton */}
+              <div className="absolute inset-x-0 top-2 flex items-center justify-center gap-2 px-3">
+                <div className="h-3 w-20 rounded-full bg-slate-200" />
+                <div className="h-3 w-12 rounded-full bg-slate-200" />
+              </div>
+
+              {/* image skeleton */}
+              <div className="mt-8 mb-3 flex h-28 w-full items-center justify-center">
+                <div className="w-16 h-16 rounded-xl bg-slate-200" />
+              </div>
+
+              {/* title skeleton */}
+              <div className="h-4 w-24 rounded-full bg-slate-200 mb-2" />
+
+              {/* brand skeleton */}
+              <div className="h-3 w-16 rounded-full bg-slate-200 mb-4" />
+
+              {/* price + favorite skeleton */}
+              <div className="mt-auto pt-3 flex items-end justify-between w-full">
+                <div>
+                  <div className="h-3 w-12 rounded-full bg-slate-200 mb-1" />
+                  <div className="h-4 w-16 rounded-full bg-slate-200" />
+                </div>
+                <div className="h-7 w-7 rounded-full bg-slate-200" />
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
@@ -101,18 +138,21 @@ export default function ProductList({
           );
 
           return (
-            <div
+            <motion.div
               key={product.id}
               role="button"
               tabIndex={0}
               onClick={() => onSelectProduct(product.id)}
-              onKeyDown={(e) => {
+              onKeyDown={(e: React.KeyboardEvent) => {
                 if (e.key === 'Enter' || e.key === ' ') {
                   e.preventDefault();
                   onSelectProduct(product.id);
                 }
               }}
               className={cardClasses}
+              whileHover={{ y: -4, scale: 1.02 }}
+              transition={{ type: "spring", stiffness: 260, damping: 20 }}
+              animate={isBestDeal ? { boxShadow: "0 0 24px rgba(56,189,248,0.55)" } : {}}
             >
               {isBestDeal && (
                 <div className="absolute right-3 top-3 rounded-full bg-sky-500 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-white shadow z-10">
@@ -182,10 +222,14 @@ export default function ProductList({
                       : 'text-slate-400 border-slate-300'
                   }`}
                 >
-                  ★
+                  <Star
+                    className="h-4 w-4"
+                    fill={isFavorite ? 'currentColor' : 'none'}
+                    strokeWidth={2}
+                  />
                 </button>
               </div>
-            </div>
+            </motion.div>
           );
         })}
       </div>
