@@ -50,7 +50,7 @@ export default function ProductList({
     const skeletonItems = Array.from({ length: 8 });
 
     return (
-      <div className="w-full md:overflow-x-auto md:pb-4 md:px-4">
+      <div className="w-full md:overflow-x-auto md:pb-4 md:px-4 md:snap-x md:snap-mandatory">
         <div className="grid grid-cols-2 gap-4 w-full md:grid md:grid-rows-2 md:grid-flow-col md:auto-cols-[minmax(190px,210px)] md:gap-4 md:justify-start">
           {skeletonItems.map((_, idx) => (
             <div
@@ -117,7 +117,7 @@ export default function ProductList({
   }, [products]);
 
   return (
-    <div className="w-full md:overflow-x-auto md:pb-4 md:px-4">
+    <div className="w-full md:overflow-x-auto md:pb-4 md:px-4 md:snap-x md:snap-mandatory">
       <div className="grid grid-cols-2 gap-4 w-full md:grid md:grid-rows-2 md:grid-flow-col md:auto-cols-[minmax(190px,210px)] md:gap-4 md:justify-start">
         {products.slice(0, 10).map((product) => {
           const isSelected = selectedProductId === product.id;
@@ -132,7 +132,7 @@ export default function ProductList({
           const isBestDeal = product.id === bestDealProductId;
 
           const cardClasses = clsx(
-            "relative flex flex-col items-center rounded-3xl bg-white/80 p-4 shadow-sm hover:shadow-md transition-shadow cursor-pointer overflow-hidden",
+            "relative flex flex-col items-center rounded-3xl bg-white/80 p-4 shadow-sm hover:shadow-md transition-shadow cursor-pointer overflow-hidden md:snap-start",
             isSelected && "ring-2 ring-blue-500",
             isBestDeal && "ring-2 ring-sky-400 shadow-xl bg-sky-50/80"
           );

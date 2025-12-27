@@ -538,8 +538,8 @@ export default function Page() {
       </div>
 
       {/* THREE-COLUMN LAYOUT */}
-      <main className="w-full px-6 mt-6 pb-6">
-  <div className="w-[85%] max-w-none mx-auto grid grid-cols-1 lg:grid-cols-[minmax(220px,1fr)_3fr_minmax(220px,1fr)] gap-5 items-start">
+      <div className="mx-auto w-full max-w-6xl px-4 lg:px-6 xl:px-8 mt-6 pb-6">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[260px,minmax(0,1fr),320px] items-start">
           {/* LEFT COLUMN */}
           <div className="flex flex-col gap-4">
             {/* LOCATION */}
@@ -788,7 +788,7 @@ export default function Page() {
             </div>
           </div>
         </div>
-      </main>
+      </div>
 
       {/* Affiliate Disclosure Footer */}
       <footer className="w-full px-6 py-4 border-t border-[var(--pl-card-border)]">
