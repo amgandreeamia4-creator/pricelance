@@ -54,11 +54,12 @@ export default function Page() {
   // Favorites (local)
   const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
 
-  // Categories (from API – still used later)
+  // Categories (from API – still used later if needed)
   const [categories, setCategories] = useState<string[]>([]);
   const [isCategoriesLoading, setIsCategoriesLoading] = useState(false);
   const [categoriesError, setCategoriesError] = useState<string | null>(null);
 
+  // Saved searches (mock)
   const [savedSearches] = useState([
     "laptop",
     "coffee",
@@ -288,7 +289,7 @@ export default function Page() {
     }
   }, [favoriteIds]);
 
-  // Load dynamic categories (still used elsewhere)
+  // Load dynamic categories (still used later if needed)
   useEffect(() => {
     let cancelled = false;
 
@@ -487,19 +488,20 @@ export default function Page() {
         </div>
       </section>
 
-      {/* MAIN GRID – 3 columns, full width with breathing room */}
+      {/* MAIN GRID – 3 columns, wide & balanced */}
       <section
         className="
-          w-screen max-w-[1800px] mx-auto
-          px-8 pt-8 pb-16
+          w-full max-w-[1800px] mx-auto
+          px-6 pt-8 pb-20
           grid grid-cols-1
-          lg:grid-cols-[240px_minmax(0,_1fr)_280px]
-          gap-10
+          lg:grid-cols-[260px_minmax(0,_1fr)_300px]
+          gap-8
         "
       >
-        {/* LEFT SIDEBAR */}
-        <aside className="space-y-5">
-          <div className={`${cardStyle} px-4 py-5`}>
+        {/* LEFT COLUMN */}
+        <aside className="space-y-6">
+          {/* Location card */}
+          <div className={`${cardStyle} p-5 w-full`}>
             <h3 className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--pl-text-subtle)] mb-3">
               Your location
             </h3>
@@ -522,11 +524,13 @@ export default function Page() {
             </button>
           </div>
 
-          <div id="filters" className={`${cardStyle} px-4 py-5`}>
+          {/* Filters card */}
+          <div id="filters" className={`${cardStyle} p-5 w-full`}>
             <h3 className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--pl-text-subtle)] mb-3">
               Filters
             </h3>
 
+            {/* Sort */}
             <div className="mb-3">
               <label className="block text-[11px] font-medium text-[var(--pl-text)] mb-1">
                 Sort
@@ -546,6 +550,7 @@ export default function Page() {
               </select>
             </div>
 
+            {/* Store */}
             <div className="mb-3">
               <label className="block text-[11px] font-medium text-[var(--pl-text)] mb-1">
                 Store
@@ -566,6 +571,7 @@ export default function Page() {
               </select>
             </div>
 
+            {/* Fast shipping */}
             <label className="flex items-center gap-2 text-[12px] cursor-pointer">
               <input
                 type="checkbox"
@@ -578,40 +584,42 @@ export default function Page() {
           </div>
         </aside>
 
-        {/* CENTER COLUMN – wrapper widened with p-6 w-full min-h */}
-        <div className="space-y-5">
-          <div className={`${cardStyle} p-6 w-full min-h-[200px]`}>
-            {visibleProducts.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-8 text-center h-full">
-                <h3 className="text-[13px] font-medium text-[var(--pl-text)] mb-1">
-                  No results found
-                </h3>
-                <p className="text-[11px] text-[var(--pl-text-subtle)]">
-                  Try searching for a product above to see matching items.
-                </p>
-              </div>
-            ) : (
-              <ProductList
-                products={visibleProducts}
-                selectedProductId={selectedProductId}
-                onSelectProduct={(id: string) => setSelectedProductId(id)}
-                favoriteIds={favoriteIds}
-                onToggleFavorite={toggleFavorite}
-              />
-            )}
-          </div>
+        {/* CENTER COLUMN */}
+        <div className={`${cardStyle} p-6 w-full min-h-[200px]`}>
+          {visibleProducts.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-8 text-center h-full">
+              <h3 className="text-[13px] font-medium text-[var(--pl-text)] mb-1">
+                No results found
+              </h3>
+              <p className="text-[11px] text-[var(--pl-text-subtle)]">
+                Try searching for a product above to see matching items.
+              </p>
+            </div>
+          ) : (
+            <ProductList
+              products={visibleProducts}
+              selectedProductId={selectedProductId}
+              onSelectProduct={(id: string) => setSelectedProductId(id)}
+              favoriteIds={favoriteIds}
+              onToggleFavorite={toggleFavorite}
+            />
+          )}
         </div>
 
-        {/* RIGHT SIDEBAR */}
-        <aside>
-          <div className={`${cardStyle} px-4 py-5 space-y-5`}>
+        {/* RIGHT COLUMN */}
+        <aside className="space-y-6">
+          {/* Best options card */}
+          <div className={`${cardStyle} p-5 w-full`}>
             <ProductSummary
               product={activeProduct as any}
               selectedProductId={selectedProductId}
               totalProducts={totalProducts}
               totalOffers={totalOffers}
             />
+          </div>
 
+          {/* Trend + Assistant card */}
+          <div className={`${cardStyle} p-5 w-full space-y-5`}>
             <PriceTrendChart
               points={trendHistory}
               isLoading={isTrendLoading}
