@@ -105,11 +105,8 @@ export default function ProductList({
                 )}
                 {storeName && (
                   <div className="mt-1 flex items-center gap-1 flex-wrap">
-                    <span className="text-[9px] text-[var(--pl-text-muted)]">
-                      from{' '}
-                      <span className="text-[var(--pl-text)] font-medium">
-                        {storeName}
-                      </span>
+                    <span className="text-[9px] text-[var(--pl-text)] font-medium">
+                      {storeName}
                     </span>
                     {isAffiliate && (
                       <span className="rounded-full border border-[var(--pl-primary)] bg-[var(--pl-primary)]/5 text-[var(--pl-primary)] px-2 py-[2px] uppercase tracking-tight text-[9px]">

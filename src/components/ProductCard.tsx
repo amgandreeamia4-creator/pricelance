@@ -20,7 +20,7 @@ export default function ProductCard({ product, isSelected, onSelect }: Props) {
     <button
       type="button"
       onClick={onSelect}
-      className={`flex w-full items-start gap-3 rounded-2xl border px-3 py-3 text-left text-sm transition-transform transform hover:scale-[1.02] hover:shadow-lg ${
+      className={`flex w-full items-start gap-3 rounded-2xl border px-3 py-3 text-left text-sm transition-transform transform hover:scale-[1.02] hover:shadow-lg h-24 overflow-hidden ${
         isSelected ? 'border-indigo-500 bg-indigo-50' : 'border-slate-800 bg-slate-900/70 hover:border-slate-600'
       }`}
     >
@@ -32,27 +32,27 @@ export default function ProductCard({ product, isSelected, onSelect }: Props) {
         />
       ) : null}
 
-      <div className="flex flex-col justify-start gap-2 flex-1 min-w-0">
+      <div className="flex flex-col justify-between flex-1 min-w-0 h-full">
         <div className="line-clamp-2 text-[13px] font-medium leading-snug text-foreground">
           {product.name}
         </div>
 
-        <div className="price-affiliate-wrapper flex flex-col items-start gap-1 w-full">
-          <span className="product-price text-base font-bold text-black whitespace-nowrap">
+        <div className="price-affiliate-wrapper flex flex-col items-start gap-1">
+          <span className="product-price text-sm font-bold text-black whitespace-nowrap">
             {minPrice} {currency}
           </span>
-          <div className="flex items-center gap-1 flex-wrap">
+          <div className="flex items-center gap-1">
             {storeLogoUrl ? (
               <img
                 src={storeLogoUrl}
                 alt={storeName}
                 title={storeName}
-                className="h-3 object-contain"
+                className="h-3 w-3 object-contain flex-shrink-0"
               />
             ) : (
-              <span className="text-xs text-gray-600 font-medium">{storeName}</span>
+              <span className="text-[10px] text-gray-600 font-medium truncate max-w-20">{storeName}</span>
             )}
-            <span className="affiliate-label text-xs bg-gray-200 text-gray-600 px-1.5 py-0.5 rounded uppercase">
+            <span className="affiliate-label text-[10px] bg-gray-200 text-gray-600 px-1 py-0.5 rounded uppercase whitespace-nowrap">
               Affiliate
             </span>
           </div>
