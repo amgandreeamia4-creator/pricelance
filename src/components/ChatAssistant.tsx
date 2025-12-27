@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
+import { MessageCircle } from "lucide-react";
 
 type Listing = {
   price?: number | string | null;
@@ -45,6 +46,8 @@ export default function ChatAssistant({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const inputRef = useRef<HTMLInputElement | null>(null);
+
   const hasResults = Array.isArray(products) && products.length > 0;
   const isDisabled = !!disabled || !hasResults;
 
@@ -60,6 +63,13 @@ export default function ChatAssistant({
     : "Ask about the current results: cheapest options, best value, or how prices compare by store.";
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+
+  const handleQuickQuestion = (prompt: string) => {
+    setInput(prompt);
+    if (inputRef?.current) {
+      inputRef.current.focus();
+    }
+  };
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({
@@ -152,12 +162,43 @@ export default function ChatAssistant({
       <div className="flex flex-col h-full">
         <div className="mb-3 flex items-start justify-between gap-2">
           <div>
-            <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-slate-700 dark:text-slate-200 mb-1.5">
-              Assistant
-            </h3>
+            <div className="flex items-center gap-2 text-[11px] font-semibold tracking-[0.15em] uppercase text-slate-700 dark:text-slate-200 mb-1.5">
+              <MessageCircle className="h-4 w-4" />
+              <span>Assistant</span>
+            </div>
             <p className="text-xs leading-relaxed text-slate-700 dark:text-slate-300">
               {descriptionText}
             </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => handleQuickQuestion("Which store has the cheapest price for this product?")}
+                className="rounded-full border border-slate-600 px-3 py-1 text-[11px] text-slate-100 hover:bg-slate-700/70 transition-colors"
+              >
+                Cheapest store
+              </button>
+              <button
+                type="button"
+                onClick={() => handleQuickQuestion("Is there a better value alternative with similar specs?")}
+                className="rounded-full border border-slate-600 px-3 py-1 text-[11px] text-slate-100 hover:bg-slate-700/70 transition-colors"
+              >
+                Better value option
+              </button>
+              <button
+                type="button"
+                onClick={() => handleQuickQuestion("Show me only options with fast delivery.")}
+                className="rounded-full border border-slate-600 px-3 py-1 text-[11px] text-slate-100 hover:bg-slate-700/70 transition-colors"
+              >
+                Fast delivery only
+              </button>
+              <button
+                type="button"
+                onClick={() => handleQuickQuestion("Compare total prices including delivery for the top 3 offers.")}
+                className="rounded-full border border-slate-600 px-3 py-1 text-[11px] text-slate-100 hover:bg-slate-700/70 transition-colors"
+              >
+                Compare top 3
+              </button>
+            </div>
           </div>
           <span className="mt-0.5 rounded-full border border-[var(--pl-card-border)] bg-[var(--pl-bg)] px-2 py-1 text-[10px] text-slate-600 dark:text-slate-300">
             Try asking
@@ -209,6 +250,7 @@ export default function ChatAssistant({
 
         <div className="flex items-center gap-2">
           <input
+            ref={inputRef}
             className="flex-1 px-3 py-2 rounded-xl bg-[var(--pl-bg)] border border-[var(--pl-card-border)] text-[11px] text-[var(--pl-text)] focus:outline-none focus:border-teal-400 disabled:opacity-50"
             placeholder={
               isDisabled

@@ -9,7 +9,10 @@ import {
   YAxis,
   Tooltip,
   CartesianGrid,
+  Area,
+  AreaChart,
 } from "recharts";
+import { format, parseISO } from "date-fns";
 
 type Point = {
   date: string;
@@ -25,6 +28,46 @@ type Props = {
 
 export default function PriceTrendChart({ points, isLoading, error }: Props) {
   const hasData = Array.isArray(points) && points.length > 0;
+
+  // Process data for better visualization
+  const chartData = React.useMemo(() => {
+    if (!hasData) return [];
+    
+    return points.map(point => {
+      let formattedDate = point.date;
+      try {
+        // Try to parse and format the date
+        const parsedDate = parseISO(point.date);
+        if (!isNaN(parsedDate.getTime())) {
+          formattedDate = format(parsedDate, "MMM yyyy");
+        }
+      } catch (e) {
+        // Keep original date if parsing fails
+      }
+      
+      return {
+        ...point,
+        formattedDate,
+        displayPrice: point.price
+      };
+    });
+  }, [points, hasData]);
+
+  // Custom tooltip for better UX
+  const CustomTooltip = ({ active, payload }: any) => {
+    if (active && payload && payload.length) {
+      const data = payload[0].payload;
+      return (
+        <div className="rounded-lg border border-slate-200 bg-white p-2 shadow-lg">
+          <p className="text-xs font-medium text-slate-900">{data.formattedDate}</p>
+          <p className="text-xs text-slate-600">
+            {data.displayPrice} {data.currency}
+          </p>
+        </div>
+      );
+    }
+    return null;
+  };
 
   return (
     <div className="rounded-2xl border border-[var(--pl-card-border)] bg-[var(--pl-card)] p-4">
@@ -48,27 +91,42 @@ export default function PriceTrendChart({ points, isLoading, error }: Props) {
           </p>
         ) : (
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart
-              data={points}
+            <AreaChart
+              data={chartData}
               margin={{ top: 8, right: 8, left: 0, bottom: 4 }}
             >
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="date" hide />
-              <YAxis hide domain={["auto", "auto"]} />
-              <Tooltip
-                formatter={(value: any) =>
-                  `${value} ${points[0]?.currency ?? ""}` 
-                }
-                labelFormatter={() => ""}
+              <defs>
+                <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8}/>
+                  <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.1}/>
+                </linearGradient>
+              </defs>
+              <CartesianGrid 
+                strokeDasharray="3 3" 
+                stroke="#e2e8f0" 
+                opacity={0.5}
               />
-              <Line
+              <XAxis 
+                dataKey="formattedDate" 
+                tick={{ fontSize: 10 }}
+                stroke="#64748b"
+                interval="preserveStartEnd"
+              />
+              <YAxis 
+                tick={{ fontSize: 10 }}
+                stroke="#64748b"
+                domain={["auto", "auto"]}
+              />
+              <Tooltip content={<CustomTooltip />} />
+              <Area
                 type="monotone"
-                dataKey="price"
+                dataKey="displayPrice"
+                stroke="#3b82f6"
                 strokeWidth={2}
-                dot={false}
-                activeDot={{ r: 3 }}
+                fillOpacity={1}
+                fill="url(#colorPrice)"
               />
-            </LineChart>
+            </AreaChart>
           </ResponsiveContainer>
         )}
       </div>

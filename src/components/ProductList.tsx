@@ -3,11 +3,13 @@
 import React from 'react';
 import { getStoreDisplayName } from '@/lib/stores/registry';
 import clsx from 'clsx';
+import { Star } from 'lucide-react';
 
 type Listing = {
   price: number;
   currency: string;
   storeName: string;
+  url?: string | null; // ✅ link to retailer
   affiliateProvider?: string | null;
   source?: string | null;
   fastDelivery?: boolean | null;
@@ -31,8 +33,26 @@ type ProductListProps = {
   isLoading: boolean;
 };
 
-// 🔒 hard cap on how many products we show in the grid
+// 🔒 how many we show in the main table
 const MAX_VISIBLE_PRODUCTS = 6;
+
+// soft threshold for "Budget pick" badge
+const BUDGET_THRESHOLD = 1000;
+
+// map store label to a soft color chip
+function getStoreToneClasses(storeLabel?: string | null) {
+  if (!storeLabel) return 'bg-slate-100 text-slate-600';
+
+  const label = storeLabel.toLowerCase();
+
+  if (label.includes('emag')) return 'bg-sky-100 text-sky-700';
+  if (label.includes('altex')) return 'bg-amber-100 text-amber-700';
+  if (label.includes('pcgarage')) return 'bg-rose-100 text-rose-700';
+  if (label.includes('evomag')) return 'bg-indigo-100 text-indigo-700';
+  if (label.includes('flanco')) return 'bg-emerald-100 text-emerald-700';
+
+  return 'bg-slate-100 text-slate-600';
+}
 
 function getBestListing(listings: Listing[] | undefined | null): Listing | null {
   if (!listings || listings.length === 0) return null;
@@ -63,7 +83,6 @@ export default function ProductList({
     );
   }
 
-  // Work on the same subset we actually render
   const visibleProducts = products.slice(0, MAX_VISIBLE_PRODUCTS);
 
   // Best deal = lowest price among visible products
@@ -84,9 +103,19 @@ export default function ProductList({
     return bestDeal.id;
   }, [visibleProducts]);
 
+  // helper to open URLs safely
+  const openListing = (url?: string | null) => {
+    if (!url) return;
+    try {
+      window.open(url, '_blank', 'noopener,noreferrer');
+    } catch {
+      // fail silently – no need to crash UI
+    }
+  };
+
   return (
     <div className="w-full">
-      {/* SIMPLE, STABLE GRID: no horizontal scroll, up to 3 cards per row on desktop */}
+      {/* SIMPLE, STABLE GRID: up to 3 cards per row on desktop */}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-2 md:grid-cols-3">
         {visibleProducts.map((product) => {
           const isSelected = selectedProductId === product.id;
@@ -96,15 +125,29 @@ export default function ProductList({
           const minPrice = bestListing?.price;
           const currency = bestListing?.currency ?? 'LEI';
           const storeLabel = getStoreDisplayName(bestListing || {});
+          const bestListingUrl = bestListing?.url ?? undefined;
           const isAffiliate = Boolean(bestListing?.affiliateProvider || bestListing?.source);
 
           const isBestDeal = product.id === bestDealProductId;
 
+          // ✅ badges
+          const hasFastDelivery = product.listings.some((l) => l.fastDelivery);
+          const isPopular = product.listings.length >= 4;
+          const isBudget = typeof minPrice === 'number' && minPrice <= BUDGET_THRESHOLD;
+
+          const badges: string[] = [];
+          if (hasFastDelivery) badges.push('Fast delivery');
+          if (isBudget) badges.push('Budget pick');
+          if (isPopular) badges.push('Popular');
+          const limitedBadges = badges.slice(0, 2);
+
           const cardClasses = clsx(
-            'relative flex flex-col items-center rounded-3xl bg-white/85 p-4 shadow-sm hover:shadow-md transition-shadow cursor-pointer overflow-hidden',
+            'relative flex flex-col items-center rounded-3xl bg-white/90 p-4 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-shadow transition-transform duration-150 cursor-pointer overflow-hidden',
             isSelected && 'ring-2 ring-blue-500',
             isBestDeal && 'ring-2 ring-sky-400 shadow-xl bg-sky-50/90'
           );
+
+          const storeTone = getStoreToneClasses(storeLabel);
 
           return (
             <div
@@ -126,12 +169,23 @@ export default function ProductList({
                 </div>
               )}
 
-              {/* Store name + Affiliate pill */}
+              {/* Store name + Affiliate pill (store chip is now a link if url exists) */}
               <div className="absolute inset-x-0 top-2 flex items-center justify-center gap-2 px-3">
                 {storeLabel && (
-                  <span className="max-w-[110px] truncate text-[11px] text-slate-500">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openListing(bestListingUrl);
+                    }}
+                    className={clsx(
+                      'max-w-[140px] truncate rounded-full px-2 py-0.5 text-[11px] font-medium border border-transparent transition-colors',
+                      storeTone,
+                      bestListingUrl && 'hover:border-sky-400 hover:shadow-sm'
+                    )}
+                  >
                     {storeLabel}
-                  </span>
+                  </button>
                 )}
                 {isAffiliate && (
                   <span className="rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-wide text-slate-600 bg-white/70 backdrop-blur">
@@ -163,6 +217,20 @@ export default function ProductList({
                 </p>
               )}
 
+              {/* Story badges row */}
+              {limitedBadges.length > 0 && (
+                <div className="mt-2 flex flex-wrap items-center justify-center gap-1">
+                  {limitedBadges.map((label) => (
+                    <span
+                      key={label}
+                      className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] text-slate-600"
+                    >
+                      {label}
+                    </span>
+                  ))}
+                </div>
+              )}
+
               {/* Price + favorite */}
               <div className="mt-auto pt-3 flex items-end justify-between w-full">
                 <div>
@@ -189,13 +257,24 @@ export default function ProductList({
                       : 'text-slate-400 border-slate-300'
                   }`}
                 >
-                  ★
+                  <Star
+                    className="h-4 w-4"
+                    fill={isFavorite ? 'currentColor' : 'none'}
+                    strokeWidth={2}
+                  />
                 </button>
               </div>
             </div>
           );
         })}
       </div>
+
+      {products.length > MAX_VISIBLE_PRODUCTS && (
+        <p className="mt-4 text-center text-[11px] text-slate-500">
+          Showing first {visibleProducts.length} of {products.length} results. More result views
+          coming soon.
+        </p>
+      )}
     </div>
   );
 }

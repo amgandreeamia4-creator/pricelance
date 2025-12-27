@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
+import { SlidersHorizontal, MessageCircle } from "lucide-react";
 
 import ThemeToggle from "@/components/ThemeToggle";
 import ProductList from "@/components/ProductList";
@@ -568,9 +569,10 @@ export default function Page() {
 
             {/* FILTERS */}
             <div className={`${cardStyle} p-4 overflow-x-hidden`}>
-              <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-slate-700 dark:text-slate-200 mb-3">
-                Filters
-              </h3>
+              <div className="flex items-center gap-2 text-[11px] font-semibold tracking-[0.15em] uppercase text-slate-700 dark:text-slate-200 mb-3">
+                <SlidersHorizontal className="h-4 w-4" />
+                <span>Filters</span>
+              </div>
               <div className="flex flex-col gap-3">
                 {/* Sort */}
                 <div className="flex items-center gap-2">
