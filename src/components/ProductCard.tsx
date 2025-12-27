@@ -1,9 +1,14 @@
 'use client';
 
-import type { ProductWithHistory } from '../types/product';
-
 type Props = {
-  product: ProductWithHistory;
+  product: {
+    name: string;
+    imageUrl?: string;
+    listings: {
+      price: number;
+      currency: string;
+    }[];
+  };
   isSelected: boolean;
   onSelect: () => void;
 };
@@ -17,31 +22,26 @@ export function ProductCard({ product, isSelected, onSelect }: Props) {
     <button
       type="button"
       onClick={onSelect}
-      className={`flex w-full items-center gap-3 rounded-2xl border px-3 py-2 text-left text-sm transition ${
+      className={`flex w-full items-center gap-3 rounded-2xl border px-3 py-2 text-left text-sm transition-transform transform hover:scale-[1.02] hover:shadow-lg ${
         isSelected
           ? 'border-indigo-500 bg-indigo-500/10'
           : 'border-slate-800 bg-slate-900/70 hover:border-slate-600'
       }`}
     >
-      <div className="h-14 w-20 overflow-hidden rounded-xl bg-slate-800">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
+      {product.imageUrl && (
         <img
-          src={listings[0]?.imageUrl ?? product.imageUrl ?? product.thumbnailUrl ?? undefined}
-          alt={product.displayName}
-          className="h-full w-full object-cover"
+          src={product.imageUrl}
+          alt={product.name}
+          className="h-16 w-16 object-contain"
         />
-      </div>
-      <div className="flex-1">
-        <p className="line-clamp-1 text-xs font-semibold text-slate-50 sm:text-sm">
-          {product.displayName}
-        </p>
-        <p className="mt-0.5 text-xs text-slate-400">
-          From{' '}
-          <span className="font-semibold text-slate-50">
-            {minPrice.toFixed(0)} {currency}
-          </span>{' '}
-          · {listings.length} stores
-        </p>
+      )}
+      <div className="flex flex-col justify-start gap-1 text-start">
+        <div className="line-clamp-2 text-[13px] font-medium leading-snug">
+          {product.name}
+        </div>
+        <div className="text-[13px] font-semibold text-white">
+          {minPrice} {currency}
+        </div>
       </div>
     </button>
   );
