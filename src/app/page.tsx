@@ -487,8 +487,10 @@ export default function Page() {
         </div>
       </section>
 
-      {/* MAIN GRID – 3 columns filling the width */}
-      <section className="w-full px-6 pt-6 pb-10 grid grid-cols-1 lg:grid-cols-[260px_minmax(0,_1fr)_320px] gap-6">
+      {/* MAIN GRID – 3 columns, tuned to mock */}
+      <section
+        className="w-full px-4 pt-6 pb-10 grid grid-cols-1 lg:grid-cols-[220px_minmax(0,_1fr)_280px] gap-4"
+      >
         {/* LEFT SIDEBAR */}
         <aside className="space-y-6">
           <div className={`${cardStyle} p-5`}>
@@ -570,9 +572,9 @@ export default function Page() {
           </div>
         </aside>
 
-        {/* CENTER COLUMN */}
+        {/* CENTER COLUMN – card padding reduced to p-3 */}
         <div className="space-y-6">
-          <div className={`${cardStyle} p-5`}>
+          <div className={`${cardStyle} p-3`}>
             {visibleProducts.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-8 text-center">
                 <h3 className="text-[13px] font-medium text-[var(--pl-text)] mb-1">

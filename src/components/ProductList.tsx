@@ -50,7 +50,7 @@ const ProductList: React.FC<ProductListProps> = ({
   }
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-x-3 gap-y-6">
       {products.map((product) => {
         const isSelected = selectedProductId === product.id;
         const bestListing = getBestListing(product.listings);
@@ -63,7 +63,7 @@ const ProductList: React.FC<ProductListProps> = ({
             key={product.id}
             role="button"
             tabIndex={0}
-            className="group relative [perspective:1200px] focus-visible:ring-2 focus-visible:ring-[var(--pl-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--pl-bg)] outline-none"
+            className="group relative min-w-[160px] p-3 sm:p-4 [perspective:1200px] focus-visible:ring-2 focus-visible:ring-[var(--pl-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--pl-bg)] outline-none transition-all duration-200 ease-in-out hover:-translate-y-1 hover:shadow-[0_10px_30px_rgba(15,23,42,0.18)]"
             onClick={() => onSelectProduct(product.id)}
             onKeyDown={(e) => {
               if (e.key === "Enter" || e.key === " ") {
@@ -74,16 +74,11 @@ const ProductList: React.FC<ProductListProps> = ({
           >
             {/* Flip card wrapper */}
             <div
-              className={`
-                relative h-full min-h-[260px] w-full
-                rounded-2xl border border-[var(--pl-card-border)]
-                bg-[var(--pl-card)]/50 backdrop-blur-md shadow-inner
-                [transform-style:preserve-3d] transition-transform duration-500
-                group-hover:[transform:rotateY(180deg)]
-                ${isSelected ? "ring-2 ring-[var(--pl-primary)]" : ""}
-              `}
+              className={`relative h-full min-h-[260px] w-full rounded-2xl border border-[var(--pl-card-border)] bg-[var(--pl-card)]/50 backdrop-blur-md shadow-inner [transform-style:preserve-3d] transition-transform duration-500 group-hover:[transform:rotateY(180deg)] ${
+                isSelected ? "ring-2 ring-[var(--pl-primary)]" : ""
+              }`}
             >
-              {/* Favorite Star */}
+              {/* Favorite Star (only star we keep) */}
               <button
                 type="button"
                 aria-label={isFavorite ? "Remove from favourites" : "Add to favourites"}
@@ -91,26 +86,19 @@ const ProductList: React.FC<ProductListProps> = ({
                   e.stopPropagation();
                   onToggleFavorite(product.id);
                 }}
-                className={`
-                  absolute top-2 right-2 z-20 h-7 w-7 rounded-full border text-[11px] flex items-center justify-center transition-colors
-                  ${isFavorite
+                className={`absolute top-2 right-2 z-20 h-7 w-7 rounded-full border text-[11px] flex items-center justify-center transition-colors ${
+                  isFavorite
                     ? "bg-[var(--pl-primary)] text-white border-[var(--pl-primary)] shadow-[0_0_12px_var(--pl-primary-glow)]"
                     : "bg-[var(--pl-bg)]/70 text-[var(--pl-text-muted)] border-[var(--pl-card-border)] hover:text-[var(--pl-primary)] hover:border-[var(--pl-primary)]"
-                  }
-                `}
+                }`}
               >
                 ★
               </button>
 
-              {/* Twinkle Sparkle */}
-              <span className="absolute top-1 left-2 text-yellow-300 text-xs pointer-events-none animate-pulse">
-                ✨
-              </span>
-
               {/* FRONT SIDE */}
               <div className="absolute inset-0 p-4 flex flex-col items-center text-center justify-between [backface-visibility:hidden]">
                 <div className="flex flex-col items-center gap-3">
-                  <div className="w-20 h-20 rounded-lg bg-[var(--pl-bg)]/50 border border-[var(--pl-card-border)] overflow-hidden flex items-center justify-center">
+                  <div className="w-24 h-24 rounded-lg bg-[var(--pl-bg)]/50 border border-[var(--pl-card-border)] overflow-hidden flex items-center justify-center">
                     <img
                       src={product.imageUrl || "/placeholder.png"}
                       alt={product.displayName || product.name}
@@ -141,9 +129,6 @@ const ProductList: React.FC<ProductListProps> = ({
                   ) : (
                     <span className="text-[11px] text-[var(--pl-text-muted)]">No offers yet</span>
                   )}
-                  <span className="mt-1 inline-block text-[9px] uppercase tracking-wider border px-2 py-0.5 rounded-full border-[var(--pl-card-border)] bg-[var(--pl-bg)]/60 text-[var(--pl-text-muted)]">
-                    Highlight
-                  </span>
                 </div>
               </div>
 
