@@ -13,6 +13,7 @@ import {
   AreaChart,
 } from "recharts";
 import { format, parseISO } from "date-fns";
+import { useSpring, animated } from '@react-spring/web';
 
 type Point = {
   date: string;

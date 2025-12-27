@@ -4,6 +4,7 @@ import React from 'react';
 import { getStoreDisplayName } from '@/lib/stores/registry';
 import clsx from 'clsx';
 import { Star } from 'lucide-react';
+import { useSpring, animated, config } from '@react-spring/web';
 
 type Listing = {
   price: number;
@@ -112,6 +113,16 @@ export default function ProductList({
       // fail silently – no need to crash UI
     }
   };
+
+  // Flip card animation state
+  const [flippedCard, setFlippedCard] = React.useState<string | null>(null);
+
+  // Spring animation
+  const { transform, opacity } = useSpring({
+    opacity: flippedCard ? 1 : 0,
+    transform: flippedCard ? 'rotateY(180deg)' : 'rotateY(0deg)',
+    config: config.wobbly,
+  });
 
   return (
     <div className="w-full">

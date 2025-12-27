@@ -21,6 +21,7 @@
   },
   "dependencies": {
     "@prisma/client": "^6.19.0",
+    "@react-spring/web": "^9.7.4",
     "date-fns": "^4.1.0",
     "framer-motion": "^12.6.3",
     "lucide-react": "^0.556.0",
@@ -28,6 +29,7 @@
     "next-themes": "latest",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
+    "react-spring": "^9.7.4",
     "recharts": "^3.4.1"
   },
   "devDependencies": {
