@@ -535,7 +535,7 @@ export default function Page() {
 
       {/* THREE-COLUMN LAYOUT */}
       <main className="w-full px-6 mt-6 pb-6">
-  <div className="w-[85%] max-w-none mx-auto grid grid-cols-1 lg:grid-cols-[260px_1fr_260px] gap-5 items-start">
+  <div className="w-[85%] max-w-none mx-auto grid grid-cols-1 lg:grid-cols-[minmax(220px,1fr)_3fr_minmax(220px,1fr)] gap-5 items-start">
           {/* LEFT COLUMN */}
           <div className="flex flex-col gap-4">
             {/* LOCATION */}
