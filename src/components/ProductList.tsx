@@ -67,6 +67,7 @@ export default function ProductList({
 
         const minPrice = bestListing?.price;
         const currency = bestListing?.currency ?? 'LEI';
+        const storeName = bestListing?.storeName;
         const isAffiliate = Boolean(bestListing?.affiliateProvider || bestListing?.source);
 
         return (
@@ -101,6 +102,21 @@ export default function ProductList({
                   <p className="mt-0.5 text-[10px] text-muted-foreground line-clamp-1">
                     {product.brand}
                   </p>
+                )}
+                {storeName && (
+                  <div className="mt-1 flex items-center gap-1 flex-wrap">
+                    <span className="text-[9px] text-[var(--pl-text-muted)]">
+                      from{' '}
+                      <span className="text-[var(--pl-text)] font-medium">
+                        {storeName}
+                      </span>
+                    </span>
+                    {isAffiliate && (
+                      <span className="rounded-full border border-[var(--pl-primary)] bg-[var(--pl-primary)]/5 text-[var(--pl-primary)] px-2 py-[2px] uppercase tracking-tight text-[9px]">
+                        Affiliate
+                      </span>
+                    )}
+                  </div>
                 )}
               </div>
             </div>
