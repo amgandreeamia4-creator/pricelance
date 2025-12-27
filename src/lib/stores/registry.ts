@@ -74,6 +74,16 @@ export function normalizeStoreName(storeId: string, fallbackName: string): strin
   return fallbackName;
 }
 
+export function getStoreDisplayName(listing: { storeId?: string | null; storeName?: string | null }): string {
+  if (listing.storeName) return listing.storeName;
+
+  const id = listing.storeId ?? "";
+  const meta = getStoreMeta(id);
+  if (meta?.name) return meta.name;
+
+  return id || "Unknown store";
+}
+
 export function defaultCountryForStore(
   storeId: string,
   fallback?: string | null
