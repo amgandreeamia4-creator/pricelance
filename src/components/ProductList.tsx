@@ -50,7 +50,7 @@ const ProductList: React.FC<ProductListProps> = ({
   }
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-x-3 gap-y-6">
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-x-6 gap-y-10">
       {products.map((product) => {
         const isSelected = selectedProductId === product.id;
         const bestListing = getBestListing(product.listings);
@@ -63,7 +63,7 @@ const ProductList: React.FC<ProductListProps> = ({
             key={product.id}
             role="button"
             tabIndex={0}
-            className="group relative min-w-[160px] p-3 sm:p-4 [perspective:1200px] focus-visible:ring-2 focus-visible:ring-[var(--pl-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--pl-bg)] outline-none transition-all duration-200 ease-in-out hover:-translate-y-1 hover:shadow-[0_10px_30px_rgba(15,23,42,0.18)]"
+            className="group relative min-w-[180px] max-w-[220px] mx-auto p-3 sm:p-4 [perspective:1200px] focus-visible:ring-2 focus-visible:ring-[var(--pl-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--pl-bg)] outline-none transition-all duration-200 ease-in-out hover:-translate-y-1 hover:shadow-[0_10px_30px_rgba(15,23,42,0.18)]"
             onClick={() => onSelectProduct(product.id)}
             onKeyDown={(e) => {
               if (e.key === "Enter" || e.key === " ") {
