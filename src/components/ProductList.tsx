@@ -58,132 +58,125 @@ const ProductList: React.FC<ProductListProps> = ({
   }
 
   return (
-    <div className="relative">
-      {/* horizontal rail */}
-      <div className="flex gap-4 overflow-x-auto pb-3 -mx-4 px-4">
-        {products.map((product) => {
-          const isSelected = selectedProductId === product.id;
-          const bestListing = getBestListing(product.listings);
-          const isFavorite = favoriteIds.includes(product.id);
+    <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+      {products.map((product) => {
+        const isSelected = selectedProductId === product.id;
+        const bestListing = getBestListing(product.listings);
+        const isFavorite = favoriteIds.includes(product.id);
 
-          const minPrice = bestListing?.price;
-          const currency = bestListing?.currency ?? "LEI";
-          const isAffiliate = Boolean(
-            bestListing?.affiliateProvider || bestListing?.source,
-          );
+        const minPrice = bestListing?.price;
+        const currency = bestListing?.currency ?? "LEI";
+        const isAffiliate = Boolean(
+          bestListing?.affiliateProvider || bestListing?.source,
+        );
 
-          return (
-            <div
-              key={product.id}
-              role="button"
-              tabIndex={0}
-              onClick={() => onSelectProduct(product.id)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  onSelectProduct(product.id);
-                }
-              }}
-              className={`flex-none w-64 rounded-2xl border border-[var(--pl-card-border)] bg-[var(--pl-card)]
-                px-4 py-3 cursor-pointer transition-all
-                hover:shadow-[0_0_20px_rgba(15,23,42,0.18)]
-                ${
-                  isSelected
-                    ? "ring-2 ring-[var(--pl-primary)]"
-                    : ""
-                }`}
-            >
-              <div className="flex">
-                {/* Image */}
-                <div className="w-16 h-16 mr-3 shrink-0 rounded-xl bg-[var(--pl-bg)]/70 border border-[var(--pl-card-border)] overflow-hidden flex items-center justify-center">
-                  <img
-                    src={product.imageUrl || "/placeholder.png"}
-                    alt={product.displayName || product.name}
-                    className="w-full h-full object-contain"
-                  />
-                </div>
-
-                {/* Text block */}
-                <div className="flex-1 flex flex-col justify-between min-w-0">
-                  <div>
-                    <h3 className="text-xs font-semibold text-[var(--pl-text)] leading-snug line-clamp-2">
-                      {product.displayName || product.name}
-                    </h3>
-                    {product.brand && (
-                      <p className="mt-0.5 text-[10px] text-[var(--pl-text-subtle)] line-clamp-1">
-                        {product.brand}
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px]">
-                    {bestListing ? (
-                      <>
-                        <span className="text-[var(--pl-text-muted)]">
-                          from <strong>{bestListing.storeName}</strong>
-                        </span>
-                        {isAffiliate && (
-                          <span className="rounded-full bg-[var(--pl-primary)]/10 text-[var(--pl-primary)] px-2 py-0.5 text-[9px]">
-                            Affiliate
-                          </span>
-                        )}
-                        {bestListing.fastDelivery && (
-                          <span className="rounded-full bg-emerald-500/10 text-emerald-400 px-2 py-0.5 text-[9px]">
-                            Fast delivery
-                          </span>
-                        )}
-                      </>
-                    ) : (
-                      <span className="text-[var(--pl-text-muted)]">
-                        No offers yet
-                      </span>
-                    )}
-                  </div>
-                </div>
+        return (
+          <div
+            key={product.id}
+            role="button"
+            tabIndex={0}
+            onClick={() => onSelectProduct(product.id)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                onSelectProduct(product.id);
+              }
+            }}
+            className={`
+              h-full rounded-2xl border border-[var(--pl-card-border)]
+              bg-[var(--pl-card)] px-3 py-3 cursor-pointer
+              transition-all hover:shadow-[0_0_18px_rgba(15,23,42,0.18)]
+              flex flex-col justify-between
+              ${isSelected ? "ring-2 ring-[var(--pl-primary)]" : ""}
+            `}
+          >
+            {/* Top: image + title */}
+            <div className="flex gap-2">
+              <div className="w-16 h-16 shrink-0 rounded-xl bg-[var(--pl-bg)]/70 border border-[var(--pl-card-border)] overflow-hidden flex items-center justify-center">
+                <img
+                  src={product.imageUrl || "/placeholder.png"}
+                  alt={product.displayName || product.name}
+                  className="w-full h-full object-contain"
+                />
               </div>
 
-              {/* Price + favourite in bottom-right */}
-              <div className="mt-3 flex items-end justify-between">
-                <div className="text-left">
+              <div className="flex-1 min-w-0">
+                <h3 className="text-xs font-semibold text-[var(--pl-text)] leading-snug line-clamp-2">
+                  {product.displayName || product.name}
+                </h3>
+                {product.brand && (
+                  <p className="mt-0.5 text-[10px] text-[var(--pl-text-subtle)] line-clamp-1">
+                    {product.brand}
+                  </p>
+                )}
+
+                <div className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[9px]">
                   {bestListing ? (
                     <>
-                      <div className="text-[10px] text-[var(--pl-text-muted)]">
-                        Best price
-                      </div>
-                      <div className="text-sm font-semibold text-[var(--pl-text)]">
-                        {formatPrice(minPrice, currency)}
-                      </div>
+                      <span className="text-[var(--pl-text-muted)]">
+                        from <strong>{bestListing.storeName}</strong>
+                      </span>
+                      {isAffiliate && (
+                        <span className="rounded-full bg-[var(--pl-primary)]/10 text-[var(--pl-primary)] px-2 py-0.5">
+                          Affiliate
+                        </span>
+                      )}
+                      {bestListing.fastDelivery && (
+                        <span className="rounded-full bg-emerald-500/10 text-emerald-400 px-2 py-0.5">
+                          Fast delivery
+                        </span>
+                      )}
                     </>
                   ) : (
-                    <div className="text-[10px] text-[var(--pl-text-muted)]">
-                      No price
-                    </div>
+                    <span className="text-[var(--pl-text-muted)]">
+                      No offers yet
+                    </span>
                   )}
                 </div>
-
-                <button
-                  type="button"
-                  aria-label={
-                    isFavorite ? "Remove from favourites" : "Add to favourites"
-                  }
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onToggleFavorite(product.id);
-                  }}
-                  className={`h-7 w-7 rounded-full border text-[11px] flex items-center justify-center transition-colors
-                    ${
-                      isFavorite
-                        ? "bg-[var(--pl-primary)] text-white border-[var(--pl-primary)] shadow-[0_0_10px_var(--pl-primary-glow)]"
-                        : "bg-[var(--pl-bg)]/80 text-[var(--pl-text-muted)] border-[var(--pl-card-border)] hover:text-[var(--pl-primary)] hover:border-[var(--pl-primary)]"
-                    }`}
-                >
-                  ★
-                </button>
               </div>
             </div>
-          );
-        })}
-      </div>
+
+            {/* Bottom: price + favourite */}
+            <div className="mt-3 flex items-end justify-between">
+              <div className="text-left">
+                {bestListing ? (
+                  <>
+                    <div className="text-[10px] text-[var(--pl-text-muted)]">
+                      Best price
+                    </div>
+                    <div className="text-sm font-semibold text-[var(--pl-text)]">
+                      {formatPrice(minPrice, currency)}
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-[10px] text-[var(--pl-text-muted)]">
+                    No price
+                  </div>
+                )}
+              </div>
+
+              <button
+                type="button"
+                aria-label={
+                  isFavorite ? "Remove from favourites" : "Add to favourites"
+                }
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onToggleFavorite(product.id);
+                }}
+                className={`h-7 w-7 rounded-full border text-[11px] flex items-center justify-center transition-colors
+                  ${
+                    isFavorite
+                      ? "bg-[var(--pl-primary)] text-white border-[var(--pl-primary)] shadow-[0_0_10px_var(--pl-primary-glow)]"
+                      : "bg-[var(--pl-bg)]/80 text-[var(--pl-text-muted)] border-[var(--pl-card-border)] hover:text-[var(--pl-primary)] hover:border-[var(--pl-primary)]"
+                  }`}
+              >
+                ★
+              </button>
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 };
