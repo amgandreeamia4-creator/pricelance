@@ -14,7 +14,7 @@ export default function ProductCard({ product, isSelected, onSelect }: Props) {
   const currency = listings[0]?.currency ?? 'EUR';
   const source = listings[0]?.source ?? 'Affiliate';
   const storeLogoUrl = listings[0]?.storeLogoUrl;
-  const storeName = listings[0]?.store;
+  const storeName = listings[0]?.store || listings[0]?.storeName || 'Affiliate';
 
   return (
     <button
@@ -37,20 +37,25 @@ export default function ProductCard({ product, isSelected, onSelect }: Props) {
           {product.name}
         </div>
 
-        <div className="text-[13px] font-semibold text-primary">
-          {minPrice} {currency}
-        </div>
-
-        <div className="text-[12px] text-muted-foreground mt-1">
-          from <span className="font-medium">{source}</span>{' '}
-          <span className="opacity-60">(affiliate)</span>
-          {storeLogoUrl ? (
-            <div className="w-6 h-4 flex items-center ml-2">
-              <img src={storeLogoUrl} alt={storeName} title={storeName} className="h-4 object-contain" />
+        <div className="price-section flex flex-col items-center gap-1 pt-2 w-full overflow-hidden text-center">
+          <div className="price text-base font-bold text-black">
+            {minPrice} {currency}
+          </div>
+          <div className="flex items-center gap-1 text-xs text-gray-600">
+            {storeLogoUrl ? (
+              <img
+                src={storeLogoUrl}
+                alt={storeName}
+                title={storeName}
+                className="h-3 object-contain"
+              />
+            ) : (
+              <span className="font-medium">{storeName}</span>
+            )}
+            <div className="affiliate-badge bg-gray-200 px-1.5 py-0.5 rounded text-uppercase">
+              affiliate
             </div>
-          ) : (
-            <div className="h-4 ml-2 inline-block text-xs text-muted-foreground">{storeName}</div>
-          )}
+          </div>
         </div>
       </div>
     </button>

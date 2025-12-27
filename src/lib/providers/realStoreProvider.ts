@@ -3,6 +3,7 @@ import type { ProductProvider, ProviderSearchResult, ProviderErrorType } from ".
 import type { IngestPayload, IngestProductInput, IngestListingInput, IngestResult } from "@/lib/ingestService";
 import { ingestProducts } from "@/lib/ingestService";
 import { providerConfigs } from "@/config/providerConfig";
+import { getStoreMeta } from "@/lib/stores/registry";
 
 /**
  * Result returned by searchAndIngest for debug/meta purposes.
@@ -135,7 +136,7 @@ function buildListingsFromItem(item: RTPProduct, options: {
 
     listings.push({
       storeName,
-      storeLogoUrl: undefined,
+      storeLogoUrl: getStoreMeta((offer.store_name ?? "online store").toLowerCase())?.logoUrl,
       url,
       imageUrl: imageUrl ?? undefined,
       price: priceNumber,
@@ -171,7 +172,7 @@ function buildListingsFromItem(item: RTPProduct, options: {
 
     listings.push({
       storeName: offer.store_name ?? "Online store",
-      storeLogoUrl: undefined,
+      storeLogoUrl: getStoreMeta((offer.store_name ?? "online store").toLowerCase())?.logoUrl,
       url: url ?? undefined,
       imageUrl: imageUrl ?? undefined,
       price: priceNumber,
@@ -625,7 +626,7 @@ export const realStoreProvider: ProductProvider & {
         listings: [
           {
             storeName: offer?.store_name ?? "Online store",
-            storeLogoUrl: undefined,
+            storeLogoUrl: getStoreMeta((offer?.store_name ?? "online store").toLowerCase())?.logoUrl,
             url:
               offer?.offer_page_url ??
               item.product_offers_page_url ??
