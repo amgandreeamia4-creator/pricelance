@@ -31,6 +31,9 @@ type ProductListProps = {
   isLoading: boolean;
 };
 
+// 🔒 hard cap on how many products we show in the grid
+const MAX_VISIBLE_PRODUCTS = 6;
+
 function getBestListing(listings: Listing[] | undefined | null): Listing | null {
   if (!listings || listings.length === 0) return null;
   return listings.reduce((best, l) => (l.price < best.price ? l : best));
@@ -60,10 +63,12 @@ export default function ProductList({
     );
   }
 
-  // Best deal = lowest price among first N products (you can increase this if you want)
+  // Work on the same subset we actually render
+  const visibleProducts = products.slice(0, MAX_VISIBLE_PRODUCTS);
+
+  // Best deal = lowest price among visible products
   const bestDealProductId = React.useMemo(() => {
-    const productsWithPrices = products
-      .slice(0, 20)
+    const productsWithPrices = visibleProducts
       .map((product) => ({
         id: product.id,
         bestListing: getBestListing(product.listings),
@@ -77,13 +82,13 @@ export default function ProductList({
     );
 
     return bestDeal.id;
-  }, [products]);
+  }, [visibleProducts]);
 
   return (
     <div className="w-full">
       {/* SIMPLE, STABLE GRID: no horizontal scroll, up to 3 cards per row on desktop */}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-2 md:grid-cols-3">
-        {products.slice(0, 20).map((product) => {
+        {visibleProducts.map((product) => {
           const isSelected = selectedProductId === product.id;
           const bestListing = getBestListing(product.listings);
           const isFavorite = favoriteIds.includes(product.id);
