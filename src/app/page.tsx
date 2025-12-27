@@ -684,7 +684,7 @@ export default function Page() {
 
           {/* CENTER COLUMN */}
           <div className="flex flex-col gap-4">
-            <div className={`${cardStyle} p-5 min-h-[180px]`}>
+            <div className={`${cardStyle} px-6 py-5 min-h-[180px]`}>
               {visibleProducts.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-6 text-center">
                   <h3 className="text-[13px] font-medium text-[var(--pl-text)] mb-1">
