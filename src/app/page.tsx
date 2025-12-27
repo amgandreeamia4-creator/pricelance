@@ -584,8 +584,8 @@ export default function Page() {
           </div>
         </aside>
 
-        {/* CENTER COLUMN */}
-        <div className={`${cardStyle} p-6 w-full min-h-[200px]`}>
+         {/* CENTER COLUMN */}
+        <div className={`${cardStyle} w-full min-w-0 p-5 lg:p-6 min-h-[200px]`}>
           {visibleProducts.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-8 text-center h-full">
               <h3 className="text-[13px] font-medium text-[var(--pl-text)] mb-1">

@@ -11,7 +11,7 @@ type Listing = {
   fastDelivery?: boolean | null;
 };
 
-type Product = {
+type ProductWithListings = {
   id: string;
   name: string;
   displayName?: string | null;
@@ -21,138 +21,186 @@ type Product = {
 };
 
 type ProductListProps = {
-  products: Product[];
+  products: ProductWithListings[];
   selectedProductId: string | null;
   onSelectProduct: (id: string) => void;
   favoriteIds: string[];
   onToggleFavorite: (id: string) => void;
 };
 
-function formatPrice(price: number, currency: string) {
-  if (!Number.isFinite(price)) return "No price";
-  return `${price.toFixed(2)} ${currency || ""}`.trim();
+function formatMoney(value: number, currency: string): string {
+  try {
+    return new Intl.NumberFormat(undefined, {
+      style: "currency",
+      currency,
+      maximumFractionDigits: 2,
+    }).format(value);
+  } catch {
+    return `${value.toFixed(2)} ${currency}`;
+  }
 }
 
-function getBestListing(listings: Listing[] | undefined | null): Listing | null {
+function pickBestListing(listings: Listing[] | undefined | null): Listing | null {
   if (!listings || listings.length === 0) return null;
-  return listings.reduce((best, l) => (l.price < best.price ? l : best));
+
+  const scored = listings
+    .filter((l) => !!l)
+    .map((l) => ({
+      l,
+      inStockScore: l.inStock == null ? 0 : l.inStock ? 1 : -1,
+      price: typeof l.price === "number" ? l.price : Number.POSITIVE_INFINITY,
+    }));
+
+  scored.sort((a, b) => {
+    if (b.inStockScore !== a.inStockScore) return b.inStockScore - a.inStockScore;
+    return a.price - b.price;
+  });
+
+  return scored[0]?.l ?? null;
 }
 
-const ProductList: React.FC<ProductListProps> = ({
+function StarIcon({ filled }: { filled: boolean }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-4 w-4"
+      aria-hidden="true"
+      fill={filled ? "currentColor" : "none"}
+      stroke="currentColor"
+      strokeWidth="2"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M11.48 3.5a.6.6 0 011.04 0l2.47 4.99a.6.6 0 00.45.33l5.51.8a.6.6 0 01.33 1.02l-3.99 3.89a.6.6 0 00-.17.53l.94 5.49a.6.6 0 01-.87.63l-4.93-2.59a.6.6 0 00-.56 0l-4.93 2.59a.6.6 0 01-.87-.63l.94-5.49a.6.6 0 00-.17-.53L2.72 10.64a.6.6 0 01.33-1.02l5.51-.8a.6.6 0 00.45-.33l2.47-4.99z"
+      />
+    </svg>
+  );
+}
+
+export default function ProductList({
   products,
   selectedProductId,
   onSelectProduct,
   favoriteIds,
   onToggleFavorite,
-}) => {
-  if (!products || products.length === 0) {
-    return null;
-  }
+}: ProductListProps) {
+  if (!products || products.length === 0) return null;
 
   return (
     <div
-      className="
-        grid
-        grid-cols-2
-        sm:grid-cols-3
-        lg:grid-cols-4
-        xl:grid-cols-5
-        gap-6
-        w-full
-      "
+      className={[
+        "w-full",
+        "grid gap-4 sm:gap-5",
+        // Enforce minimum card width so they never become skinny sticks.
+        "[grid-template-columns:repeat(auto-fit,minmax(190px,1fr))]",
+        // Slightly wider min on very large screens, effectively capping columns.
+        "2xl:[grid-template-columns:repeat(auto-fit,minmax(220px,1fr))]",
+      ].join(" ")}
     >
       {products.map((product) => {
         const isSelected = selectedProductId === product.id;
-        const bestListing = getBestListing(product.listings);
         const isFavorite = favoriteIds.includes(product.id);
-        const minPrice = bestListing?.price ?? NaN;
-        const currency = bestListing?.currency ?? "LEI";
+
+        const best = pickBestListing(product.listings);
+        const bestPrice =
+          best?.price != null && best?.currency
+            ? formatMoney(best.price, best.currency)
+            : null;
+        const bestStore = best?.storeName ?? null;
 
         return (
-          <button
+          <div
             key={product.id}
-            type="button"
+            role="button"
+            tabIndex={0}
             onClick={() => onSelectProduct(product.id)}
-            className={`
-              relative
-              mx-auto
-              min-w-[180px] max-w-[220px] w-full
-              flex flex-col items-center text-center
-              rounded-2xl
-              border border-[var(--pl-card-border)]
-              bg-[var(--pl-card)]/80
-              backdrop-blur-md
-              p-4
-              overflow-hidden
-              transition-all duration-200
-              hover:-translate-y-1 hover:shadow-[0_10px_30px_rgba(15,23,42,0.18)]
-              ${isSelected ? "ring-2 ring-[var(--pl-primary)]" : ""}
-            `}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                onSelectProduct(product.id);
+              }
+            }}
+            className={[
+              "relative flex h-full flex-col",
+              "rounded-2xl border",
+              "bg-[var(--pl-card)] border-[var(--pl-card-border)]",
+              "px-4 py-4",
+              "shadow-sm transition-shadow",
+              "hover:shadow-md hover:-translate-y-1",
+              "focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--pl-primary)]",
+              isSelected ? "ring-2 ring-[var(--pl-primary)]" : "",
+            ].join(" ")}
           >
-            {/* Favorite star */}
-            <span
+            {/* Single favorite star (top-right) */}
+            <button
+              type="button"
+              aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
+              aria-pressed={isFavorite}
               onClick={(e) => {
                 e.stopPropagation();
                 onToggleFavorite(product.id);
               }}
-              className={`
-                absolute top-2 right-2 z-20 h-7 w-7 rounded-full border
-                text-[11px] flex items-center justify-center cursor-pointer
-                transition-colors
-                ${
-                  isFavorite
-                    ? "bg-[var(--pl-primary)] text-white border-[var(--pl-primary)] shadow-[0_0_12px_var(--pl-primary-glow)]"
-                    : "bg-[var(--pl-bg)]/70 text-[var(--pl-text-muted)] border-[var(--pl-card-border)] hover:text-[var(--pl-primary)] hover:border-[var(--pl-primary)]"
-                }
-              `}
+              className={[
+                "absolute right-3 top-3 z-10",
+                "grid h-9 w-9 place-items-center rounded-full",
+                "border bg-[var(--pl-bg-soft)] border-[var(--pl-card-border)]",
+                "text-[var(--pl-text-muted)]",
+                "transition",
+                "hover:text-[var(--pl-text)]",
+                isFavorite ? "text-[var(--pl-primary)]" : "",
+              ].join(" ")}
             >
-              ★
-            </span>
+              <StarIcon filled={isFavorite} />
+            </button>
 
-            {/* Image */}
-            <div className="w-full h-[140px] mb-3 flex items-center justify-center">
-              <img
-                src={product.imageUrl || "/placeholder.png"}
-                alt={product.displayName || product.name}
-                className="max-h-full max-w-full object-contain"
-              />
-            </div>
-
-            {/* Name + brand */}
-            <h3 className="text-xs font-semibold leading-tight mb-1 text-[var(--pl-text)] line-clamp-2">
-              {product.displayName || product.name}
-            </h3>
-            {product.brand && (
-              <p className="text-[11px] text-[var(--pl-text-subtle)] mb-2">
-                {product.brand}
-              </p>
-            )}
-
-            {/* Best price */}
-            <div className="mt-auto">
-              {bestListing ? (
-                <>
-                  <p className="text-[11px] text-[var(--pl-text-muted)] mb-0.5">
-                    Best price
-                  </p>
-                  <p className="text-sm font-semibold text-[var(--pl-text)]">
-                    {formatPrice(minPrice, currency)}
-                  </p>
-                  <p className="text-[11px] text-[var(--pl-text-subtle)]">
-                    from <span className="font-medium">{bestListing.storeName}</span>
-                  </p>
-                </>
+            {/* Fixed-height image area */}
+            <div className="mb-3 flex h-[140px] w-full items-center justify-center">
+              {product.imageUrl ? (
+                <img
+                  src={product.imageUrl}
+                  alt={product.displayName || product.name}
+                  className="max-h-full max-w-full object-contain"
+                  loading="lazy"
+                />
               ) : (
-                <p className="text-[11px] text-[var(--pl-text-muted)]">
-                  No offers yet
-                </p>
+                <div className="flex h-full w-full items-center justify-center rounded-xl bg-[var(--pl-bg-soft)]">
+                  <span className="text-sm text-[var(--pl-text-subtle)]">No image</span>
+                </div>
               )}
             </div>
-          </button>
+
+            {/* Title + brand */}
+            <h3 className="text-center text-sm font-semibold leading-snug text-[var(--pl-text)] line-clamp-2">
+              {product.displayName || product.name}
+            </h3>
+
+            {product.brand ? (
+              <p className="mt-1 text-center text-xs text-[var(--pl-text-muted)] line-clamp-1">
+                {product.brand}
+              </p>
+            ) : (
+              // keep height stable if no brand
+              <div className="mt-1 h-[16px]" />
+            )}
+
+            {/* Price block at bottom */}
+            <div className="mt-auto pt-4 text-center">
+              <p className="text-[11px] font-medium tracking-wide text-[var(--pl-text-subtle)]">
+                Best price
+              </p>
+
+              <p className="mt-1 text-base font-bold text-[var(--pl-text)]">
+                {bestPrice ?? "—"}
+              </p>
+
+              <p className="mt-1 text-xs text-[var(--pl-text-muted)] line-clamp-1">
+                {bestStore ?? "—"}
+              </p>
+            </div>
+          </div>
         );
       })}
     </div>
   );
-};
-
-export default ProductList;
+}
