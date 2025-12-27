@@ -60,10 +60,10 @@ export default function ProductList({
     );
   }
 
-  // Compute best deal product ID (lowest price among first 10 products)
+  // Best deal = lowest price among first N products (you can increase this if you want)
   const bestDealProductId = React.useMemo(() => {
     const productsWithPrices = products
-      .slice(0, 10)
+      .slice(0, 20)
       .map((product) => ({
         id: product.id,
         bestListing: getBestListing(product.listings),
@@ -80,9 +80,10 @@ export default function ProductList({
   }, [products]);
 
   return (
-    <div className="w-full md:overflow-x-auto md:pb-4 md:px-4 md:snap-x md:snap-mandatory">
-      <div className="grid grid-cols-2 gap-4 w-full md:grid md:grid-rows-2 md:grid-flow-col md:auto-cols-[minmax(190px,220px)] md:gap-4 md:justify-start">
-        {products.slice(0, 10).map((product) => {
+    <div className="w-full">
+      {/* SIMPLE, STABLE GRID: no horizontal scroll, up to 3 cards per row on desktop */}
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-2 md:grid-cols-3">
+        {products.slice(0, 20).map((product) => {
           const isSelected = selectedProductId === product.id;
           const bestListing = getBestListing(product.listings);
           const isFavorite = favoriteIds.includes(product.id);
@@ -95,9 +96,9 @@ export default function ProductList({
           const isBestDeal = product.id === bestDealProductId;
 
           const cardClasses = clsx(
-            'relative flex flex-col items-center rounded-3xl bg-white/80 p-4 shadow-sm hover:shadow-md transition-shadow cursor-pointer overflow-hidden',
+            'relative flex flex-col items-center rounded-3xl bg-white/85 p-4 shadow-sm hover:shadow-md transition-shadow cursor-pointer overflow-hidden',
             isSelected && 'ring-2 ring-blue-500',
-            isBestDeal && 'ring-2 ring-sky-400 shadow-xl bg-sky-50/80'
+            isBestDeal && 'ring-2 ring-sky-400 shadow-xl bg-sky-50/90'
           );
 
           return (
@@ -123,7 +124,7 @@ export default function ProductList({
               {/* Store name + Affiliate pill */}
               <div className="absolute inset-x-0 top-2 flex items-center justify-center gap-2 px-3">
                 {storeLabel && (
-                  <span className="max-w-[120px] truncate text-[11px] text-slate-500">
+                  <span className="max-w-[110px] truncate text-[11px] text-slate-500">
                     {storeLabel}
                   </span>
                 )}
@@ -135,7 +136,7 @@ export default function ProductList({
               </div>
 
               {/* Product image */}
-              <div className="mt-8 mb-3 flex h-28 w-full items-center justify-center">
+              <div className="mt-8 mb-3 flex h-24 w-full items-center justify-center">
                 <div className="w-16 h-16 rounded-xl border overflow-hidden flex items-center justify-center">
                   <img
                     src={product.imageUrl || '/placeholder.png'}
