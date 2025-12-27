@@ -64,10 +64,10 @@ export default function RootLayout({
             </header>
 
             <main className="flex-1 w-full">
-              <div className="max-w-5xl mx-auto w-full px-4 py-6">
-                {children}
-              </div>
-            </main>
+  <div className="w-[85%] max-w-none mx-auto px-4 py-6">
+    {children}
+  </div>
+</main>
 
             <footer className="w-full border-t border-slate-200/80 dark:border-slate-800 bg-white/80 dark:bg-neutral-950/80">
               <div className="max-w-5xl mx-auto px-4 py-4 text-[11px] leading-relaxed text-gray-600 dark:text-gray-400 space-y-1 text-center sm:text-left">
