@@ -37,11 +37,11 @@ export default function ProductCard({ product, isSelected, onSelect }: Props) {
           {product.name}
         </div>
 
-        <div className="price-section flex flex-col items-center gap-1 pt-2 w-full overflow-hidden text-center">
-          <div className="price text-base font-bold text-black">
+        <div className="price-affiliate-wrapper flex flex-col items-center gap-1 mt-3 w-full overflow-hidden text-center">
+          <span className="product-price text-base font-bold text-black whitespace-nowrap">
             {minPrice} {currency}
-          </div>
-          <div className="flex items-center gap-1 text-xs text-gray-600">
+          </span>
+          <div className="flex items-center gap-1">
             {storeLogoUrl ? (
               <img
                 src={storeLogoUrl}
@@ -50,11 +50,11 @@ export default function ProductCard({ product, isSelected, onSelect }: Props) {
                 className="h-3 object-contain"
               />
             ) : (
-              <span className="font-medium">{storeName}</span>
+              <span className="text-xs text-gray-600 font-medium">{storeName}</span>
             )}
-            <div className="affiliate-badge bg-gray-200 px-1.5 py-0.5 rounded text-uppercase">
-              affiliate
-            </div>
+            <span className="affiliate-label text-xs bg-gray-200 text-gray-600 px-1.5 py-0.5 rounded uppercase">
+              Affiliate
+            </span>
           </div>
         </div>
       </div>
