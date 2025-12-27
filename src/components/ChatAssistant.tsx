@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
+import { motion } from "framer-motion";
 
 type Listing = {
   price?: number | string | null;
@@ -141,7 +142,13 @@ export default function ChatAssistant({
     : "";
 
   return (
-    <div className="rounded-2xl border border-[var(--pl-card-border)] bg-[var(--pl-card)] p-4 shadow-sm ring-1 ring-teal-400/40 dark:ring-teal-500/40">
+    <motion.section
+      id="ai-assistant"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35, ease: "easeOut" }}
+      className="rounded-2xl border border-[var(--pl-card-border)] bg-[var(--pl-card)] p-4 shadow-sm ring-1 ring-teal-400/40 dark:ring-teal-500/40"
+    >
       <div className="flex flex-col h-full">
         <div className="mb-3 flex items-start justify-between gap-2">
           <div>
@@ -228,7 +235,7 @@ export default function ChatAssistant({
           </button>
         </div>
       </div>
-    </div>
+    </motion.section>
   );
 }
 

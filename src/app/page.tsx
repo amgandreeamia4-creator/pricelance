@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
+import { motion } from "framer-motion";
 
 import ThemeToggle from "@/components/ThemeToggle";
 import ProductList from "@/components/ProductList";
@@ -469,17 +470,9 @@ export default function Page() {
   );
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-slate-50 bg-noise-soft">
-      {/* Radial spotlight */}
-      <div className="pointer-events-none fixed inset-0 z-0">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.16),_transparent_55%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(15,23,42,0.75),_transparent_60%)]" />
-      </div>
-
-      {/* Actual page content */}
-      <div className="relative z-10">
-        {/* HEADER */}
-        <header className="relative w-full pt-6 pb-4 px-6">
+    <main className="min-h-screen bg-slate-100 text-slate-900 dark:bg-gradient-to-br dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 dark:text-slate-50 dark:bg-noise-soft">
+      {/* HEADER */}
+      <header className="relative w-full pt-6 pb-4 px-6">
         <div className="max-w-7xl mx-auto text-center">
           <div className="inline-block px-5 py-1.5 rounded-full border border-[var(--pl-card-border)] bg-[var(--pl-card)] text-[12px] font-semibold tracking-[0.2em] uppercase text-[var(--pl-text)]">
             PRICELANCE
@@ -503,13 +496,16 @@ export default function Page() {
             Ad slot preview · Header banner 776x90
           </div>
           <ThemeToggle />
-          <button
+          <motion.button
             type="button"
             onClick={scrollToAssistant}
             className="px-4 py-2 rounded-full bg-[var(--pl-primary)] hover:brightness-110 text-[12px] font-medium text-white shadow-[0_0_20px_var(--pl-primary-glow)] transition-all"
+            whileHover={{ scale: 1.04, y: -1 }}
+            whileTap={{ scale: 0.97, y: 0 }}
+            transition={{ type: "spring", stiffness: 260, damping: 18 }}
           >
             AI Assistant
-          </button>
+          </motion.button>
         </div>
       </header>
 
@@ -805,7 +801,6 @@ export default function Page() {
           </p>
         </div>
       </footer>
-      </div>
     </main>
   );
 }
