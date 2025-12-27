@@ -20,7 +20,7 @@ export default function ProductCard({ product, isSelected, onSelect }: Props) {
     <button
       type="button"
       onClick={onSelect}
-      className={`flex w-full items-center gap-3 rounded-2xl border px-3 py-2 text-left text-sm transition-transform transform hover:scale-[1.02] hover:shadow-lg ${
+      className={`flex w-full items-start gap-3 rounded-2xl border px-3 py-3 text-left text-sm transition-transform transform hover:scale-[1.02] hover:shadow-lg ${
         isSelected ? 'border-indigo-500 bg-indigo-50' : 'border-slate-800 bg-slate-900/70 hover:border-slate-600'
       }`}
     >
@@ -28,20 +28,20 @@ export default function ProductCard({ product, isSelected, onSelect }: Props) {
         <img
           src={product.imageUrl}
           alt={product.name}
-          className="h-16 w-16 object-contain"
+          className="h-16 w-16 object-contain flex-shrink-0"
         />
       ) : null}
 
-      <div className="flex flex-col justify-start gap-1 text-start">
+      <div className="flex flex-col justify-start gap-2 flex-1 min-w-0">
         <div className="line-clamp-2 text-[13px] font-medium leading-snug text-foreground">
           {product.name}
         </div>
 
-        <div className="price-affiliate-wrapper flex flex-col items-center gap-1 mt-3 w-full overflow-hidden text-center">
+        <div className="price-affiliate-wrapper flex flex-col items-start gap-1 w-full">
           <span className="product-price text-base font-bold text-black whitespace-nowrap">
             {minPrice} {currency}
           </span>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 flex-wrap">
             {storeLogoUrl ? (
               <img
                 src={storeLogoUrl}
