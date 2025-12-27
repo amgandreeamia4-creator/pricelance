@@ -479,7 +479,7 @@ export default function Page() {
             type="button"
             onClick={() => runSearch(query)}
             disabled={isSearching}
-            className="h-11 px-6 rounded-full bg-[var(--pl-primary)] text-white text-sm font-semibold shadow-[0_0_18px_var(--pl-primary-glow)] hover:brightness-110 disabled:opacity-60 transition-all flex itemsCenter gap-2"
+            className="h-11 px-6 rounded-full bg-[var(--pl-primary)] text-white text-sm font-semibold shadow-[0_0_18px_var(--pl-primary-glow)] hover:brightness-110 disabled:opacity-60 transition-all flex items-center gap-2"
           >
             <span className="text-base">🔍</span>
             <span>{isSearching ? "Searching..." : "Search"}</span>
@@ -490,10 +490,11 @@ export default function Page() {
       {/* MAIN GRID – 3 columns, full width with breathing room */}
       <section
         className="
-          w-screen max-w-[1600px] mx-auto px-6 pt-6 pb-10
+          w-screen max-w-[1800px] mx-auto
+          px-8 pt-8 pb-16
           grid grid-cols-1
-          lg:grid-cols-[250px_minmax(0,_1fr)_300px]
-          gap-8
+          lg:grid-cols-[240px_minmax(0,_1fr)_280px]
+          gap-10
         "
       >
         {/* LEFT SIDEBAR */}
@@ -577,11 +578,11 @@ export default function Page() {
           </div>
         </aside>
 
-        {/* CENTER COLUMN – wrapper widened with p-6 w-full */}
+        {/* CENTER COLUMN – wrapper widened with p-6 w-full min-h */}
         <div className="space-y-5">
-          <div className={`${cardStyle} p-6 w-full`}>
+          <div className={`${cardStyle} p-6 w-full min-h-[200px]`}>
             {visibleProducts.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-8 text-center">
+              <div className="flex flex-col items-center justify-center py-8 text-center h-full">
                 <h3 className="text-[13px] font-medium text-[var(--pl-text)] mb-1">
                   No results found
                 </h3>
