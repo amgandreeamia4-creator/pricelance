@@ -1,22 +1,18 @@
 'use client';
 
+import type { ProductWithHistory } from '../types/product';
+
 type Props = {
-  product: {
-    name: string;
-    imageUrl?: string;
-    listings: {
-      price: number;
-      currency: string;
-    }[];
-  };
+  product: ProductWithHistory;
   isSelected: boolean;
   onSelect: () => void;
 };
 
-export function ProductCard({ product, isSelected, onSelect }: Props) {
+export default function ProductCard({ product, isSelected, onSelect }: Props) {
   const listings = product.listings;
   const minPrice = Math.min(...listings.map((l) => l.price));
   const currency = listings[0]?.currency ?? 'EUR';
+  const source = listings[0]?.source ?? 'Affiliate';
 
   return (
     <button
@@ -24,23 +20,28 @@ export function ProductCard({ product, isSelected, onSelect }: Props) {
       onClick={onSelect}
       className={`flex w-full items-center gap-3 rounded-2xl border px-3 py-2 text-left text-sm transition-transform transform hover:scale-[1.02] hover:shadow-lg ${
         isSelected
-          ? 'border-indigo-500 bg-indigo-500/10'
-          : 'border-slate-800 bg-slate-900/70 hover:border-slate-600'
+          ? 'border-indigo-500 bg-indigo-50'
+          : 'border-slate-300 hover:border-slate-400'
       }`}
     >
-      {product.imageUrl && (
+      {product.imageUrl ? (
         <img
           src={product.imageUrl}
           alt={product.name}
           className="h-16 w-16 object-contain"
         />
-      )}
+      ) : null}
+
       <div className="flex flex-col justify-start gap-1 text-start">
-        <div className="line-clamp-2 text-[13px] font-medium leading-snug">
+        <div className="line-clamp-2 text-[13px] font-medium text-foreground">
           {product.name}
         </div>
-        <div className="text-[13px] font-semibold text-white">
+        <div className="text-[13px] font-semibold text-primary">
           {minPrice} {currency}
+        </div>
+        <div className="text-[12px] text-muted-foreground mt-1">
+          from <span className="font-medium">{source}</span>{' '}
+          <span className="opacity-60">(affiliate)</span>
         </div>
       </div>
     </button>
