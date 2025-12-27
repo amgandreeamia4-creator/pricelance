@@ -469,18 +469,24 @@ export default function Page() {
   );
 
   return (
-    <div className="min-h-screen w-full">
+    <div className="min-h-screen w-full bg-[var(--pl-bg)] text-[var(--pl-text)]">
       {/* HEADER */}
       <header className="relative w-full pt-6 pb-4 px-6">
-        <div className="max-w-5xl mx-auto text-center">
+        <div className="max-w-7xl mx-auto text-center">
           <div className="inline-block px-5 py-1.5 rounded-full border border-[var(--pl-card-border)] bg-[var(--pl-card)] text-[12px] font-semibold tracking-[0.2em] uppercase text-[var(--pl-text)]">
             PRICELANCE
           </div>
           <p className="mt-3 text-[12px] text-[var(--pl-text-muted)] leading-relaxed">
-            PriceLance is an informational service that compares tech prices from multiple online retailers. Prices come from manually curated data, official feeds, and affiliate feeds where available — no scraping.
+            PriceLance is an informational service that compares tech prices
+            from multiple online retailers. Prices come from manually curated
+            data, official feeds, and affiliate feeds where available — no
+            scraping.
           </p>
           <p className="mt-1 text-[11px] text-[var(--pl-text-subtle)]">
-            Coverage is continuously expanding, starting from Romania and extending deeper into the EU. Always verify the final price, delivery costs, and product details on the retailer&apos;s website before buying.
+            Coverage is continuously expanding, starting from Romania and
+            extending deeper into the EU. Always verify the final price,
+            delivery costs, and product details on the retailer&apos;s website
+            before buying.
           </p>
         </div>
 
@@ -501,7 +507,7 @@ export default function Page() {
 
       {/* SEARCH BAR */}
       <div className="w-full px-6 mt-2">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-7xl mx-auto">
           <div className="flex items-center gap-3">
             <div className="flex-1 relative">
               <input
@@ -529,7 +535,7 @@ export default function Page() {
 
       {/* THREE-COLUMN LAYOUT */}
       <main className="w-full px-6 mt-6 pb-6">
-        <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-[260px_1fr_260px] gap-5 items-start">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-[260px_minmax(0,2.2fr)_280px] gap-6 items-start">
           {/* LEFT COLUMN */}
           <div className="flex flex-col gap-4">
             {/* LOCATION */}
@@ -741,7 +747,7 @@ export default function Page() {
                       </span>
                       <span className="ml-2 text-[10px] text-[var(--pl-text-subtle)]">
                         {row.price != null
-                          ? `${row.price} ${row.currency ?? ""}` 
+                          ? `${row.price} ${row.currency ?? ""}`
                           : "No price"}
                         {row.storeName ? ` · ${row.storeName}` : ""}
                       </span>
@@ -781,9 +787,12 @@ export default function Page() {
 
       {/* Affiliate Disclosure Footer */}
       <footer className="w-full px-6 py-4 border-t border-[var(--pl-card-border)]">
-        <div className="max-w-6xl mx-auto text-center">
+        <div className="max-w-7xl mx-auto text-center">
           <p className="text-[10px] text-[var(--pl-text-subtle)] leading-relaxed">
-            Some links on PriceLance are affiliate links. If you buy through one of these links, we may earn a small commission from the retailer, at no extra cost to you. Prices and availability can change; always check the retailer site.
+            Some links on PriceLance are affiliate links. If you buy through one
+            of these links, we may earn a small commission from the retailer, at
+            no extra cost to you. Prices and availability can change; always
+            check the retailer site.
           </p>
         </div>
       </footer>
