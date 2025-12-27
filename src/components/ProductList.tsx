@@ -55,9 +55,9 @@ const ProductList: React.FC<ProductListProps> = ({
         grid
         grid-cols-2
         sm:grid-cols-3
-        md:grid-cols-4
+        lg:grid-cols-4
         xl:grid-cols-5
-        gap-x-5 gap-y-8
+        gap-6
         w-full
       "
     >
@@ -69,73 +69,73 @@ const ProductList: React.FC<ProductListProps> = ({
         const currency = bestListing?.currency ?? "LEI";
 
         return (
-          <div
+          <button
             key={product.id}
-            role="button"
-            tabIndex={0}
+            type="button"
             onClick={() => onSelectProduct(product.id)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                onSelectProduct(product.id);
-              }
-            }}
             className={`
               relative
-              flex flex-col items-center justify-start
-              text-center
-              rounded-xl
+              mx-auto
+              min-w-[180px] max-w-[220px] w-full
+              flex flex-col items-center text-center
+              rounded-2xl
               border border-[var(--pl-card-border)]
               bg-[var(--pl-card)]/80
               backdrop-blur-md
-              shadow-md
               p-4
-              w-full
               overflow-hidden
-              cursor-pointer
-              transition-transform duration-200 hover:scale-[1.02] hover:shadow-[0_10px_30px_rgba(15,23,42,0.18)]
+              transition-all duration-200
+              hover:-translate-y-1 hover:shadow-[0_10px_30px_rgba(15,23,42,0.18)]
               ${isSelected ? "ring-2 ring-[var(--pl-primary)]" : ""}
             `}
           >
             {/* Favorite star */}
-            <button
-              type="button"
-              aria-label={isFavorite ? "Remove from favourites" : "Add to favourites"}
+            <span
               onClick={(e) => {
                 e.stopPropagation();
                 onToggleFavorite(product.id);
               }}
-              className={`absolute top-2 right-2 z-20 h-7 w-7 rounded-full border text-[11px] flex items-center justify-center transition-colors ${
-                isFavorite
-                  ? "bg-[var(--pl-primary)] text-white border-[var(--pl-primary)] shadow-[0_0_12px_var(--pl-primary-glow)]"
-                  : "bg-[var(--pl-bg)]/70 text-[var(--pl-text-muted)] border-[var(--pl-card-border)] hover:text-[var(--pl-primary)] hover:border-[var(--pl-primary)]"
-              }`}
+              className={`
+                absolute top-2 right-2 z-20 h-7 w-7 rounded-full border
+                text-[11px] flex items-center justify-center cursor-pointer
+                transition-colors
+                ${
+                  isFavorite
+                    ? "bg-[var(--pl-primary)] text-white border-[var(--pl-primary)] shadow-[0_0_12px_var(--pl-primary-glow)]"
+                    : "bg-[var(--pl-bg)]/70 text-[var(--pl-text-muted)] border-[var(--pl-card-border)] hover:text-[var(--pl-primary)] hover:border-[var(--pl-primary)]"
+                }
+              `}
             >
               ★
-            </button>
+            </span>
 
             {/* Image */}
-            <img
-              src={product.imageUrl || "/placeholder.png"}
-              alt={product.displayName || product.name}
-              className="w-full h-[150px] object-contain mb-4"
-            />
+            <div className="w-full h-[140px] mb-3 flex items-center justify-center">
+              <img
+                src={product.imageUrl || "/placeholder.png"}
+                alt={product.displayName || product.name}
+                className="max-h-full max-w-full object-contain"
+              />
+            </div>
 
             {/* Name + brand */}
-            <h3 className="text-sm font-semibold leading-tight mb-1 text-[var(--pl-text)] line-clamp-2">
+            <h3 className="text-xs font-semibold leading-tight mb-1 text-[var(--pl-text)] line-clamp-2">
               {product.displayName || product.name}
             </h3>
             {product.brand && (
-              <p className="text-[11px] text-[var(--pl-text-subtle)] mb-1">
+              <p className="text-[11px] text-[var(--pl-text-subtle)] mb-2">
                 {product.brand}
               </p>
             )}
 
             {/* Best price */}
-            <div className="mt-1 mb-1">
+            <div className="mt-auto">
               {bestListing ? (
                 <>
-                  <p className="text-base font-bold text-[var(--pl-text)]">
+                  <p className="text-[11px] text-[var(--pl-text-muted)] mb-0.5">
+                    Best price
+                  </p>
+                  <p className="text-sm font-semibold text-[var(--pl-text)]">
                     {formatPrice(minPrice, currency)}
                   </p>
                   <p className="text-[11px] text-[var(--pl-text-subtle)]">
@@ -143,10 +143,12 @@ const ProductList: React.FC<ProductListProps> = ({
                   </p>
                 </>
               ) : (
-                <p className="text-[11px] text-[var(--pl-text-muted)]">No offers yet</p>
+                <p className="text-[11px] text-[var(--pl-text-muted)]">
+                  No offers yet
+                </p>
               )}
             </div>
-          </div>
+          </button>
         );
       })}
     </div>
