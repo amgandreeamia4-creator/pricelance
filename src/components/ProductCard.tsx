@@ -45,7 +45,9 @@ export default function ProductCard({ product, isSelected, onSelect }: Props) {
           from <span className="font-medium">{source}</span>{' '}
           <span className="opacity-60">(affiliate)</span>
           {storeLogoUrl ? (
-            <img src={storeLogoUrl} alt={storeName} className="h-4 ml-2 object-contain inline-block" />
+            <div className="w-6 h-4 flex items-center ml-2">
+              <img src={storeLogoUrl} alt={storeName} title={storeName} className="h-4 object-contain" />
+            </div>
           ) : (
             <div className="h-4 ml-2 inline-block text-xs text-muted-foreground">{storeName}</div>
           )}
