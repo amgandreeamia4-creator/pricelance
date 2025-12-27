@@ -58,8 +58,8 @@ const ProductList: React.FC<ProductListProps> = ({
   }
 
   return (
-    <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-      {products.map((product) => {
+    <div className="grid grid-cols-5 gap-4 w-full max-w-full">
+      {products.slice(0, 10).map((product) => {
         const isSelected = selectedProductId === product.id;
         const bestListing = getBestListing(product.listings);
         const isFavorite = favoriteIds.includes(product.id);
