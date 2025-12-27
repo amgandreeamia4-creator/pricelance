@@ -21,8 +21,6 @@ type Listing = {
   deliveryDays?: number | null;
   inStock?: boolean | null;
   deliveryTimeDays?: number | null;
-
-  // New: affiliate metadata from API
   source?: string | null;
   affiliateProvider?: string | null;
 };
@@ -42,13 +40,10 @@ export default function Page() {
   const [query, setQuery] = useState("");
   const [products, setProducts] = useState<ProductWithListings[]>([]);
   const [isSearching, setIsSearching] = useState(false);
-  const [selectedProductId, setSelectedProductId] =
-    useState<string | null>(null);
+  const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
 
   // Filters
-  const [sortBy, setSortBy] = useState<
-    "relevance" | "price-asc" | "price-desc"
-  >("relevance");
+  const [sortBy, setSortBy] = useState<"relevance" | "price-asc" | "price-desc">("relevance");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [storeFilter, setStoreFilter] = useState<StoreId | "all">("all");
   const [fastOnly, setFastOnly] = useState(false);
@@ -56,15 +51,14 @@ export default function Page() {
   // Location
   const [location, setLocation] = useState("Not set");
 
-  // Favorites (local only for now)
+  // Favorites (local)
   const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
 
-  // Dynamic categories from DB
+  // Categories (from API – still used later)
   const [categories, setCategories] = useState<string[]>([]);
   const [isCategoriesLoading, setIsCategoriesLoading] = useState(false);
   const [categoriesError, setCategoriesError] = useState<string | null>(null);
 
-  // Saved searches (mock)
   const [savedSearches] = useState([
     "laptop",
     "coffee",
@@ -85,22 +79,9 @@ export default function Page() {
   const [trendError, setTrendError] = useState<string | null>(null);
 
   function isFastListing(l: Listing): boolean {
-    // Prefer explicit numeric days if present
-    if (l.deliveryTimeDays != null) {
-      return l.deliveryTimeDays <= FAST_SHIPPING_DAYS;
-    }
-
-    // Fallback: use deliveryDays if that's what the data uses
-    if (l.deliveryDays != null) {
-      return l.deliveryDays <= FAST_SHIPPING_DAYS;
-    }
-
-    // Fallback: a boolean hint
-    if (typeof l.fastDelivery === "boolean") {
-      return l.fastDelivery;
-    }
-
-    // If we know nothing, don't treat it as fast
+    if (l.deliveryTimeDays != null) return l.deliveryTimeDays <= FAST_SHIPPING_DAYS;
+    if (l.deliveryDays != null) return l.deliveryDays <= FAST_SHIPPING_DAYS;
+    if (typeof l.fastDelivery === "boolean") return l.fastDelivery;
     return false;
   }
 
@@ -118,24 +99,14 @@ export default function Page() {
     const isUK = loc.includes("united kingdom") || loc === "uk";
 
     if (isRomania) {
-      if (id === "emag" || id === "altex" || id === "pcgarage" || id === "flanco") {
-        return 3;
-      }
-      if (id === "other_eu" || id === "amazon_de") {
-        return 1;
-      }
+      if (id === "emag" || id === "altex" || id === "pcgarage" || id === "flanco") return 3;
+      if (id === "other_eu" || id === "amazon_de") return 1;
     }
-
     if (isGermany) {
-      if (id === "amazon_de" || id === "other_eu") {
-        return 2;
-      }
+      if (id === "amazon_de" || id === "other_eu") return 2;
     }
-
     if (isUK) {
-      if (id === "other_eu") {
-        return 1;
-      }
+      if (id === "other_eu") return 1;
     }
 
     return 0;
@@ -209,7 +180,6 @@ export default function Page() {
 
   useEffect(() => {
     if (!selectedProductId) return;
-
     const stillThere = visibleProducts.some((p) => p.id === selectedProductId);
     if (!stillThere) {
       if (visibleProducts.length > 0) {
@@ -230,8 +200,7 @@ export default function Page() {
     }
 
     const base =
-      visibleProducts.find((p) => p.id === selectedProductId) ??
-      visibleProducts[0];
+      visibleProducts.find((p) => p.id === selectedProductId) ?? visibleProducts[0];
 
     setTrendProductId(base.id);
   }, [visibleProducts, selectedProductId]);
@@ -313,16 +282,13 @@ export default function Page() {
   useEffect(() => {
     if (typeof window === "undefined") return;
     try {
-      window.localStorage.setItem(
-        "pricelance:favorites",
-        JSON.stringify(favoriteIds),
-      );
+      window.localStorage.setItem("pricelance:favorites", JSON.stringify(favoriteIds));
     } catch (error) {
       console.error("Failed to save favorites to localStorage", error);
     }
   }, [favoriteIds]);
 
-  // Load dynamic categories from DB on mount
+  // Load dynamic categories (still used elsewhere)
   useEffect(() => {
     let cancelled = false;
 
@@ -381,7 +347,6 @@ export default function Page() {
     );
   };
 
-  // Resilient search function backed by /api/products
   async function runSearch(q: string) {
     const trimmed = q.trim();
     setQuery(trimmed);
@@ -396,15 +361,9 @@ export default function Page() {
     try {
       const params = new URLSearchParams({ q: trimmed });
 
-      if (categoryFilter !== "all") {
-        params.set("category", categoryFilter);
-      }
-      if (storeFilter !== "all") {
-        params.set("store", storeFilter);
-      }
-      if (fastOnly) {
-        params.set("fastOnly", "true");
-      }
+      if (categoryFilter !== "all") params.set("category", categoryFilter);
+      if (storeFilter !== "all") params.set("store", storeFilter);
+      if (fastOnly) params.set("fastOnly", "true");
 
       const res = await fetch(`/api/products?${params.toString()}`, {
         method: "GET",
@@ -439,14 +398,11 @@ export default function Page() {
       ?.scrollIntoView({ behavior: "smooth", block: "center" });
   }
 
-  // Unified card style
   const cardStyle =
-    "rounded-2xl bg-[var(--pl-card)]/60 backdrop-blur-md shadow-inner border border-[var(--pl-card-border)]";
+    "rounded-2xl bg-[var(--pl-card)] border border-[var(--pl-card-border)] backdrop-blur-md shadow-[inset_0_0_0.5px_rgba(255,255,255,0.2),_0_4px_12px_rgba(0,0,0,0.08)]";
 
   const activeProduct =
-    visibleProducts.find((p) => p.id === selectedProductId) ??
-    visibleProducts[0] ??
-    null;
+    visibleProducts.find((p) => p.id === selectedProductId) ?? visibleProducts[0] ?? null;
 
   const totalProducts = visibleProducts.length;
   const totalOffers = visibleProducts.reduce(
@@ -469,64 +425,80 @@ export default function Page() {
   );
 
   return (
-    <main className="min-h-screen w-full bg-[var(--pl-bg)] text-[var(--pl-text)]">
-      {/* HEADER */}
-      <header className="w-full px-6 py-4 border-b border-[var(--pl-card-border)] bg-[var(--pl-bg)]">
-        <div className="flex justify-between items-center max-w-7xl mx-auto">
-          <div className="text-lg font-bold tracking-[0.35em] uppercase">
-            PRICELANCE
-          </div>
-          <div className="flex items-center gap-4">
-            <ThemeToggle />
-            <button
-              type="button"
-              onClick={scrollToAssistant}
-              className="px-4 py-2 rounded-full bg-[var(--pl-primary)] text-white text-xs font-medium shadow-[0_0_20px_var(--pl-primary-glow)] hover:brightness-110 transition-all"
-            >
-              AI Assistant
-            </button>
-          </div>
+    <main className="min-h-screen w-full text-[var(--pl-text)]" id="top">
+      {/* HEADER CONTROLS */}
+      <header className="w-full px-6 pt-6">
+        <div className="max-w-7xl mx-auto flex justify-end items-center gap-4">
+          <ThemeToggle />
+          <button
+            type="button"
+            onClick={scrollToAssistant}
+            className="flex items-center justify-center gap-2 h-11 px-5 rounded-full bg-[var(--pl-primary)] text-white text-xs font-medium shadow-[0_0_16px_var(--pl-primary-glow)] hover:brightness-110 transition-all"
+          >
+            AI Assistant
+          </button>
         </div>
       </header>
 
       {/* SEARCH BAR */}
-      <div className="w-full bg-[var(--pl-bg)] py-4 px-6 border-b border-[var(--pl-card-border)]">
-        <div
-          id="search"
-          className="max-w-4xl mx-auto flex items-center gap-3"
-        >
-          <input
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && runSearch(query)}
-            placeholder='Search products (e.g. "laptop", "mouse", "nescafe")'
-            className="flex-1 px-4 py-2.5 rounded-xl border border-[var(--pl-card-border)] bg-[var(--pl-card)] text-sm text-[var(--pl-text)] placeholder:text-[var(--pl-text-subtle)] focus:outline-none focus:ring-2 focus:ring-[var(--pl-primary)] focus:border-[var(--pl-primary)] shadow-[0_0_12px_rgba(15,23,42,0.6)]"
-          />
+      <section className="w-full px-6 mt-4">
+        <div className="max-w-7xl mx-auto flex items-center gap-4">
+          <div
+            id="search"
+            className="flex-1 flex items-center h-12 rounded-full bg-[var(--pl-card)] border border-[var(--pl-card-border)] shadow-[0_20px_40px_rgba(15,23,42,0.22)] px-1 sm:px-2"
+          >
+            <div className="flex items-center">
+              <div className="px-4 h-9 rounded-full bg-[var(--pl-primary)] text-white text-sm font-semibold flex items-center justify-center shadow-[0_0_16px_var(--pl-primary-glow)]">
+                PriceLance
+              </div>
+            </div>
+
+            <div className="flex items-center ml-2">
+              <button
+                type="button"
+                className="h-8 px-3 rounded-full bg-[var(--pl-bg-soft)] text-[11px] font-medium text-[var(--pl-text)] flex items-center gap-1 border border-[var(--pl-card-border)]"
+              >
+                All
+                <span className="text-[10px]">▾</span>
+              </button>
+            </div>
+
+            <div className="mx-3 h-6 w-px bg-[var(--pl-card-border)]/80" />
+
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && runSearch(query)}
+              placeholder="Search for the best prices..."
+              className="flex-1 bg-transparent text-sm text-[var(--pl-text)] placeholder:text-[var(--pl-text-subtle)] focus:outline-none"
+            />
+          </div>
+
           <button
             type="button"
             onClick={() => runSearch(query)}
             disabled={isSearching}
-            className="px-6 py-2.5 rounded-xl bg-[var(--pl-primary)] text-white text-sm font-semibold shadow-[0_0_20px_var(--pl-primary-glow)] hover:brightness-110 disabled:opacity-60 transition-all"
+            className="h-11 px-6 rounded-full bg-[var(--pl-primary)] text-white text-sm font-semibold shadow-[0_0_18px_var(--pl-primary-glow)] hover:brightness-110 disabled:opacity-60 transition-all flex items-center gap-2"
           >
-            {isSearching ? "Searching..." : "Search"}
+            <span className="text-base">🔍</span>
+            <span>{isSearching ? "Searching..." : "Search"}</span>
           </button>
         </div>
-      </div>
+      </section>
 
-      {/* MAIN GRID */}
-      <section className="w-full max-w-7xl mx-auto px-4 py-8 grid grid-cols-1 md:grid-cols-12 gap-6">
+      {/* MAIN GRID – 3 columns filling the width */}
+      <section className="w-full px-6 pt-6 pb-10 grid grid-cols-1 lg:grid-cols-[260px_minmax(0,_1fr)_320px] gap-6">
         {/* LEFT SIDEBAR */}
-        <aside className="md:col-span-3 space-y-6 bg-[var(--pl-card)]/60 backdrop-blur-md shadow-inner border border-[var(--pl-card-border)] rounded-2xl p-4">
-          {/* LOCATION */}
-          <div className={`${cardStyle} p-4`}>
+        <aside className="space-y-6">
+          <div className={`${cardStyle} p-5`}>
             <h3 className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--pl-text-subtle)] mb-3">
               Your location
             </h3>
             <select
               value={location}
               onChange={(e) => setLocation(e.target.value)}
-              className="w-full p-2.5 rounded-lg border border-[var(--pl-card-border)] bg-[var(--pl-bg)] text-[12px] text-[var(--pl-text)] focus:outline-none focus:border-[var(--pl-primary)]"
+              className="w-full p-2.5 rounded-lg border border-[var(--pl-card-border)] bg-[var(--pl-bg-soft)] text-[12px] text-[var(--pl-text)] focus:outline-none focus:border-[var(--pl-primary)]"
             >
               <option value="Not set">Not set</option>
               <option value="Romania">Romania</option>
@@ -536,19 +508,17 @@ export default function Page() {
             <button
               type="button"
               onClick={handleUseLocation}
-              className="mt-3 w-full py-2.5 rounded-lg bg-[var(--pl-primary)] text-[12px] font-medium text-white shadow-[0_0_20px_var(--pl-primary-glow)] hover:brightness-110 transition-all"
+              className="mt-3 w-full h-11 px-5 rounded-full bg-[var(--pl-primary)] text-[12px] font-medium text-white shadow-[0_0_16px_var(--pl-primary-glow)] hover:brightness-110 transition-all"
             >
               Use my location (stub)
             </button>
           </div>
 
-          {/* FILTERS */}
-          <div id="filters" className={`${cardStyle} p-4`}>
+          <div id="filters" className={`${cardStyle} p-5`}>
             <h3 className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--pl-text-subtle)] mb-3">
               Filters
             </h3>
 
-            {/* Sort */}
             <div className="mb-3">
               <label className="block text-[11px] font-medium text-[var(--pl-text)] mb-1">
                 Sort
@@ -560,7 +530,7 @@ export default function Page() {
                     e.target.value as "relevance" | "price-asc" | "price-desc",
                   )
                 }
-                className="w-full p-2 rounded-lg border border-[var(--pl-card-border)] bg-[var(--pl-bg)] text-[12px] text-[var(--pl-text)] focus:outline-none focus:border-[var(--pl-primary)]"
+                className="w-full p-2 rounded-lg border border-[var(--pl-card-border)] bg-[var(--pl-bg-soft)] text-[12px] text-[var(--pl-text)] focus:outline-none focus:border-[var(--pl-primary)]"
               >
                 <option value="relevance">Relevance</option>
                 <option value="price-asc">Price ↑</option>
@@ -568,7 +538,6 @@ export default function Page() {
               </select>
             </div>
 
-            {/* Store */}
             <div className="mb-3">
               <label className="block text-[11px] font-medium text-[var(--pl-text)] mb-1">
                 Store
@@ -578,7 +547,7 @@ export default function Page() {
                 onChange={(e) =>
                   setStoreFilter(e.target.value as StoreId | "all")
                 }
-                className="w-full p-2 rounded-lg border border-[var(--pl-card-border)] bg-[var(--pl-bg)] text-[12px] text-[var(--pl-text)] focus:outline-none focus:border-[var(--pl-primary)]"
+                className="w-full p-2 rounded-lg border border-[var(--pl-card-border)] bg-[var(--pl-bg-soft)] text-[12px] text-[var(--pl-text)] focus:outline-none focus:border-[var(--pl-primary)]"
               >
                 <option value="all">All stores</option>
                 {STORES.map((store) => (
@@ -589,23 +558,21 @@ export default function Page() {
               </select>
             </div>
 
-            {/* Fast shipping */}
             <label className="flex items-center gap-2 text-[12px] cursor-pointer">
               <input
                 type="checkbox"
                 checked={fastOnly}
                 onChange={(e) => setFastOnly(e.target.checked)}
-                className="w-3.5 h-3.5 rounded border-[var(--pl-card-border)] bg-[var(--pl-bg)] text-[var(--pl-primary)] focus:ring-[var(--pl-primary)]"
+                className="w-3.5 h-3.5 rounded border-[var(--pl-card-border)] bg-[var(--pl-bg-soft)] text-[var(--pl-primary)] focus:ring-[var(--pl-primary)]"
               />
               <span className="text-[var(--pl-text)]">Fast shipping only</span>
             </label>
           </div>
         </aside>
 
-        {/* CENTER GRID */}
-        <div className="md:col-span-6 space-y-6">
-          {/* PRODUCT GRID */}
-          <div className={`${cardStyle} p-4`}>
+        {/* CENTER COLUMN */}
+        <div className="space-y-6">
+          <div className={`${cardStyle} p-5`}>
             {visibleProducts.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-8 text-center">
                 <h3 className="text-[13px] font-medium text-[var(--pl-text)] mb-1">
@@ -625,38 +592,41 @@ export default function Page() {
               />
             )}
           </div>
-
-          {/* You can re-add Saved Searches / Favorites UI here later if you want */}
         </div>
 
         {/* RIGHT SIDEBAR */}
-        <aside className="md:col-span-3 space-y-4 bg-[var(--pl-card)]/60 backdrop-blur-md shadow-inner border border-[var(--pl-card-border)] rounded-2xl p-4">
-          <ProductSummary
-            product={activeProduct as any}
-            selectedProductId={selectedProductId}
-            totalProducts={totalProducts}
-            totalOffers={totalOffers}
-          />
-
-          <PriceTrendChart
-            points={trendHistory}
-            isLoading={isTrendLoading}
-            error={trendError}
-          />
-
-          <div id="ai-assistant-panel" className="animate-fade-in-up">
-            <ChatAssistant
-              products={visibleProducts}
-              searchQuery={query}
-              location={location}
-              disabled={visibleProducts.length === 0}
+        <aside>
+          <div className={`${cardStyle} p-5 space-y-6`}>
+            <ProductSummary
+              product={activeProduct as any}
+              selectedProductId={selectedProductId}
+              totalProducts={totalProducts}
+              totalOffers={totalOffers}
             />
+
+            <PriceTrendChart
+              points={trendHistory}
+              isLoading={isTrendLoading}
+              error={trendError}
+            />
+
+            <div
+              id="ai-assistant-panel"
+              className="animate-fade-in-up shadow-[0_0_12px_rgba(59,130,246,0.25)]"
+            >
+              <ChatAssistant
+                products={visibleProducts}
+                searchQuery={query}
+                location={location}
+                disabled={visibleProducts.length === 0}
+              />
+            </div>
           </div>
         </aside>
       </section>
 
       {/* Affiliate Disclosure Footer */}
-      <footer className="w-full px-6 py-4 border-t border-[var(--pl-card-border)] mt-8">
+      <footer className="w-full px-6 py-4 mt-8">
         <div className="max-w-6xl mx-auto text-center">
           <p className="text-[10px] text-[var(--pl-text-subtle)] leading-relaxed">
             Some links on PriceLance are affiliate links. If you buy through one
@@ -667,45 +637,30 @@ export default function Page() {
         </div>
       </footer>
 
-      {/* BOTTOM NAV */}
-      <footer className="w-full fixed bottom-0 left-0 border-t border-[var(--pl-card-border)] bg-[var(--pl-card)]/80 backdrop-blur-xl py-2 px-6 flex justify-around text-[11px] z-50">
+      {/* Bottom nav */}
+      <footer className="w-full fixed bottom-0 left-0 h-16 border-t border-[var(--pl-card-border)] bg-[var(--pl-card)]/80 backdrop-blur-xl px-6 flex items-center justify-center gap-8 text-[11px] z-50">
         <a
-          href="#"
+          href="#top"
           className="flex flex-col items-center justify-center gap-1 px-3 py-2 text-xs text-[var(--pl-text-muted)] hover:text-[var(--pl-primary)] transition-colors"
         >
-          <span>🏠</span>
+          <span className="text-[20px]">🏠</span>
           <span>Home</span>
-        </a>
-        <a
-          href="#filters"
-          className="flex flex-col items-center justify-center gap-1 px-3 py-2 text-xs text-[var(--pl-text-muted)] hover:text-[var(--pl-primary)] transition-colors"
-        >
-          <span>🎛️</span>
-          <span>Filters</span>
         </a>
         <a
           href="#search"
           className="flex flex-col items-center justify-center gap-1 px-3 py-2 text-xs text-[var(--pl-text-muted)] hover:text-[var(--pl-primary)] transition-colors"
         >
-          <span>🔍</span>
+          <span className="text-[20px]">🔍</span>
           <span>Search</span>
         </a>
         <a
           href="#"
           className="flex flex-col items-center justify-center gap-1 px-3 py-2 text-xs text-[var(--pl-text-muted)] hover:text-[var(--pl-primary)] transition-colors"
         >
-          <span>🕘</span>
+          <span className="text-[20px]">🕘</span>
           <span>Recent</span>
         </a>
-        <a
-          href="#"
-          className="flex flex-col items-center justify-center gap-1 px-3 py-2 text-xs text-[var(--pl-text-muted)] hover:text-[var(--pl-primary)] transition-colors"
-        >
-          <span>👤</span>
-          <span>Profile</span>
-        </a>
       </footer>
-
     </main>
   );
 }
