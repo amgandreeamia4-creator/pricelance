@@ -82,11 +82,26 @@ export default function ProductList({
                 onSelectProduct(product.id);
               }
             }}
-            className={`rounded-2xl border px-3 py-3 cursor-pointer transition-all hover:shadow-md flex flex-col justify-between ${
+            className={`relative flex flex-col items-center rounded-3xl bg-white/80 p-4 shadow-sm hover:shadow-md transition-shadow cursor-pointer overflow-hidden ${
               isSelected ? 'ring-2 ring-blue-500' : ''
             }`}
           >
-            <div className="flex gap-2">
+            {/* Store name + Affiliate pill - absolutely positioned at top */}
+            <div className="absolute inset-x-0 top-2 flex items-center justify-center gap-2 px-3">
+              {storeName && (
+                <span className="max-w-[120px] truncate text-[11px] text-slate-500">
+                  {storeName}
+                </span>
+              )}
+              {isAffiliate && (
+                <span className="rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-wide text-slate-600 bg-white/70 backdrop-blur">
+                  Affiliate
+                </span>
+              )}
+            </div>
+
+            {/* Product image */}
+            <div className="mt-8 mb-3 flex h-28 w-full items-center justify-center">
               <div className="w-16 h-16 rounded-xl border overflow-hidden flex items-center justify-center">
                 <img
                   src={product.imageUrl || '/placeholder.png'}
@@ -94,40 +109,32 @@ export default function ProductList({
                   className="w-full h-full object-contain"
                 />
               </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="text-xs font-semibold leading-snug line-clamp-2">
-                  {product.displayName || product.name}
-                </h3>
-                {product.brand && (
-                  <p className="mt-0.5 text-[10px] text-muted-foreground line-clamp-1">
-                    {product.brand}
-                  </p>
-                )}
-                {storeName && (
-                  <div className="mt-1 flex items-center gap-1 flex-wrap">
-                    <span className="text-[9px] text-[var(--pl-text)] font-medium">
-                      {storeName}
-                    </span>
-                    {isAffiliate && (
-                      <span className="rounded-full border border-[var(--pl-primary)] bg-[var(--pl-primary)]/5 text-[var(--pl-primary)] px-2 py-[2px] uppercase tracking-tight text-[9px]">
-                        Affiliate
-                      </span>
-                    )}
-                  </div>
-                )}
-              </div>
             </div>
-            <div className="mt-3 flex items-end justify-between">
+
+            {/* Product name */}
+            <h3 className="mt-1 text-center text-sm font-medium text-slate-800 line-clamp-2">
+              {product.displayName ?? product.name}
+            </h3>
+
+            {/* Brand */}
+            {product.brand && (
+              <p className="mt-0.5 text-center text-[10px] text-slate-600 line-clamp-1">
+                {product.brand}
+              </p>
+            )}
+
+            {/* Price section */}
+            <div className="mt-auto pt-3 flex items-end justify-between w-full">
               <div>
                 {bestListing ? (
                   <>
-                    <div className="text-[10px] text-muted-foreground">Best price</div>
-                    <div className="text-sm font-semibold">
+                    <div className="text-[10px] text-slate-500 text-center">Best price</div>
+                    <div className="text-sm font-semibold text-slate-900">
                       {minPrice} {currency}
                     </div>
                   </>
                 ) : (
-                  <div className="text-[10px] text-muted-foreground">No price</div>
+                  <div className="text-[10px] text-slate-500">No price</div>
                 )}
               </div>
               <button
@@ -139,7 +146,7 @@ export default function ProductList({
                 className={`h-7 w-7 rounded-full border flex items-center justify-center text-xs transition-colors ${
                   isFavorite
                     ? 'bg-blue-500 text-white border-blue-500'
-                    : 'text-muted-foreground border'
+                    : 'text-slate-400 border-slate-300'
                 }`}
               >
                 ★
