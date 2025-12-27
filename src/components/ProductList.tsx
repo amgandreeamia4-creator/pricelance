@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { getStoreDisplayName } from '@/lib/stores/registry';
+import clsx from 'clsx';
 
 type Listing = {
   price: number;
@@ -59,9 +60,28 @@ export default function ProductList({
     );
   }
 
+  // Compute best deal product ID (lowest price among all products)
+  const bestDealProductId = React.useMemo(() => {
+    const productsWithPrices = products
+      .slice(0, 10)
+      .map(product => ({
+        id: product.id,
+        bestListing: getBestListing(product.listings)
+      }))
+      .filter(({ bestListing }) => bestListing && typeof bestListing.price === 'number');
+    
+    if (productsWithPrices.length === 0) return null;
+    
+    const bestDeal = productsWithPrices.reduce((best, current) => 
+      current.bestListing!.price < best.bestListing!.price ? current : best
+    );
+    
+    return bestDeal.id;
+  }, [products]);
+
   return (
-    <div className="w-full md:overflow-x-auto md:pb-4">
-      <div className="grid grid-cols-2 gap-4 w-full md:grid md:grid-rows-2 md:grid-flow-col md:auto-cols-[minmax(190px,210px)] md:gap-4">
+    <div className="w-full md:overflow-x-auto md:pb-4 md:px-4">
+      <div className="grid grid-cols-2 gap-4 w-full md:grid md:grid-rows-2 md:grid-flow-col md:auto-cols-[minmax(190px,210px)] md:gap-4 md:justify-start">
         {products.slice(0, 10).map((product) => {
           const isSelected = selectedProductId === product.id;
           const bestListing = getBestListing(product.listings);
@@ -71,6 +91,14 @@ export default function ProductList({
           const currency = bestListing?.currency ?? 'LEI';
           const storeLabel = getStoreDisplayName(bestListing || {});
           const isAffiliate = Boolean(bestListing?.affiliateProvider || bestListing?.source);
+
+          const isBestDeal = product.id === bestDealProductId;
+
+          const cardClasses = clsx(
+            "relative flex flex-col items-center rounded-3xl bg-white/80 p-4 shadow-sm hover:shadow-md transition-shadow cursor-pointer overflow-hidden",
+            isSelected && "ring-2 ring-blue-500",
+            isBestDeal && "ring-2 ring-sky-400 shadow-xl bg-sky-50/80"
+          );
 
           return (
             <div
@@ -84,10 +112,13 @@ export default function ProductList({
                   onSelectProduct(product.id);
                 }
               }}
-              className={`relative flex flex-col items-center rounded-3xl bg-white/80 p-4 shadow-sm hover:shadow-md transition-shadow cursor-pointer overflow-hidden ${
-                isSelected ? 'ring-2 ring-blue-500' : ''
-              }`}
+              className={cardClasses}
             >
+              {isBestDeal && (
+                <div className="absolute right-3 top-3 rounded-full bg-sky-500 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-white shadow z-10">
+                  Best price
+                </div>
+              )}
               {/* Store name + Affiliate pill - absolutely positioned at top */}
               <div className="absolute inset-x-0 top-2 flex items-center justify-center gap-2 px-3">
                 {storeLabel && (
