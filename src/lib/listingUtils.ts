@@ -50,5 +50,6 @@ export function isGoodListing(listing: {
   url?: string | null;
   price?: number | null;
 }): boolean {
-  return isValidListingUrl(listing.url) && isValidListingPrice(listing.price);
+  // Only require valid price for now - allow missing URLs for browsing
+  return isValidListingPrice(listing.price);
 }
