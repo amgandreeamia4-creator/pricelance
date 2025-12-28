@@ -132,6 +132,7 @@ export default function ProductList({
           const isSelected = selectedProductId === product.id;
           const bestListing = getBestListing(product.listings);
           const isFavorite = favoriteIds.includes(product.id);
+          const offerCount = product.listings?.length ?? 0;
 
           const minPrice = bestListing?.price;
           const currency = bestListing?.currency ?? 'LEI';
@@ -251,6 +252,11 @@ export default function ProductList({
                       <div className="text-sm font-semibold text-slate-900">
                         {minPrice} {currency}
                       </div>
+                      {offerCount > 1 && (
+                        <div className="mt-0.5 text-[10px] text-slate-500">
+                          {offerCount} oferte disponibile
+                        </div>
+                      )}
                     </>
                   ) : (
                     <div className="text-[10px] text-slate-500">No price</div>

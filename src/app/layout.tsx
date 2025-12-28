@@ -5,9 +5,22 @@ import Link from "next/link";
 import ThemeProvider from "@/components/ThemeProvider";
 
 export const metadata: Metadata = {
-  title: "PriceLance – Tech price comparison in Romania",
+  title: 'PriceLance – Comparare prețuri la electronice în România',
   description:
-    "Compare real prices for phones, laptops, and other tech from major Romanian stores in one place.",
+    'Caută și compară prețuri la telefoane, laptopuri, monitoare, căști și alte electronice din magazinele online din România. Găsește cele mai bune oferte rapid, într-un singur loc.',
+  metadataBase: new URL('https://pricelance.com'),
+  openGraph: {
+    title: 'PriceLance – Comparare prețuri la electronice în România',
+    description:
+      'Caută și compară prețuri la telefoane, laptopuri, monitoare, căști și alte electronice din magazinele online din România.',
+    url: 'https://pricelance.com',
+    type: 'website',
+    siteName: 'PriceLance',
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
   // This creates: <meta name="profitshareid" content="...">
   other: {
     profitshareid: "ef16e2643bedf2876e19640f297c5e9a",
@@ -22,7 +35,7 @@ export default function RootLayout({
   const currentYear = new Date().getFullYear();
 
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="ro" suppressHydrationWarning>
       <body className="min-h-screen antialiased selection:bg-blue-600/40 selection:text-white">
         <ThemeProvider>
           <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-neutral-950">
@@ -64,19 +77,20 @@ export default function RootLayout({
             </header>
 
             <main className="flex-1 w-full">
-  <div className="w-[85%] max-w-none mx-auto px-4 py-6">
-    {children}
-  </div>
-</main>
+              <div className="w-[85%] max-w-none mx-auto px-4 py-6">
+                {children}
+              </div>
+            </main>
 
-            <footer className="w-full border-t border-slate-200/80 dark:border-slate-800 bg-white/80 dark:bg-neutral-950/80">
+            <footer className="w-full border-t border-slate-400/80 dark:border-slate-800 bg-white/80 dark:bg-neutral-950/80">
               <div className="max-w-5xl mx-auto px-4 py-4 text-[11px] leading-relaxed text-gray-600 dark:text-gray-400 space-y-1 text-center sm:text-left">
-                <p>
-                  Some links on PriceLance are affiliate links. If you buy
-                  through one of these links, we may earn a small commission
-                  from the retailer, at no extra cost to you. Prices and
-                  availability can change; always check the retailer site.
-                </p>
+                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                  <span>PriceLance · instrument independent de comparare prețuri</span>
+                  <span className="max-w-xl">
+                    Prețurile și ofertele afișate pot varia. Unele linkuri pot fi linkuri de afiliere, iar PriceLance poate primi
+                    comisioane fără costuri suplimentare pentru tine.
+                  </span>
+                </div>
                 <p className="text-[10px] text-gray-500 dark:text-gray-500">
                   &copy; {currentYear} PriceLance.
                 </p>

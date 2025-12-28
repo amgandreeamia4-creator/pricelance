@@ -485,6 +485,10 @@ export default function Page() {
             data, official feeds, and affiliate feeds where available — no
             scraping.
           </p>
+          <p className="mt-2 max-w-xl text-sm text-slate-600 dark:text-slate-300">
+            PriceLance este un comparator independent de prețuri pentru electronice în România. Caută un produs, vezi ofertele
+            din mai multe magazine online și alege rapid varianta care ți se potrivește.
+          </p>
           <p className="mt-1 text-[11px] text-[var(--pl-text-subtle)]">
             Coverage is continuously expanding, starting from Romania and
             extending deeper into the EU. Always verify the final price,

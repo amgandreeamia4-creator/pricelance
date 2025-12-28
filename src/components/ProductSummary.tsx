@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { getStoreDisplayName } from "@/lib/stores/registry";
 
 type Listing = {
   id: string;
@@ -11,6 +12,7 @@ type Listing = {
   deliveryTimeDays?: number | null;
   fastDelivery?: boolean | null;
   priceLastSeenAt?: string | null;
+  url?: string | null;
 };
 
 type Product = {
@@ -212,6 +214,60 @@ export default function ProductSummary({
               </p>
             )}
           </div>
+
+          {/* Offers section */}
+          {(() => {
+            const listings = product?.listings ?? [];
+            const sortedListings = [...listings].sort((a, b) => a.price - b.price);
+            
+            return sortedListings.length > 0 ? (
+              <div className="mt-4 border-t border-slate-200 pt-3 dark:border-slate-800">
+                <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                  Oferte pentru acest produs
+                </h4>
+
+                <div className="flex flex-col gap-2">
+                  {sortedListings.slice(0, 5).map((listing, index) => {
+                    const storeLabel = getStoreDisplayName(listing);
+
+                    return (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between rounded-2xl bg-slate-50 px-3 py-2 text-xs dark:bg-slate-900/60"
+                      >
+                        <div className="flex flex-col">
+                          <span className="font-medium text-slate-800 dark:text-slate-100">
+                            {storeLabel}
+                          </span>
+                          <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                            {listing.price} {listing.currency ?? 'LEI'}
+                          </span>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const url = listing.url;
+                            if (!url) return;
+                            window.open(url, '_blank', 'noopener,noreferrer');
+                          }}
+                          className="rounded-full bg-blue-500 px-3 py-1 text-[11px] font-semibold text-white shadow-sm hover:bg-blue-600"
+                        >
+                          spre magazin »
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {sortedListings.length > 5 && (
+                  <div className="mt-2 text-[11px] text-slate-500 dark:text-slate-400">
+                    + {sortedListings.length - 5} oferte suplimentare
+                  </div>
+                )}
+              </div>
+            ) : null;
+          })()}
         </>
       )}
     </div>
