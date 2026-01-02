@@ -69,7 +69,6 @@ export async function GET(req: NextRequest, context: RouteContext) {
         countryCode: true,
         createdAt: true,
         updatedAt: true,
-        priceLastSeenAt: true,
       },
       orderBy: { createdAt: "desc" },
     });

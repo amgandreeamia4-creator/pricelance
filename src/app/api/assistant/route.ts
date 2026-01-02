@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { isListingFromDisabledNetwork } from "@/config/affiliateNetworks";
 
 type Listing = {
   id?: string;
@@ -6,6 +7,8 @@ type Listing = {
   storeName?: string | null;
   price?: number | string | null;
   currency?: string | null;
+  affiliateProvider?: string | null;
+  affiliateProgram?: string | null;
 };
 
 type Product = {
@@ -794,6 +797,17 @@ export async function POST(req: NextRequest) {
       ? (body.products as Product[])
       : [];
 
+    // Defensive filtering: remove any Profitshare listings that might have slipped through
+    const filteredProducts = products.map(product => ({
+      ...product,
+      listings: (product.listings || []).filter(listing => 
+        !isListingFromDisabledNetwork({
+          affiliateProvider: listing.affiliateProvider || null,
+          affiliateProgram: listing.affiliateProgram || null
+        })
+      )
+    })).filter(product => product.listings.length > 0);
+
     const messages = body.messages.filter(
       (m): m is AssistantMessage =>
         !!m &&
@@ -830,7 +844,7 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    if (!products.length) {
+    if (!filteredProducts.length) {
       return NextResponse.json<AssistantResponseBody>({
         ok: true,
         answer:
@@ -844,7 +858,7 @@ export async function POST(req: NextRequest) {
 
     if (intent === "cheapest") {
       answer = buildCheapestAnswer({
-        products,
+        products: filteredProducts,
         questionText,
         searchQuery,
         location,
@@ -853,21 +867,21 @@ export async function POST(req: NextRequest) {
       });
     } else if (intent === "best_value") {
       answer = buildBestValueAnswer({
-        products,
+        products: filteredProducts,
         searchQuery,
         location,
         favoriteIds: favoriteIdsSet,
       });
     } else if (intent === "filter") {
       answer = buildFilterAnswer({
-        products,
+        products: filteredProducts,
         questionText,
         searchQuery,
         location,
       });
     } else {
       answer = buildSummaryAnswer({
-        products,
+        products: filteredProducts,
         searchQuery,
         location,
       });

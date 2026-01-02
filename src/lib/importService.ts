@@ -66,6 +66,11 @@ export interface ImportOptions {
    * Only used when source = "affiliate".
    */
   affiliateProgram?: string;
+  /**
+   * Affiliate network identifier (e.g., "PROFITSHARE", "TWOPERFORMANT").
+   * Used for filtering networks from public-facing features.
+   */
+  network?: string;
 }
 
 function isValidAbsoluteUrl(url: string): boolean {
@@ -262,6 +267,7 @@ export async function importNormalizedListings(
     urlTimeoutMs = 4000,
     affiliateProvider,
     affiliateProgram,
+    network,
   } = options;
 
   // Cache product lookups by GTIN or brand+title (case-insensitive)
@@ -447,6 +453,7 @@ export async function importNormalizedListings(
             // Affiliate metadata (only set if provided)
             ...(affiliateProvider && { affiliateProvider }),
             ...(affiliateProgram && { affiliateProgram }),
+            ...(network && { network }),
           },
         });
         summary.listingsUpdated++;
@@ -484,6 +491,7 @@ export async function importNormalizedListings(
             // Affiliate metadata (only set if provided)
             ...(affiliateProvider && { affiliateProvider }),
             ...(affiliateProgram && { affiliateProgram }),
+            ...(network && { network }),
           },
         });
         summary.listingsCreated++;

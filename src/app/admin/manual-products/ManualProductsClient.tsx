@@ -1,6 +1,10 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { AdminSettingsProvider, useAdminSettings } from "@/contexts/AdminSettingsContext";
+import AdminNetworkToggle from "@/components/AdminNetworkToggle";
+import { isListingFromDisabledNetwork } from "@/config/affiliateNetworks";
+import { shouldShowListingInAdmin } from "@/config/affiliates";
 
 const STORE_OPTIONS = ["emag", "altex", "pcgarage", "flanco", "amazon_de", "other_eu"];
 
@@ -14,11 +18,37 @@ type AdminProduct = {
   listingsCount: number;
 };
 
+type AdminListing = {
+  id: string;
+  storeName: string;
+  price: number;
+  currency: string;
+  url: string | null;
+  affiliateProvider: string | null;
+  affiliateProgram: string | null;
+  createdAt: string;
+};
+
 export default function ManualProductsClient() {
+  return (
+    <AdminSettingsProvider>
+      <ManualProductsContent />
+    </AdminSettingsProvider>
+  );
+}
+
+function ManualProductsContent() {
+  // Admin settings
+  const { showDisabledNetworks } = useAdminSettings();
+  
   // Product list state
   const [products, setProducts] = useState<AdminProduct[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  
+  // Listings state
+  const [productListings, setProductListings] = useState<Record<string, AdminListing[]>>({});
+  const [loadingListings, setLoadingListings] = useState<Record<string, boolean>>({});
 
   // Product form state
   const [productName, setProductName] = useState("");
@@ -46,6 +76,15 @@ export default function ManualProductsClient() {
     fetchProducts();
   }, []);
 
+  // Fetch listings for all products when products are loaded or when toggle changes
+  useEffect(() => {
+    if (products.length > 0) {
+      products.forEach(product => {
+        fetchProductListings(product.id);
+      });
+    }
+  }, [products, showDisabledNetworks]);
+
   async function fetchProducts() {
     setIsLoading(true);
     setLoadError(null);
@@ -64,6 +103,27 @@ export default function ManualProductsClient() {
       setProducts([]);
     } finally {
       setIsLoading(false);
+    }
+  }
+
+  // Fetch listings for a specific product
+  async function fetchProductListings(productId: string) {
+    setLoadingListings(prev => ({ ...prev, [productId]: true }));
+    try {
+      const res = await fetch(`/api/admin/products/${productId}/listings`);
+      if (!res.ok) {
+        console.error(`Failed to load listings for product ${productId}`);
+        return;
+      }
+      const data = await res.json();
+      setProductListings(prev => ({ 
+        ...prev, 
+        [productId]: Array.isArray(data.listings) ? data.listings : []
+      }));
+    } catch (err) {
+      console.error(`Error fetching listings for product ${productId}:`, err);
+    } finally {
+      setLoadingListings(prev => ({ ...prev, [productId]: false }));
     }
   }
 
@@ -179,6 +239,8 @@ export default function ManualProductsClient() {
           </a>
         </div>
 
+        <AdminNetworkToggle />
+
         {/* CREATE PRODUCT FORM */}
         <div className="mb-8 p-4 border border-slate-300 dark:border-slate-700 rounded-2xl bg-white dark:bg-slate-800">
           <h2 className="text-lg font-semibold mb-4">Create Product</h2>
@@ -290,6 +352,82 @@ export default function ManualProductsClient() {
                     {expandedProductId === product.id ? "Cancel" : "Add listing"}
                   </button>
                 </div>
+
+                {/* Listings display with admin toggle logic */}
+                {(productListings[product.id]?.length > 0 || loadingListings[product.id]) && (
+                  <div className="mt-3 pt-3 border-t border-slate-200 dark:border-slate-600">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="text-xs font-medium text-slate-600 dark:text-slate-400">
+                        Listings ({productListings[product.id]?.length || 0})
+                      </h4>
+                      {!showDisabledNetworks && (
+                        <span className="text-xs text-yellow-600 bg-yellow-50 px-2 py-1 rounded">
+                          Some networks hidden
+                        </span>
+                      )}
+                    </div>
+                    
+                    {loadingListings[product.id] ? (
+                      <p className="text-xs text-slate-500">Loading listings...</p>
+                    ) : (
+                      <div className="space-y-1">
+                        {productListings[product.id]?.map((listing) => {
+                          const isDisabled = isListingFromDisabledNetwork(listing);
+                          const shouldShow = shouldShowListingInAdmin(isDisabled, showDisabledNetworks);
+                          
+                          if (!shouldShow) return null;
+                          
+                          return (
+                            <div
+                              key={listing.id}
+                              className={`
+                                text-xs p-2 rounded border
+                                ${isDisabled && showDisabledNetworks 
+                                  ? 'bg-yellow-50 border-yellow-200' 
+                                  : 'bg-slate-50 border-slate-200 dark:bg-slate-700 dark:border-slate-600'
+                                }
+                              `}
+                            >
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                  <span className="font-medium">{listing.storeName}</span>
+                                  <span className="text-slate-500">
+                                    {listing.price} {listing.currency}
+                                  </span>
+                                  {listing.affiliateProvider && (
+                                    <span className="text-xs px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded">
+                                      {listing.affiliateProvider}
+                                    </span>
+                                  )}
+                                  {isDisabled && (
+                                    <span className="text-xs px-1.5 py-0.5 bg-red-100 text-red-700 rounded">
+                                      Disabled
+                                    </span>
+                                  )}
+                                </div>
+                                {listing.url && (
+                                  <a
+                                    href={listing.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-blue-600 hover:text-blue-800 underline"
+                                  >
+                                    Visit
+                                  </a>
+                                )}
+                              </div>
+                              {listing.affiliateProgram && (
+                                <div className="text-xs text-slate-500 mt-1">
+                                  Program: {listing.affiliateProgram}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {/* Inline listing form */}
                 {expandedProductId === product.id && (

@@ -5,6 +5,7 @@ import { PrismaClient } from "@prisma/client";
 import { computeDiscountPercent } from "@/lib/dealsUtils";
 import { isDemoProduct } from "@/lib/demoFilter";
 import { checkRateLimit } from "@/lib/rateLimit";
+import { getNetworkFilter, AFFILIATE_FLAGS, shouldHideListing } from "@/config/affiliates";
 
 const prisma = new PrismaClient();
 
@@ -77,11 +78,20 @@ export async function GET(req: NextRequest) {
       }
     }
 
+    // Apply network filtering to exclude disabled networks
+    const networkFilter = getNetworkFilter();
+    const whereClause = Object.keys(networkFilter).length > 0 ? {
+      listings: {
+        some: networkFilter,
+      },
+    } : undefined;
+
     const products = await prisma.product.findMany({
       include: {
         listings: true,
         priceHistory: true,
       },
+      where: whereClause,
     });
 
     const deals: Deal[] = [];
@@ -92,12 +102,23 @@ export async function GET(req: NextRequest) {
       // Require at least one listing
       if (!p.listings || p.listings.length === 0) continue;
 
+      // Filter out disabled networks from listings
+      const filteredListings = (p.listings as any[]).filter((l: any) => {
+        // Additional safety filter: exclude disabled networks using affiliate fields
+        if (shouldHideListing(l)) {
+          return false;
+        }
+        return true;
+      });
+
+      if (filteredListings.length === 0) continue;
+
       // Skip demo/DummyJSON products - they should not appear in deals
-      if (isDemoProduct({ id: p.id, brand: p.brand, listings: p.listings })) {
+      if (isDemoProduct({ id: p.id, brand: p.brand, listings: filteredListings })) {
         continue;
       }
 
-      const validHistory = p.priceHistory.filter((h) => h.price > 0);
+      const validHistory = (p.priceHistory as any[]).filter((h: any) => h.price > 0);
       if (validHistory.length < MIN_HISTORY_POINTS) continue;
 
       withHistoryCount++;
@@ -112,8 +133,8 @@ export async function GET(req: NextRequest) {
 
       if (!(avgHistoricalPrice > 0)) continue;
 
-      const validListings = p.listings.filter(
-        (l) => typeof l.price === "number" && l.price > 0
+      const validListings = filteredListings.filter(
+        (l: any) => typeof l.price === "number" && l.price > 0
       );
       if (validListings.length === 0) continue;
 

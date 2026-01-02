@@ -5,6 +5,7 @@ import { getStoreDisplayName } from '@/lib/stores/registry';
 import clsx from 'clsx';
 import { Star } from 'lucide-react';
 import { useSpring, animated, config } from '@react-spring/web';
+import { isListingFromDisabledNetwork } from '@/config/affiliateNetworks';
 
 type Listing = {
   price: number;
@@ -14,6 +15,7 @@ type Listing = {
   affiliateProvider?: string | null;
   source?: string | null;
   fastDelivery?: boolean | null;
+  network?: string | null; // Legacy field - kept for compatibility
 };
 
 type Product = {
@@ -140,6 +142,10 @@ export default function ProductList({
           const bestListingUrl = bestListing?.url ?? undefined;
           const isAffiliate = Boolean(bestListing?.affiliateProvider || bestListing?.source);
 
+          // Check if this listing should be disabled (secondary safety layer)
+          const shouldDisableLink = isListingFromDisabledNetwork(bestListing || {});
+          const finalListingUrl = shouldDisableLink ? undefined : bestListingUrl;
+
           const isBestDeal = product.id === bestDealProductId;
 
           // ✅ badges
@@ -188,13 +194,18 @@ export default function ProductList({
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
-                      openListing(bestListingUrl);
+                      if (finalListingUrl) {
+                        openListing(finalListingUrl);
+                      }
                     }}
+                    disabled={shouldDisableLink || false}
                     className={clsx(
                       'max-w-[140px] truncate rounded-full px-2 py-0.5 text-[11px] font-medium border border-transparent transition-colors',
                       storeTone,
-                      bestListingUrl && 'hover:border-sky-400 hover:shadow-sm'
+                      finalListingUrl && !shouldDisableLink && 'hover:border-sky-400 hover:shadow-sm',
+                      shouldDisableLink && 'opacity-50 cursor-not-allowed'
                     )}
+                    title={shouldDisableLink ? 'Temporarily unavailable' : undefined}
                   >
                     {storeLabel}
                   </button>
