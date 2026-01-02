@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import { getNetworkFilter, AFFILIATE_FLAGS } from '@/config/affiliates';
 
 type ListingResponse = {
   id: string;
@@ -48,6 +49,14 @@ export async function GET(req: NextRequest) {
     // --- WHERE: search across ALL products, ALL categories ---
     const where: any = {};
 
+    // Apply network filtering to exclude disabled networks
+    const networkFilter = getNetworkFilter();
+    if (Object.keys(networkFilter).length > 0) {
+      where.listings = {
+        some: networkFilter,
+      };
+    }
+
     if (q) {
       where.OR = [
         { name: { contains: q, mode: 'insensitive' } },
@@ -58,11 +67,21 @@ export async function GET(req: NextRequest) {
 
     if (store) {
       // Filter to products that have at least one listing from this store
-      where.listings = {
-        some: {
-          storeId: store,
-        },
-      };
+      if (where.listings && where.listings.some) {
+        // Combine network filter with store filter
+        where.listings.some = {
+          AND: [
+            where.listings.some,
+            { storeId: store },
+          ],
+        };
+      } else {
+        where.listings = {
+          some: {
+            storeId: store,
+          },
+        };
+      }
     }
 
     // Total for pagination
@@ -89,25 +108,36 @@ export async function GET(req: NextRequest) {
       // "relevance": keep DB order; we can improve later if needed
     }
 
-    const products: ProductResponse[] = sorted.map((p) => ({
-      id: p.id,
-      name: p.name,
-      displayName: p.displayName,
-      brand: p.brand,
-      imageUrl: p.imageUrl,
-      category: (p as any).category ?? null,
-      listings: (p.listings || []).map((l: any) => ({
-        id: l.id,
-        storeId: l.storeId ?? null,
-        storeName: l.storeName ?? null,
-        price: l.price,
-        currency: l.currency ?? null,
-        url: l.url ?? l.productUrl ?? l.affiliateUrl ?? null,
-        affiliateProvider: l.affiliateProvider ?? null,
-        source: l.source ?? null,
-        fastDelivery: l.fastDelivery ?? null,
-      })),
-    }));
+    // Profitshare filtering logic
+    const isProfitshare = (listing: any) =>
+      listing.affiliateProvider?.toLowerCase() === "profitshare";
+
+    const filterListingsForVisibility = (listings: any[]) => {
+      if (!AFFILIATE_FLAGS.DISABLE_PROFITSHARE) return listings;
+      return listings.filter(l => !isProfitshare(l));
+    };
+
+    const products: ProductResponse[] = sorted
+      .map((p) => ({
+        id: p.id,
+        name: p.name,
+        displayName: p.displayName,
+        brand: p.brand,
+        imageUrl: p.imageUrl,
+        category: (p as any).category ?? null,
+        listings: filterListingsForVisibility(p.listings ?? [])
+          .map((l: any) => ({
+            id: l.id,
+            storeId: l.storeId ?? null,
+            storeName: l.storeName ?? null,
+            price: l.price,
+            currency: l.currency ?? null,
+            url: l.url ?? l.productUrl ?? l.affiliateUrl ?? null,
+            affiliateProvider: l.affiliateProvider ?? null,
+            source: l.source ?? null,
+            fastDelivery: l.fastDelivery ?? null,
+          })),
+      }));
 
     return NextResponse.json({
       products,
