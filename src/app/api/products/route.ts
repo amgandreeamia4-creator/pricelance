@@ -55,7 +55,6 @@ export async function GET(req: NextRequest) {
     // --- WHERE: search across ALL products, ALL categories ---
     const where: any = {};
 
-    // Simple text search across name / displayName / brand
     if (q) {
       where.OR = [
         { name: { contains: q, mode: 'insensitive' } },
@@ -64,8 +63,8 @@ export async function GET(req: NextRequest) {
       ];
     }
 
-    // Optional filter by store: products that have at least one listing from this store
     if (store) {
+      // Products that have at least one listing from this store
       where.listings = {
         some: {
           storeId: store,
@@ -73,10 +72,9 @@ export async function GET(req: NextRequest) {
       };
     }
 
-    // Total for pagination
-    const total = await prisma.product.count({ where });
+    // Total before visibility filter (good enough for v0, we override with visible length)
+    await prisma.product.count({ where });
 
-    // Base query: include all listings; no clever filtering here
     const dbProducts = await prisma.product.findMany({
       where,
       include: {
@@ -94,7 +92,7 @@ export async function GET(req: NextRequest) {
     } else if (sort === 'price-desc') {
       sorted.sort((a, b) => getBestPrice(b) - getBestPrice(a));
     } else {
-      // "relevance": keep DB order for now
+      // "relevance": keep DB order; can improve later
     }
 
     // Profitshare filtering logic (in-memory)
@@ -113,22 +111,27 @@ export async function GET(req: NextRequest) {
       brand: p.brand,
       imageUrl: p.imageUrl,
       category: p.category ?? null,
-      listings: filterListingsForVisibility(p.listings ?? []).map((l: any) => ({
-        id: l.id,
-        storeId: l.storeId ?? null,
-        storeName: l.storeName ?? null,
-        price: l.price,
-        currency: l.currency ?? null,
-        url: l.url ?? l.productUrl ?? l.affiliateUrl ?? null,
-        affiliateProvider: l.affiliateProvider ?? null,
-        source: l.source ?? null,
-        fastDelivery: l.fastDelivery ?? null,
-      })),
+      listings: filterListingsForVisibility(p.listings ?? []).map(
+        (l: any): ListingResponse => ({
+          id: l.id,
+          storeId: l.storeId ?? null,
+          storeName: l.storeName ?? null,
+          price: l.price,
+          currency: l.currency ?? null,
+          url: l.url ?? l.productUrl ?? l.affiliateUrl ?? null,
+          affiliateProvider: l.affiliateProvider ?? null,
+          source: l.source ?? null,
+          fastDelivery: l.fastDelivery ?? null,
+        }),
+      ),
     }));
 
+    // 🔹 keep only products that actually have visible offers
+    const visibleProducts = products.filter((p) => p.listings.length > 0);
+
     return NextResponse.json({
-      products,
-      total,
+      products: visibleProducts,
+      total: visibleProducts.length, // simple & honest for v0
       page,
       perPage,
     });
