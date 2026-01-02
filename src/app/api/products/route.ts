@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { getNetworkFilter, AFFILIATE_FLAGS } from '@/config/affiliates';
+import { AFFILIATE_FLAGS } from '@/config/affiliates';
 
 type ListingResponse = {
   id: string;
@@ -26,8 +26,9 @@ type ProductResponse = {
 
 function getBestPrice(product: { listings: { price: number | null }[] }) {
   if (!product.listings || product.listings.length === 0) return Infinity;
-  const prices = product.listings
-    .map((l) => (typeof l.price === 'number' ? l.price : Infinity));
+  const prices = product.listings.map((l) =>
+    typeof l.price === 'number' ? l.price : Infinity,
+  );
   return Math.min(...prices);
 }
 
@@ -41,22 +42,20 @@ export async function GET(req: NextRequest) {
     const pageParam = searchParams.get('page') ?? '1';
     const perPageParam = searchParams.get('perPage') ?? '24';
 
-    const page = Math.max(1, Number.isNaN(Number(pageParam)) ? 1 : parseInt(pageParam, 10));
-    const perPageRaw = Number.isNaN(Number(perPageParam)) ? 24 : parseInt(perPageParam, 10);
+    const page = Math.max(
+      1,
+      Number.isNaN(Number(pageParam)) ? 1 : parseInt(pageParam, 10),
+    );
+    const perPageRaw = Number.isNaN(Number(perPageParam))
+      ? 24
+      : parseInt(perPageParam, 10);
     const perPage = Math.min(Math.max(perPageRaw, 1), 48);
     const skip = (page - 1) * perPage;
 
     // --- WHERE: search across ALL products, ALL categories ---
     const where: any = {};
 
-    // Apply network filtering to exclude disabled networks
-    const networkFilter = getNetworkFilter();
-    if (Object.keys(networkFilter).length > 0) {
-      where.listings = {
-        some: networkFilter,
-      };
-    }
-
+    // Simple text search across name / displayName / brand
     if (q) {
       where.OR = [
         { name: { contains: q, mode: 'insensitive' } },
@@ -65,23 +64,13 @@ export async function GET(req: NextRequest) {
       ];
     }
 
+    // Optional filter by store: products that have at least one listing from this store
     if (store) {
-      // Filter to products that have at least one listing from this store
-      if (where.listings && where.listings.some) {
-        // Combine network filter with store filter
-        where.listings.some = {
-          AND: [
-            where.listings.some,
-            { storeId: store },
-          ],
-        };
-      } else {
-        where.listings = {
-          some: {
-            storeId: store,
-          },
-        };
-      }
+      where.listings = {
+        some: {
+          storeId: store,
+        },
+      };
     }
 
     // Total for pagination
@@ -105,39 +94,37 @@ export async function GET(req: NextRequest) {
     } else if (sort === 'price-desc') {
       sorted.sort((a, b) => getBestPrice(b) - getBestPrice(a));
     } else {
-      // "relevance": keep DB order; we can improve later if needed
+      // "relevance": keep DB order for now
     }
 
-    // Profitshare filtering logic
+    // Profitshare filtering logic (in-memory)
     const isProfitshare = (listing: any) =>
-      listing.affiliateProvider?.toLowerCase() === "profitshare";
+      listing.affiliateProvider?.toLowerCase() === 'profitshare';
 
     const filterListingsForVisibility = (listings: any[]) => {
       if (!AFFILIATE_FLAGS.DISABLE_PROFITSHARE) return listings;
-      return listings.filter(l => !isProfitshare(l));
+      return listings.filter((l) => !isProfitshare(l));
     };
 
-    const products: ProductResponse[] = sorted
-      .map((p) => ({
-        id: p.id,
-        name: p.name,
-        displayName: p.displayName,
-        brand: p.brand,
-        imageUrl: p.imageUrl,
-        category: (p as any).category ?? null,
-        listings: filterListingsForVisibility(p.listings ?? [])
-          .map((l: any) => ({
-            id: l.id,
-            storeId: l.storeId ?? null,
-            storeName: l.storeName ?? null,
-            price: l.price,
-            currency: l.currency ?? null,
-            url: l.url ?? l.productUrl ?? l.affiliateUrl ?? null,
-            affiliateProvider: l.affiliateProvider ?? null,
-            source: l.source ?? null,
-            fastDelivery: l.fastDelivery ?? null,
-          })),
-      }));
+    const products: ProductResponse[] = sorted.map((p: any) => ({
+      id: p.id,
+      name: p.name,
+      displayName: p.displayName,
+      brand: p.brand,
+      imageUrl: p.imageUrl,
+      category: p.category ?? null,
+      listings: filterListingsForVisibility(p.listings ?? []).map((l: any) => ({
+        id: l.id,
+        storeId: l.storeId ?? null,
+        storeName: l.storeName ?? null,
+        price: l.price,
+        currency: l.currency ?? null,
+        url: l.url ?? l.productUrl ?? l.affiliateUrl ?? null,
+        affiliateProvider: l.affiliateProvider ?? null,
+        source: l.source ?? null,
+        fastDelivery: l.fastDelivery ?? null,
+      })),
+    }));
 
     return NextResponse.json({
       products,
