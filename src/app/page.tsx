@@ -537,9 +537,11 @@ export default function Page() {
               {isSearching ? "Searching..." : "Search"}
             </button>
           </div>
-          <p className="mt-2 text-[10px] text-[var(--pl-text-subtle)] italic">
-            Debug: no enrichment data for last search.
-          </p>
+          {process.env.NODE_ENV !== 'production' && (
+  <p className="mt-2 text-[10px] text-[var(--pl-text-subtle)]">
+    Debug: no enrichment data for last search.
+  </p>
+)}
         </div>
       </div>
 
