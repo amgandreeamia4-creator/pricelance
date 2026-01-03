@@ -127,7 +127,7 @@ async function upsertListing(
 
   const listingData = {
     price: row.price,
-    priceCents: Math.round(row.price * 100),
+    priceCents: Math.min(Math.round(row.price * 100), 2147483647), // Cap at INT32 max
     currency: row.currency,
     inStock,
     // Include affiliate metadata if provided
