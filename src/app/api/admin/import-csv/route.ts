@@ -290,7 +290,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { rows, skippedMissingFields, totalDataRows, headerError } =
+    const { rows, skippedMissingFields, parsedTotalRows, headerError } =
       parseResult;
 
     if (headerError) {
