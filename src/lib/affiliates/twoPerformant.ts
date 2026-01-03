@@ -29,9 +29,21 @@ export type TwoPerformantRow = {
 };
 
 export type TwoPerformantParseResult = {
-  rows: TwoPerformantRow[];
+  ok: boolean;
+  totalRows: number;
+  processedRows: number;
+  skippedRows: number;
+  skipped: number;
+  createdProducts: number;
+  updatedProducts: number;
+  createdListings: number;
+  updatedListings: number;
   skippedMissingFields: number;
-  totalDataRows: number;
+  skippedMissingExternalId: number;
+  failedRows: number;
+  failed: number;
+  errors: { rowNumber: number; message: string; code: string | null }[];
+  rows: TwoPerformantRow[];
   headerError?: string;
 };
 
@@ -247,12 +259,9 @@ function extractHost(url: string | undefined): string | undefined {
 
 /**
  * Validate that essential columns are present in the header.
- * For 2Performant we insist on:
+ * For 2Performant we only require:
  * - a name column
- * - at least ONE price-like column somewhere
- *
- * URL columns are validated per-row, not at header level, because different
- * feeds may put the deeplink in different places.
+ * - Price validation happens per-row since we have smart fallback
  */
 function validateHeaders(
   headerRow: string[],
@@ -262,14 +271,6 @@ function validateHeaders(
 
   if (!headerMap.has("name")) {
     missing.push("Product name");
-  }
-
-  // Check that at least one of our price candidates exists in the header.
-  const hasAnyPriceHeader = headerRow.some((h) =>
-    PRICE_HEADER_CANDIDATES.includes(normalizeHeader(h))
-  );
-  if (!hasAnyPriceHeader) {
-    missing.push("Price column (Price with discou / Price with VAT / Price without VA)");
   }
 
   if (missing.length > 0) {
@@ -291,9 +292,21 @@ export function parseTwoPerformantCsv(content: string): TwoPerformantParseResult
 
   if (csvRows.length < 2) {
     return {
-      rows: [],
+      ok: true,
+      totalRows: 0,
+      processedRows: 0,
+      skippedRows: 0,
+      skipped: 0,
+      createdProducts: 0,
+      updatedProducts: 0,
+      createdListings: 0,
+      updatedListings: 0,
       skippedMissingFields: 0,
-      totalDataRows: 0,
+      skippedMissingExternalId: 0,
+      failedRows: 0,
+      failed: 0,
+      errors: [],
+      rows: [],
     };
   }
 
@@ -303,9 +316,21 @@ export function parseTwoPerformantCsv(content: string): TwoPerformantParseResult
   const headerError = validateHeaders(headerRow, headerMap);
   if (headerError) {
     return {
-      rows: [],
+      ok: false,
+      totalRows: csvRows.length - 1,
+      processedRows: 0,
+      skippedRows: 0,
+      skipped: 0,
+      createdProducts: 0,
+      updatedProducts: 0,
+      createdListings: 0,
+      updatedListings: 0,
       skippedMissingFields: 0,
-      totalDataRows: csvRows.length - 1,
+      skippedMissingExternalId: 0,
+      failedRows: 0,
+      failed: 0,
+      errors: [],
+      rows: [],
       headerError,
     };
   }
@@ -412,9 +437,21 @@ export function parseTwoPerformantCsv(content: string): TwoPerformantParseResult
   }
 
   return {
-    rows,
+    ok: skippedMissingFields === 0,
+    totalRows: csvRows.length - 1,
+    processedRows: rows.length,
+    skippedRows: skippedMissingFields,
+    skipped: skippedMissingFields,
+    createdProducts: 0,
+    updatedProducts: 0,
+    createdListings: 0,
+    updatedListings: 0,
     skippedMissingFields,
-    totalDataRows: csvRows.length - 1,
+    skippedMissingExternalId: 0,
+    failedRows: skippedMissingFields,
+    failed: skippedMissingFields,
+    errors: [],
+    rows,
   };
 }
 
