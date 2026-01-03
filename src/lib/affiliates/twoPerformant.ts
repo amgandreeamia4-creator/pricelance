@@ -3,28 +3,35 @@
 // 2PERFORMANT CSV FEED ADAPTER - CANONICAL FOR YOUR SHEET
 // =============================================================================
 //
-// This parser is tailored to the concrete 2Performant CSV you showed:
-// - Advertiser name
-// - Category
-// - Manufacturer
-// - Product code
-// - Product name
-// - Product descript
-// - Product affiliate l
-// - Product link
-// - Product picture
-// - Price without VA
-// - Price with VAT
-// - Price with discou
-// - Currency
+// Tailored to the concrete 2Performant CSV you showed:
+//
+//   A: Advertiser name
+//   B: Category
+//   C: Manufacturer
+//   D: Product code
+//   E: Product name
+//   F: Product descript
+//   G: Product affiliate l
+//   H: Product link
+//   I: Product picture
+//   J: Price without VA(T)
+//   K: Price with VAT
+//   L: Price with discou(nt)
+//   M: Currency
 //
 // It:
-// - Detects delimiter (, or ;) once from the header line
-// - Extracts Product name, URLs, image, prices, currency, category, store
-// - Requires only Product name + any price column
-// - Parses Romanian and international price formats
 //
-// It returns TwoPerformantRow[] which the adapter then turns into NormalizedListing[].
+// - Parses CSV using a generic splitter that treats both "," and ";" as separators
+//   (so we don't guess the delimiter incorrectly).
+// - Locates headers using .includes() instead of strict .startsWith().
+// - For each data row, requires ONLY:
+//     * Product name (E) non-empty
+//     * At least one price column (J/K/L) non-empty and parseable
+// - URL is not required at parser level (importNormalizedListings decides
+//   whether the row is "listing-capable").
+//
+// Returns TwoPerformantRow[] plus some counters.
+//
 // =============================================================================
 
 export type TwoPerformantRow = {
@@ -64,44 +71,16 @@ export type TwoPerformantParseResult = {
 };
 
 /**
- * Detect delimiter (comma or semicolon) from the first non-empty line.
- */
-function detectDelimiter(line: string): "," | ";" {
-  let commaCount = 0;
-  let semicolonCount = 0;
-  let inQuotes = false;
-
-  for (let i = 0; i < line.length; i++) {
-    const char = line[i];
-
-    if (char === '"') {
-      inQuotes = !inQuotes;
-      continue;
-    }
-
-    if (!inQuotes) {
-      if (char === ",") commaCount++;
-      else if (char === ";") semicolonCount++;
-    }
-  }
-
-  if (semicolonCount > commaCount) return ";";
-  return ",";
-}
-
-/**
- * Parse CSV into a 2D array of cells.
- * Handles quotes and auto-detects delimiter.
+ * Generic CSV parser:
+ * - Strips BOM
+ * - Splits on newlines
+ * - Splits each line on "," or ";" (both treated as delimiters)
+ * - Handles quotes and escaped quotes
  */
 function parseCsv(content: string): string[][] {
   const rows: string[][] = [];
   const cleanContent = content.replace(/^\uFEFF/, ""); // strip BOM
-  const lines = cleanContent.split(/\r?\n/).filter((l) => l.trim().length > 0);
-
-  if (lines.length === 0) return rows;
-
-  const delimiter = detectDelimiter(lines[0]);
-  console.log("[2Performant] Detected CSV delimiter:", delimiter);
+  const lines = cleanContent.split(/\r?\n/);
 
   for (const line of lines) {
     if (!line.trim()) continue;
@@ -126,7 +105,7 @@ function parseCsv(content: string): string[][] {
       } else {
         if (char === '"') {
           inQuotes = true;
-        } else if (char === delimiter) {
+        } else if (char === "," || char === ";") {
           row.push(current.trim());
           current = "";
         } else {
@@ -199,8 +178,6 @@ function extractHost(url: string | undefined): string | undefined {
 
 /**
  * Main parser for 2Performant CSV.
- *
- * Very simple header mapping based on the concrete sheet you use.
  */
 export function parseTwoPerformantCsv(content: string): TwoPerformantParseResult {
   const csvRows = parseCsv(content);
@@ -228,39 +205,40 @@ export function parseTwoPerformantCsv(content: string): TwoPerformantParseResult
   const headerRow = csvRows[0];
   const lowerHeaders = headerRow.map((h) => h.toLowerCase().trim());
 
+  console.log("[2Performant] Header row:", headerRow);
+  console.log("[2Performant] Lower headers:", lowerHeaders);
+
+  // Use includes() for robustness, not strict startsWith()
   const idxAdvertiser = lowerHeaders.findIndex((h) =>
-    h.startsWith("advertiser name"),
+    h.includes("advertiser name"),
   );
   const idxCategory = lowerHeaders.findIndex((h) =>
-    h.startsWith("category"),
+    h.includes("category"),
   );
   const idxProductName = lowerHeaders.findIndex((h) =>
-    h.startsWith("product name"),
+    h.includes("product name"),
   );
   const idxAffiliate = lowerHeaders.findIndex((h) =>
-    h.startsWith("product affiliate"),
+    h.includes("product affiliate"),
   );
   const idxProductLink = lowerHeaders.findIndex((h) =>
-    h.startsWith("product link"),
+    h.includes("product link"),
   );
   const idxPicture = lowerHeaders.findIndex((h) =>
-    h.startsWith("product picture"),
+    h.includes("product picture"),
   );
   const idxPriceDisc = lowerHeaders.findIndex((h) =>
-    h.startsWith("price with discou"),
+    h.includes("price with discou"),
   );
   const idxPriceVat = lowerHeaders.findIndex((h) =>
-    h.startsWith("price with vat"),
+    h.includes("price with vat"),
   );
   const idxPriceWithout = lowerHeaders.findIndex((h) =>
-    h.startsWith("price without va"),
+    h.includes("price without va"),
   );
   const idxCurrency = lowerHeaders.findIndex((h) =>
-    h.startsWith("currency"),
+    h.includes("currency"),
   );
-
-  console.log("[2Performant] Headers:", headerRow);
-  console.log("[2Performant] Lower headers:", lowerHeaders);
 
   if (idxProductName === -1) {
     return {
@@ -309,8 +287,7 @@ export function parseTwoPerformantCsv(content: string): TwoPerformantParseResult
     const priceVat = cell(rawRow, idxPriceVat);
     const priceWithout = cell(rawRow, idxPriceWithout);
 
-    const priceStr =
-      priceDisc || priceVat || priceWithout;
+    const priceStr = priceDisc || priceVat || priceWithout;
 
     if (!priceStr) {
       console.log(
@@ -363,7 +340,7 @@ export function parseTwoPerformantCsv(content: string): TwoPerformantParseResult
 
   const processedRows = rows.length;
   const skippedRows = skippedMissingFields;
-  const ok = skippedRows === 0;
+  const ok = processedRows > 0 && skippedRows === 0;
 
   return {
     ok,
