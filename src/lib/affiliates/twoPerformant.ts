@@ -62,6 +62,9 @@ const COLUMN_MAPPINGS: Record<string, keyof TwoPerformantRow> = {
   link: "affiliateUrl",
   product_url: "affiliateUrl",
   affiliate_link: "affiliateUrl",
+  // 2Performant feed variants used in our current sheet:
+  product_affiliate_l: "affiliateUrl",
+  product_link: "affiliateUrl",
   
   // Image URL variations
   image_url: "imageUrl",
@@ -325,6 +328,45 @@ export function parseTwoPerformantCsv(content: string): {
   }
   
   const headerMap = buildHeaderMap(csvRows[0]);
+  
+  // If no affiliateUrl column was detected from headers, try to auto-detect it from data
+  if (!headerMap.has("affiliateUrl")) {
+    const maxRowsToCheck = Math.min(20, csvRows.length - 1);
+    const scores: number[] = new Array(csvRows[0].length).fill(0);
+
+    for (let rowIndex = 1; rowIndex <= maxRowsToCheck; rowIndex++) {
+      const row = csvRows[rowIndex];
+      if (!row) continue;
+
+      for (let col = 0; col < row.length; col++) {
+        const value = (row[col] ?? "").toString().trim();
+        if (!value) continue;
+        // Only consider URL-ish values
+        if (value.startsWith("http://") || value.startsWith("https://")) {
+          scores[col]++;
+
+          // Bonus score if it looks like a 2Performant deeplink
+          if (value.includes("2performant") || value.includes("event.")) {
+            scores[col] += 2;
+          }
+        }
+      }
+    }
+
+    let bestCol = -1;
+    let bestScore = 0;
+    for (let i = 0; i < scores.length; i++) {
+      if (scores[i] > bestScore) {
+        bestScore = scores[i];
+        bestCol = i;
+      }
+    }
+
+    // Only set affiliateUrl if we found a plausible URL column
+    if (bestCol >= 0 && bestScore > 0) {
+      headerMap.set("affiliateUrl", bestCol);
+    }
+  }
   
   // Validate required columns exist in header
   const headerError = validateHeaders(headerMap);
