@@ -113,8 +113,13 @@ async function upsertListing(
   row: ProfitshareRow,
   affiliateProvider?: string,
   affiliateProgram?: string,
-): Promise<{ isNew: boolean }> {
+): Promise<{ isNew: boolean; hasListing: boolean }> {
   const inStock = parseAvailability(row.availability);
+
+  // Skip listing creation if no URL is available
+  if (!row.affiliateUrl) {
+    return { isNew: false, hasListing: false };
+  }
 
   const existing = await db.listing.findFirst({
     where: {
@@ -140,7 +145,7 @@ async function upsertListing(
       where: { id: existing.id },
       data: listingData,
     });
-    return { isNew: false };
+    return { isNew: false, hasListing: true };
   }
 
   await db.listing.create({
@@ -152,7 +157,7 @@ async function upsertListing(
     },
   });
 
-  return { isNew: true };
+  return { isNew: true, hasListing: true };
 }
 
 /**
@@ -191,14 +196,16 @@ async function processBatch(
       else updatedProducts++;
 
       // 2) Listing with affiliate metadata
-      const { isNew: isNewListing } = await upsertListing(
+      const { isNew: isNewListing, hasListing } = await upsertListing(
         productId, 
         row, 
         metadata.provider, 
         metadata.program
       );
-      if (isNewListing) createdListings++;
-      else updatedListings++;
+      if (hasListing) {
+        if (isNewListing) createdListings++;
+        else updatedListings++;
+      }
     } catch (err: any) {
       failedRows++;
       const message = err instanceof Error ? err.message : String(err);

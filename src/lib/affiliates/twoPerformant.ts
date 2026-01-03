@@ -392,8 +392,8 @@ export function parseTwoPerformantCsv(content: string): TwoPerformantParseResult
       }
     }
 
-    // Critical field checks
-    if (!name || !priceStr || (!affiliateUrl && !productUrl)) {
+    // Critical field checks - only require name and price, URL is optional
+    if (!name || !priceStr) {
       skippedMissingFields++;
       continue;
     }
@@ -421,8 +421,8 @@ export function parseTwoPerformantCsv(content: string): TwoPerformantParseResult
 
     rows.push({
       name,
-      productUrl: productUrl || affiliateUrl, // at least one is guaranteed now
-      affiliateUrl: affiliateUrl || productUrl, // keep track of the 2P deeplink when present
+      productUrl: productUrl || affiliateUrl || "", // allow empty if no URL
+      affiliateUrl: affiliateUrl || productUrl || "", // allow empty if no URL
       imageUrl,
       price,
       currency,
