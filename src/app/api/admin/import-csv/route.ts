@@ -1,12 +1,9 @@
 // src/app/api/admin/import-csv/route.ts
 // CSV bulk import for Products + Listings (file upload)
-// Safe, schema-light version: only uses fields we know exist,
-// and adds product.imageUrl so the UI can finally show images.
 //
-// NOTE: This route uses a provider registry system for extensibility:
-// - Providers are defined in src/config/affiliateIngestion.ts
-// - Parser selection is dynamic based on provider parameter
-// - Both providers store affiliate metadata (affiliateProvider, affiliateProgram) in the Listing table.
+// This route now has two paths:
+// - provider = "2performant" → uses twoPerformantAdapter + importNormalizedListings
+// - provider = "profitshare" → uses legacy ProfitshareRow pipeline (parseProfitshareCsv + processBatch)
 
 import { NextRequest, NextResponse } from "next/server";
 import { validateAdminToken } from "@/lib/adminAuth";
@@ -16,16 +13,9 @@ import {
   parseAvailability,
   type ProfitshareRow,
 } from "@/lib/affiliates/profitshare";
-import {
-  parseTwoPerformantCsv,
-  parseAvailability as parseTwoPerformantAvailability,
-  type TwoPerformantRow,
-} from "@/lib/affiliates/twoPerformant";
-import {
-  AFFILIATE_INGEST_PARSERS,
-  isValidProvider,
-  type AffiliateIngestProviderId,
-} from "@/config/affiliateIngestion";
+import { isValidProvider } from "@/config/affiliateIngestion";
+import { twoPerformantAdapter } from "@/lib/affiliates/twoPerformantAdapter";
+import { importNormalizedListings } from "@/lib/importService";
 
 export const dynamic = "force-dynamic";
 
@@ -36,31 +26,8 @@ const MAX_IMPORT_ROWS = 300;
 const db: any = prisma;
 
 /**
- * Adapter to convert TwoPerformantRow to ProfitshareRow format
- * This allows us to use the existing processBatch pipeline without changes
- */
-function adaptTwoPerformantRowToProfitshareRow(
-  row: TwoPerformantRow,
-): ProfitshareRow {
-  return {
-    name: row.name,
-    productUrl: row.productUrl,
-    affiliateUrl: row.affiliateUrl,
-    imageUrl: row.imageUrl,
-    price: row.price,
-    currency: row.currency,
-    categoryRaw: row.categoryRaw,
-    sku: row.sku,
-    gtin: row.gtin,
-    availability: row.availability,
-    storeName: row.storeName,
-  };
-}
-
-/**
  * Find or create a Product based on name (and optional category).
- * This version does NOT use externalId/source — it’s intentionally simple
- * so it works against your current DB schema.
+ * Legacy path for Profitshare rows.
  */
 async function findOrCreateProduct(
   row: ProfitshareRow,
@@ -106,9 +73,7 @@ async function findOrCreateProduct(
 
 /**
  * Find or create a Listing for a product.
- * Identifies by (productId, storeName, url).
- * Only uses very safe fields: price, priceCents, currency, inStock, storeName, url.
- * Now includes affiliate metadata support.
+ * Legacy path for Profitshare rows.
  */
 async function upsertListing(
   productId: string,
@@ -134,10 +99,9 @@ async function upsertListing(
 
   const listingData = {
     price: row.price,
-    priceCents: Math.min(Math.round(row.price * 100), 2147483647), // Cap at INT32 max
+    priceCents: Math.min(Math.round(row.price * 100), 2147483647),
     currency: row.currency,
     inStock,
-    // Include affiliate metadata if provided
     ...(affiliateProvider && { affiliateProvider }),
     ...(affiliateProgram && { affiliateProgram }),
   };
@@ -163,7 +127,7 @@ async function upsertListing(
 }
 
 /**
- * Process a batch of rows – errors are collected per row.
+ * Process a batch of ProfitshareRow rows – legacy path.
  */
 async function processBatch(
   rows: ProfitshareRow[],
@@ -174,7 +138,7 @@ async function processBatch(
   updatedProducts: number;
   createdListings: number;
   updatedListings: number;
-  skippedMissingExternalId: number; // kept for summary compat; always 0 here
+  skippedMissingExternalId: number;
   failedRows: number;
   errors: { rowNumber: number; message: string; code: string | null }[];
 }> {
@@ -195,12 +159,10 @@ async function processBatch(
     const rowNum = startIdx + i + 2; // +2 for header + 1-index
 
     try {
-      // 1) Product
       const { productId, isNew: isNewProduct } = await findOrCreateProduct(row);
       if (isNewProduct) createdProducts++;
       else updatedProducts++;
 
-      // 2) Listing with affiliate metadata
       const { isNew: isNewListing, hasListing } = await upsertListing(
         productId,
         row,
@@ -260,7 +222,6 @@ export async function POST(req: NextRequest) {
     const formData = await req.formData();
     const file = formData.get("file");
 
-    // Provider selection: read from form data and validate against registry
     const providerParam =
       (formData.get("provider") as string | null) ?? "profitshare";
     const provider = isValidProvider(providerParam)
@@ -296,30 +257,115 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 2) Parse CSV using provider registry
-    let parseResult: any;
+    // -----------------------------------------------------------------------
+    // 2Performant path — use adapter + importNormalizedListings
+    // -----------------------------------------------------------------------
+    if (provider === "2performant") {
+      console.log("[import-csv] Using TwoPerformantAdapter pipeline");
+
+      const normalized = twoPerformantAdapter.normalize(content);
+      const totalRows = normalized.length;
+      const isCapped = totalRows > MAX_IMPORT_ROWS;
+      const limitedRows = normalized.slice(0, MAX_IMPORT_ROWS);
+
+      if (limitedRows.length === 0) {
+        return NextResponse.json(
+          {
+            ok: false,
+            totalRows,
+            processedRows: 0,
+            skippedRows: totalRows,
+            skipped: totalRows,
+            createdProducts: 0,
+            updatedProducts: 0,
+            createdListings: 0,
+            updatedListings: 0,
+            skippedMissingFields: totalRows,
+            skippedMissingExternalId: 0,
+            failedRows: 0,
+            failed: 0,
+            errors: [],
+            truncated: isCapped,
+            message:
+              totalRows === 0
+                ? "No valid 2Performant rows found in CSV"
+                : "No valid 2Performant rows in the first batch",
+            capped: isCapped,
+            maxRowsPerImport: MAX_IMPORT_ROWS,
+            provider,
+          },
+          { status: 200 },
+        );
+      }
+
+      const summary = await importNormalizedListings(limitedRows, {
+        source: "affiliate",
+        defaultCountryCode: "RO",
+        affiliateProvider: "2performant",
+        affiliateProgram: "2performant_ro",
+        network: "TWOPERFORMANT",
+        startRowNumber: 2,
+      });
+
+      const processedRows =
+        summary.listingRows + summary.productOnlyRows;
+      const skippedRows = totalRows - processedRows;
+      const failedRows = summary.errors.length;
+      const ok = processedRows > 0;
+
+      const errors = summary.errors.map((e) => ({
+        rowNumber: e.rowNumber,
+        message: e.message,
+        code: null as string | null,
+      }));
+
+      const message = isCapped
+        ? `Processed first ${limitedRows.length} rows out of ${totalRows}. Split your CSV and re-upload remaining rows.` 
+        : null;
+
+      return NextResponse.json(
+        {
+          ok,
+          totalRows,
+          processedRows,
+          skippedRows,
+          skipped: skippedRows,
+          createdProducts: summary.productsCreated,
+          updatedProducts: summary.productsMatched,
+          createdListings: summary.listingsCreated,
+          updatedListings: summary.listingsUpdated,
+          skippedMissingFields: skippedRows,
+          skippedMissingExternalId: 0,
+          failedRows,
+          failed: failedRows,
+          errors,
+          truncated: isCapped,
+          message,
+          capped: isCapped,
+          maxRowsPerImport: MAX_IMPORT_ROWS,
+          provider,
+        },
+        { status: 200 },
+      );
+    }
+
+    // -----------------------------------------------------------------------
+    // Profitshare path — legacy CSV pipeline (parseProfitshareCsv + processBatch)
+    // -----------------------------------------------------------------------
+
+    let parseResult;
     try {
-      const parser = AFFILIATE_INGEST_PARSERS[provider];
-      parseResult = parser(content);
+      parseResult = parseProfitshareCsv(content);
     } catch (err: any) {
       const message = err instanceof Error ? err.message : String(err);
-      console.error(
-        `[admin/import-csv] CSV parse error for ${provider}:`,
-        err,
-      );
+      console.error("[admin/import-csv] CSV parse error (profitshare):", err);
       return NextResponse.json(
-        { ok: false, error: `Failed to parse ${provider} CSV: ${message}` },
+        { ok: false, error: `Failed to parse profitshare CSV: ${message}` },
         { status: 500 },
       );
     }
 
-    const {
-      rows,
-      skippedMissingFields,
-      parsedTotalRows,
-      totalRows: legacyTotalRows,
-      headerError,
-    } = parseResult;
+    const { rows, skippedMissingFields, headerError } = parseResult;
 
     if (headerError) {
       return NextResponse.json(
@@ -328,41 +374,20 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Adapt rows based on provider
-    let adaptedRows: ProfitshareRow[];
-    let affiliateMetadata: { provider?: string; program?: string }[] = [];
-
-    if (provider === "2performant") {
-      const twoPerformantRows = rows as TwoPerformantRow[];
-      adaptedRows = twoPerformantRows.map(adaptTwoPerformantRowToProfitshareRow);
-      // Extract affiliate metadata from 2Performant rows
-      affiliateMetadata = twoPerformantRows.map((row) => ({
-        provider: row.affiliateProvider,
-        program: row.affiliateProgram,
-      }));
-    } else {
-      adaptedRows = rows as ProfitshareRow[];
-      // For Profitshare, set default affiliate metadata
-      affiliateMetadata = rows.map(() => ({
+    const adaptedRows = rows as ProfitshareRow[];
+    const affiliateMetadata: { provider?: string; program?: string }[] =
+      adaptedRows.map(() => ({
         provider: "profitshare",
         program: undefined,
       }));
-    }
 
-    // Prefer parser-reported total row count when available
-    const totalRows =
-      typeof parsedTotalRows === "number"
-        ? parsedTotalRows
-        : typeof legacyTotalRows === "number"
-          ? legacyTotalRows
-          : adaptedRows.length;
-
+    const totalRows = adaptedRows.length;
     const limitedRows = adaptedRows.slice(0, MAX_IMPORT_ROWS);
     const limitedMetadata = affiliateMetadata.slice(0, MAX_IMPORT_ROWS);
     const isCapped = totalRows > MAX_IMPORT_ROWS;
 
     console.log(
-      `[import-csv] Starting import: totalRows=${totalRows}, processedRows=${limitedRows.length}, capped=${isCapped}`,
+      `[import-csv] (profitshare) Starting import: totalRows=${totalRows}, processedRows=${limitedRows.length}, capped=${isCapped}`,
     );
 
     if (limitedRows.length === 0) {
@@ -393,7 +418,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 3) Process in batches
     let createdProducts = 0;
     let updatedProducts = 0;
     let createdListings = 0;
@@ -419,7 +443,7 @@ export async function POST(req: NextRequest) {
 
     const durationMs = Date.now() - startTime;
     console.log(
-      `[import-csv] Import complete: processedRows=${limitedRows.length}, created=${createdProducts}/${createdListings}, updated=${updatedProducts}/${updatedListings}, failed=${failedRows}, duration=${durationMs}ms`,
+      `[import-csv] (profitshare) Import complete: processedRows=${limitedRows.length}, created=${createdProducts}/${createdListings}, updated=${updatedProducts}/${updatedListings}, failed=${failedRows}, duration=${durationMs}ms`,
     );
 
     if (errors.length > 50) {
@@ -427,12 +451,10 @@ export async function POST(req: NextRequest) {
     }
 
     const message = isCapped
-      ? `Processed first ${limitedRows.length} rows out of ${totalRows}. Split your CSV and re-upload remaining rows.`
+      ? `Processed first ${limitedRows.length} rows out of ${totalRows}. Split your CSV and re-upload remaining rows.` 
       : null;
 
-    const skippedRows = skippedMissingFields; // externalId skipping is always 0 now
-
-    // New: compute a more realistic ok flag
+    const skippedRows = skippedMissingFields;
     const successCount =
       createdProducts +
       updatedProducts +
@@ -460,7 +482,7 @@ export async function POST(req: NextRequest) {
         message,
         capped: isCapped,
         maxRowsPerImport: MAX_IMPORT_ROWS,
-        provider, // Add provider to response for tracking
+        provider,
       },
       { status: 200 },
     );
@@ -472,36 +494,3 @@ export async function POST(req: NextRequest) {
     );
   }
 }
-
-/*
-VERIFICATION TEST SCENARIOS:
-
-1. Profitshare CSV (default behavior):
-   POST /api/admin/import-csv with Profitshare CSV file
-   → Should work exactly as before, with affiliateProvider='profitshare'
-
-2. 2Performant CSV (new functionality):
-   POST /api/admin/import-csv?provider=2performant with 2Performant CSV file
-   → Should parse 2Performant headers (name, price, currency, deeplink, merchant, program_name)
-   → Should create listings with affiliateProvider='2performant' and affiliateProgram from CSV
-   → Should appear in public search (not filtered by DISABLED_AFFILIATE_SOURCES)
-
-3. Error handling:
-   Invalid provider parameter → 400 error
-   Missing required columns → headerError with specific message
-   Invalid price format → row skipped with detailed error in response
-
-Expected database state after 2Performant import:
-- Product rows with name, category, imageUrl from CSV
-- Listing rows with:
-  * storeName extracted from URL domain
-  * url = deeplink from CSV
-  * price, currency from CSV
-  * affiliateProvider = '2performant'
-  * affiliateProgram = program_name from CSV (if present)
-
-Expected public search behavior:
-- 2Performant listings should appear in /api/products results
-- Profitshare listings should be filtered out (DISABLE_PROFITSHARE = true)
-- Both providers should be visible in admin views
-*/
