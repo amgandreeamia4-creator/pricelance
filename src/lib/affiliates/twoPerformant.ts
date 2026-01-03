@@ -1,15 +1,20 @@
 // src/lib/affiliates/twoPerformant.ts
-// 2Performant CSV feed adapter
+// 2Performant CSV feed adapter – tuned for the current feed format.
+//
+// IMPORTANT: This is designed to work with the user's existing 2Performant CSV:
+// - Name:           "Product name"
+// - URLs:           "Product affiliate l", "Product link", and sometimes a 2P deeplink in "Category"
+// - Prices:         "Price with discou", "Price with VAT", "Price without VA"
+// - Currency:       "Currency"
+// and similar variants.
+//
+// It returns rows compatible with the Profitshare importer so the rest of the
+// pipeline (processBatch, findOrCreateProduct, upsertListing) can stay unchanged.
 
-/**
- * Normalized row from 2Performant CSV feed.
- * Maps 2Performant-specific columns to a canonical internal shape.
- * This matches the shape returned by parseProfitshareCsv for compatibility.
- */
 export type TwoPerformantRow = {
   name: string;
-  productUrl: string;
-  affiliateUrl: string;
+  productUrl: string;        // merchant product URL (if available)
+  affiliateUrl: string;      // 2Performant deeplink (if available)
   imageUrl?: string;
   price: number;
   currency: string;
@@ -19,119 +24,18 @@ export type TwoPerformantRow = {
   availability?: string;
   storeName: string;
   // Affiliate metadata specific to 2Performant
-  affiliateProvider: string;
+  affiliateProvider: string; // always "2performant"
   affiliateProgram?: string;
 };
 
-/**
- * Result summary from 2Performant CSV import.
- * Matches the shape returned by parseProfitshareCsv.
- */
-export type TwoPerformantImportResult = {
-  ok: boolean;
-  totalRows: number;
-  processedRows: number;
-  skippedRows: number;
-  skipped: number;
-  createdProducts: number;
-  updatedProducts: number;
-  createdListings: number;
-  updatedListings: number;
+export type TwoPerformantParseResult = {
+  rows: TwoPerformantRow[];
   skippedMissingFields: number;
-  skippedMissingExternalId: number;
-  failedRows: number;
-  failed: number;
-  errors: { rowNumber: number; message: string; code: string | null }[];
+  totalDataRows: number;
+  headerError?: string;
 };
 
-/**
- * Possible 2Performant CSV column name variations (normalized to lowercase, spaces/dashes to underscores).
- */
-const COLUMN_MAPPINGS: Record<string, keyof TwoPerformantRow> = {
-  // Name variations
-  name: "name",
-  product_name: "name",
-  title: "name",
-  product_title: "name",
-  product: "name",
-  
-  // Product URL variations (use deeplink as primary)
-  deeplink: "affiliateUrl",
-  tracking_link: "affiliateUrl",
-  url: "affiliateUrl",
-  link: "affiliateUrl",
-  product_url: "affiliateUrl",
-  affiliate_link: "affiliateUrl",
-  // 2Performant feed variants used in our current sheet:
-  product_affiliate_l: "affiliateUrl",
-  product_link: "affiliateUrl",
-  
-  // Image URL variations
-  image_url: "imageUrl",
-  image: "imageUrl",
-  img: "imageUrl",
-  picture: "imageUrl",
-  product_image: "imageUrl",
-  product_picture: "imageUrl",
-  
-  // Price variations – just to tell us these are price-ish columns.
-  // We will still use PRICE_HEADER_CANDIDATES per row to pick the actual value.
-  price_with_discou: "price",
-  price_with_vat: "price",
-  price_without_va: "price",
-  price: "price",
-  current_price: "price",
-  pret: "price",
-  final_price: "price",
-  
-  // Currency variations
-  currency: "currency",
-  moneda: "currency",
-  valuta: "currency",
-  
-  // Category variations
-  category: "categoryRaw",
-  categorie: "categoryRaw",
-  product_category: "categoryRaw",
-  
-  // SKU variations
-  sku: "sku",
-  product_code: "sku",
-  cod_produs: "sku",
-  code: "sku",
-  id: "sku",
-  product_id: "sku",
-  
-  // GTIN / barcode variations
-  gtin: "gtin",
-  ean: "gtin",
-  ean13: "gtin",
-  barcode: "gtin",
-  
-  // Availability variations
-  availability: "availability",
-  stock: "availability",
-  in_stock: "availability",
-  disponibilitate: "availability",
-  stoc: "availability",
-  
-  // Store/Merchant variations
-  merchant: "storeName",
-  store: "storeName",
-  store_name: "storeName",
-  merchant_name: "storeName",
-  
-  // Program/Campaign variations
-  program_name: "affiliateProgram",
-  program: "affiliateProgram",
-  campaign: "affiliateProgram",
-  campaign_name: "affiliateProgram",
-};
-
-/**
- * Price header candidates in priority order for 2Performant feeds.
- * We'll try these in order per row to find the first non-empty price.
- */
+// Price header priority – first non-empty wins *per row*.
 const PRICE_HEADER_CANDIDATES = [
   "price_with_discou", // "Price with discou" – discounted price (best)
   "price_with_vat",    // "Price with VAT"
@@ -142,8 +46,73 @@ const PRICE_HEADER_CANDIDATES = [
   "final_price",
 ];
 
+// Column name → TwoPerformantRow field.
+// Keys here are *normalized* header names (see normalizeHeader).
+const COLUMN_MAPPINGS: Record<string, keyof TwoPerformantRow | "currency" | "availability" | "affiliateProgram" | "categoryRaw" | "sku" | "gtin"> = {
+  // Name
+  "product_name": "name",
+  "name": "name",
+  "title": "name",
+
+  // URLs
+  "product_affiliate_l": "affiliateUrl", // 2Performant deeplink
+  "product_link": "productUrl",          // merchant product URL
+  "deeplink": "affiliateUrl",
+  "affiliate_link": "affiliateUrl",
+  "url": "productUrl",
+  "link": "productUrl",
+
+  // Image
+  "product_picture": "imageUrl",
+  "image_url": "imageUrl",
+  "image": "imageUrl",
+  "img": "imageUrl",
+
+  // Store / merchant / advertiser
+  "advertiser_name": "storeName",
+
+  // Category
+  "category": "categoryRaw",
+
+  // SKU / product code
+  "product_code": "sku",
+  "sku": "sku",
+  "code": "sku",
+
+  // GTIN / barcode
+  "gtin": "gtin",
+  "ean": "gtin",
+  "ean13": "gtin",
+  "barcode": "gtin",
+
+  // Availability
+  "availability": "availability",
+  "stock": "availability",
+  "in_stock": "availability",
+
+  // Currency
+  "currency": "currency",
+
+  // Price-ish columns – we still use PRICE_HEADER_CANDIDATES per row,
+  // but mapping them to "price" lets getCell() fetch them if needed.
+  "price_with_discou": "price",
+  "price_with_vat": "price",
+  "price_without_va": "price",
+  "price": "price",
+  "current_price": "price",
+  "pret": "price",
+  "final_price": "price",
+
+  // Program / campaign
+  "program_name": "affiliateProgram",
+  "program": "affiliateProgram",
+  "campaign": "affiliateProgram",
+  "campaign_name": "affiliateProgram",
+};
+
 /**
- * Normalize a header name: lowercase, trim, replace spaces/dashes with underscores.
+ * Normalize a header name: lowercase, trim, replace spaces/dashes with underscores,
+ * strip other non-word chars.
  */
 function normalizeHeader(header: string): string {
   return header
@@ -154,60 +123,12 @@ function normalizeHeader(header: string): string {
 }
 
 /**
- * Extract store name from a URL's domain.
- * e.g., "https://www.emag.ro/laptop-xyz" -> "emag.ro"
- */
-function extractStoreFromUrl(url: string): string {
-  try {
-    const parsed = new URL(url);
-    // Remove 'www.' prefix if present
-    return parsed.hostname.replace(/^www\./, "");
-  } catch {
-    return "unknown";
-  }
-}
-
-/**
- * Parse a price string to a number.
- * Handles Romanian format (1.234,56) and international format (1,234.56).
- */
-function parsePrice(priceStr: string): number | null {
-  if (!priceStr || !priceStr.trim()) return null;
-  
-  let cleaned = priceStr.trim();
-  
-  // Remove currency symbols and whitespace
-  cleaned = cleaned.replace(/[^\d.,\-]/g, "");
-  
-  if (!cleaned) return null;
-  
-  // Detect format: if last separator is comma and has 2-3 digits after, it's decimal
-  const lastComma = cleaned.lastIndexOf(",");
-  const lastDot = cleaned.lastIndexOf(".");
-  
-  if (lastComma > lastDot && cleaned.length - lastComma <= 4) {
-    // Romanian format: 1.234,56 -> replace . with nothing, , with .
-    cleaned = cleaned.replace(/\./g, "").replace(",", ".");
-  } else if (lastDot > lastComma && cleaned.length - lastDot <= 4) {
-    // International format: 1,234.56 -> remove commas
-    cleaned = cleaned.replace(/,/g, "");
-  } else {
-    // No decimal separator or ambiguous, just remove commas
-    cleaned = cleaned.replace(/,/g, "");
-  }
-  
-  const num = parseFloat(cleaned);
-  return Number.isFinite(num) && num > 0 ? num : null;
-}
-
-/**
  * Parse CSV content into rows.
- * Handles quoted fields and various line endings.
+ * Handles quoted fields and both comma / semicolon delimiters.
  */
 function parseCsv(content: string): string[][] {
   const rows: string[][] = [];
-  // Remove BOM if present
-  const cleanContent = content.replace(/^\uFEFF/, "");
+  const cleanContent = content.replace(/^\uFEFF/, ""); // strip BOM
   const lines = cleanContent.split(/\r?\n/);
 
   for (const line of lines) {
@@ -234,7 +155,6 @@ function parseCsv(content: string): string[][] {
         if (char === '"') {
           inQuotes = true;
         } else if (char === "," || char === ";") {
-          // Support both comma and semicolon as delimiters
           row.push(current.trim());
           current = "";
         } else {
@@ -252,177 +172,191 @@ function parseCsv(content: string): string[][] {
 
 /**
  * Build header index map from the first row.
- * Maps normalized column names to their indices.
+ * Maps TwoPerformantRow fields to their column indices.
  */
-function buildHeaderMap(headerRow: string[]): Map<keyof TwoPerformantRow, number> {
-  const map = new Map<keyof TwoPerformantRow, number>();
-  
+function buildHeaderMap(headerRow: string[]): Map<keyof TwoPerformantRow | "currency" | "availability" | "affiliateProgram" | "categoryRaw" | "sku" | "gtin", number> {
+  const map = new Map<keyof TwoPerformantRow | "currency" | "availability" | "affiliateProgram" | "categoryRaw" | "sku" | "gtin", number>();
+
   for (let i = 0; i < headerRow.length; i++) {
     const normalized = normalizeHeader(headerRow[i]);
     const mappedField = COLUMN_MAPPINGS[normalized];
-    
     if (mappedField && !map.has(mappedField)) {
       map.set(mappedField, i);
     }
   }
-  
-  // Fallback: auto-detect an image column if none was mapped explicitly
-  if (!map.has("imageUrl")) {
-    for (let i = 0; i < headerRow.length; i++) {
-      const normalized = normalizeHeader(headerRow[i]);
-      if (
-        normalized.includes("image") ||
-        normalized.includes("picture") ||
-        normalized.includes("poza") ||
-        normalized.includes("imagine")
-      ) {
-        map.set("imageUrl", i);
-        break;
-      }
-    }
-  }
-  
+
   return map;
 }
 
 /**
- * Get a cell value from a row by field name.
+ * Get a cell value from a row by mapped field.
  */
 function getCell(
   row: string[],
-  headerMap: Map<keyof TwoPerformantRow, number>,
-  field: keyof TwoPerformantRow
+  headerMap: Map<keyof TwoPerformantRow | "currency" | "availability" | "affiliateProgram" | "categoryRaw" | "sku" | "gtin", number>,
+  field: keyof TwoPerformantRow | "currency" | "availability" | "affiliateProgram" | "categoryRaw" | "sku" | "gtin"
 ): string {
   const idx = headerMap.get(field);
-  if (idx === undefined || idx >= row.length) return "";
-  return (row[idx] ?? "").trim();
+  if (idx === undefined || idx < 0 || idx >= row.length) return "";
+  return (row[idx] ?? "").toString().trim();
 }
 
 /**
- * Validate that required columns exist in the header.
- * Returns an error message if validation fails, or null if valid.
+ * Parse a price string to a number.
+ * Handles Romanian format (1.234,56) and international format (1,234.56).
  */
-function validateHeaders(headerMap: Map<keyof TwoPerformantRow, number>): string | null {
+function parsePrice(priceStr: string): number | null {
+  if (!priceStr || !priceStr.trim()) return null;
+
+  let cleaned = priceStr.trim();
+
+  // Remove currency symbols and spaces
+  cleaned = cleaned.replace(/[^\d.,\-]/g, "");
+  if (!cleaned) return null;
+
+  const lastComma = cleaned.lastIndexOf(",");
+  const lastDot = cleaned.lastIndexOf(".");
+
+  if (lastComma > lastDot && cleaned.length - lastComma <= 4) {
+    // Romanian format: 1.234,56
+    cleaned = cleaned.replace(/\./g, "").replace(",", ".");
+  } else if (lastDot > lastComma && cleaned.length - lastDot <= 4) {
+    // International format: 1,234.56
+    cleaned = cleaned.replace(/,/g, "");
+  } else {
+    // Fallback: strip commas
+    cleaned = cleaned.replace(/,/g, "");
+  }
+
+  const num = parseFloat(cleaned);
+  return Number.isFinite(num) && num > 0 ? num : null;
+}
+
+/**
+ * Extract host from URL and strip "www." prefix.
+ */
+function extractHost(url: string | undefined): string | undefined {
+  if (!url) return undefined;
+  try {
+    const u = new URL(url);
+    return u.hostname.replace(/^www\./, "");
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * Validate that essential columns are present in the header.
+ * For 2Performant we insist on:
+ * - a name column
+ * - at least ONE price-like column somewhere
+ *
+ * URL columns are validated per-row, not at header level, because different
+ * feeds may put the deeplink in different places.
+ */
+function validateHeaders(
+  headerRow: string[],
+  headerMap: Map<keyof TwoPerformantRow | "currency" | "availability" | "affiliateProgram" | "categoryRaw" | "sku" | "gtin", number>
+): string | null {
   const missing: string[] = [];
-  
-  // Must have name
+
   if (!headerMap.has("name")) {
-    missing.push("name");
+    missing.push("Product name");
   }
-  
-  // Must have price
-  if (!headerMap.has("price")) {
-    missing.push("price");
+
+  // Check that at least one of our price candidates exists in the header.
+  const hasAnyPriceHeader = headerRow.some((h) =>
+    PRICE_HEADER_CANDIDATES.includes(normalizeHeader(h))
+  );
+  if (!hasAnyPriceHeader) {
+    missing.push("Price column (Price with discou / Price with VAT / Price without VA)");
   }
-  
-  // Must have deeplink/url
-  if (!headerMap.has("affiliateUrl")) {
-    missing.push("deeplink/url");
-  }
-  
+
   if (missing.length > 0) {
     return `Missing required columns: ${missing.join(", ")}`;
   }
-  
+
   return null;
 }
 
 /**
  * Parse 2Performant CSV content into normalized rows.
- * Returns an array of valid rows and skipped count.
- * Throws an error if required columns are missing from the header.
+ * - Uses Product name as product name.
+ * - Pulls URLs from Product affiliate l / Product link / 2P deeplink column.
+ * - For each row, scans Price with discou → Price with VAT → Price without VA
+ *   (and other price-like headers) to find a usable price.
  */
-export function parseTwoPerformantCsv(content: string): {
-  rows: TwoPerformantRow[];
-  skippedMissingFields: number;
-  totalDataRows: number;
-  headerError?: string;
-} {
+export function parseTwoPerformantCsv(content: string): TwoPerformantParseResult {
   const csvRows = parseCsv(content);
-  
+
   if (csvRows.length < 2) {
-    return { rows: [], skippedMissingFields: 0, totalDataRows: 0 };
+    return {
+      rows: [],
+      skippedMissingFields: 0,
+      totalDataRows: 0,
+    };
   }
-  
-  const headerMap = buildHeaderMap(csvRows[0]);
-  
-  // Build a prioritized list of column indices that look like price columns
+
   const headerRow = csvRows[0];
+  const headerMap = buildHeaderMap(headerRow);
+
+  const headerError = validateHeaders(headerRow, headerMap);
+  if (headerError) {
+    return {
+      rows: [],
+      skippedMissingFields: 0,
+      totalDataRows: csvRows.length - 1,
+      headerError,
+    };
+  }
+
+  // Build list of price candidate column indices in priority order.
   const priceCandidateIndices: number[] = [];
   for (let col = 0; col < headerRow.length; col++) {
-    const normalized = normalizeHeader(headerRow[col]);
-    const candidateIndex = PRICE_HEADER_CANDIDATES.indexOf(normalized);
-    if (candidateIndex !== -1) {
-      // Insert into priceCandidateIndices based on priority in PRICE_HEADER_CANDIDATES
-      // so we preserve "discounted > with VAT > without VAT > others"
+    const norm = normalizeHeader(headerRow[col]);
+    if (PRICE_HEADER_CANDIDATES.includes(norm)) {
       priceCandidateIndices.push(col);
     }
   }
-  
-  // If no affiliateUrl column was detected from headers, try to auto-detect it from data
-  if (!headerMap.has("affiliateUrl")) {
-    const maxRowsToCheck = Math.min(20, csvRows.length - 1);
-    const scores: number[] = new Array(csvRows[0].length).fill(0);
 
-    for (let rowIndex = 1; rowIndex <= maxRowsToCheck; rowIndex++) {
-      const row = csvRows[rowIndex];
-      if (!row) continue;
-
-      for (let col = 0; col < row.length; col++) {
-        const value = (row[col] ?? "").toString().trim();
-        if (!value) continue;
-        // Only consider URL-ish values
-        if (value.startsWith("http://") || value.startsWith("https://")) {
-          scores[col]++;
-
-          // Bonus score if it looks like a 2Performant deeplink
-          if (value.includes("2performant") || value.includes("event.")) {
-            scores[col] += 2;
-          }
-        }
-      }
-    }
-
-    let bestCol = -1;
-    let bestScore = 0;
-    for (let i = 0; i < scores.length; i++) {
-      if (scores[i] > bestScore) {
-        bestScore = scores[i];
-        bestCol = i;
-      }
-    }
-
-    // Only set affiliateUrl if we found a plausible URL column
-    if (bestCol >= 0 && bestScore > 0) {
-      headerMap.set("affiliateUrl", bestCol);
-    }
-  }
-  
-  // Validate required columns exist in header
-  const headerError = validateHeaders(headerMap);
-  if (headerError) {
-    return { rows: [], skippedMissingFields: 0, totalDataRows: csvRows.length - 1, headerError };
-  }
-  
   const rows: TwoPerformantRow[] = [];
   let skippedMissingFields = 0;
-  
-  // Process data rows (skip header)
+
   for (let i = 1; i < csvRows.length; i++) {
     const rawRow = csvRows[i];
-    
-    // Skip empty rows
-    if (!rawRow || rawRow.every((cell) => !cell.trim())) {
+
+    // Skip empty lines quickly
+    if (!rawRow || rawRow.every((c) => !c || !c.toString().trim())) {
       continue;
     }
-    
+
     const name = getCell(rawRow, headerMap, "name");
-    const affiliateUrl = getCell(rawRow, headerMap, "affiliateUrl");
-    
-    // Try mapped "price" first, if buildHeaderMap found one
+
+    // URLs from mapped fields
+    let affiliateUrl = getCell(rawRow, headerMap, "affiliateUrl");
+    let productUrl = getCell(rawRow, headerMap, "productUrl");
+    const categoryRaw = getCell(rawRow, headerMap, "categoryRaw");
+
+    // Sometimes the "Category" column contains the 2Performant deeplink.
+    if (!affiliateUrl && categoryRaw && categoryRaw.startsWith("http")) {
+      affiliateUrl = categoryRaw;
+    }
+
+    // If we still don't have an affiliateUrl but productUrl looks like a 2P link, treat it as such.
+    if (!affiliateUrl && productUrl && /2performant|event\./i.test(productUrl)) {
+      affiliateUrl = productUrl;
+    }
+
+    // If productUrl is empty but affiliateUrl looks like a merchant URL (no 2performant in it),
+    // keep affiliateUrl as is and later we derive store from it. Otherwise, we keep productUrl
+    // as the merchant URL when present.
+    if (!productUrl && affiliateUrl && !/2performant|event\./i.test(affiliateUrl)) {
+      productUrl = affiliateUrl;
+    }
+
+    // PRICE: try mapped "price" first, then fall back to candidates per row.
     let priceStr = getCell(rawRow, headerMap, "price");
 
-    // Fallback: if that is empty, scan all known price columns in priority order
     if (!priceStr && priceCandidateIndices.length > 0) {
       for (const colIdx of priceCandidateIndices) {
         const raw = (rawRow[colIdx] ?? "").toString().trim();
@@ -433,37 +367,41 @@ export function parseTwoPerformantCsv(content: string): {
       }
     }
 
-    // Check critical fields
-    if (!name || !affiliateUrl || !priceStr) {
+    // Critical field checks
+    if (!name || !priceStr || (!affiliateUrl && !productUrl)) {
       skippedMissingFields++;
       continue;
     }
-    
+
     const price = parsePrice(priceStr);
     if (price === null) {
       skippedMissingFields++;
       continue;
     }
-    
-    // Extract store name from affiliate URL
-    const storeName = extractStoreFromUrl(affiliateUrl);
-    
-    const currency = getCell(rawRow, headerMap, "currency") || "RON";
+
     const imageUrl = getCell(rawRow, headerMap, "imageUrl") || undefined;
-    const categoryRaw = getCell(rawRow, headerMap, "categoryRaw") || undefined;
+    const currencyCell = getCell(rawRow, headerMap, "currency");
+    const currency = (currencyCell || "RON").toUpperCase();
+
     const sku = getCell(rawRow, headerMap, "sku") || undefined;
     const gtin = getCell(rawRow, headerMap, "gtin") || undefined;
     const availability = getCell(rawRow, headerMap, "availability") || undefined;
     const affiliateProgram = getCell(rawRow, headerMap, "affiliateProgram") || undefined;
-    
+
+    // Store name: prefer explicit advertiser_name; if missing, derive from productUrl or affiliateUrl.
+    let storeName = getCell(rawRow, headerMap, "storeName");
+    if (!storeName) {
+      storeName = extractHost(productUrl) || extractHost(affiliateUrl) || "unknown";
+    }
+
     rows.push({
       name,
-      productUrl: affiliateUrl, // Use affiliate URL as product URL for 2Performant
-      affiliateUrl,
+      productUrl: productUrl || affiliateUrl, // at least one is guaranteed now
+      affiliateUrl: affiliateUrl || productUrl, // keep track of the 2P deeplink when present
       imageUrl,
       price,
-      currency: currency.toUpperCase(),
-      categoryRaw,
+      currency,
+      categoryRaw: categoryRaw || undefined,
       sku,
       gtin,
       availability,
@@ -472,25 +410,22 @@ export function parseTwoPerformantCsv(content: string): {
       affiliateProgram,
     });
   }
-  
+
   return {
     rows,
     skippedMissingFields,
-    totalDataRows: csvRows.length - 1, // Exclude header
+    totalDataRows: csvRows.length - 1,
   };
 }
 
 /**
- * Check if availability string indicates in-stock.
- * Reuses the same logic as Profitshare for consistency.
+ * Simple availability parser, reused by the importer if needed.
  */
 export function parseAvailability(availability: string | undefined): boolean {
-  if (!availability) return true; // Default to in-stock
-  
+  if (!availability) return true;
+
   const lower = availability.toLowerCase().trim();
-  
-  // Common out-of-stock indicators
-  const outOfStockPatterns = [
+  const outPatterns = [
     "out of stock",
     "indisponibil",
     "stoc epuizat",
@@ -499,10 +434,10 @@ export function parseAvailability(availability: string | undefined): boolean {
     "false",
     "no",
   ];
-  
-  for (const pattern of outOfStockPatterns) {
-    if (lower.includes(pattern)) return false;
+
+  for (const p of outPatterns) {
+    if (lower.includes(p)) return false;
   }
-  
+
   return true;
 }
