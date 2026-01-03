@@ -39,7 +39,9 @@ const db: any = prisma;
  * Adapter to convert TwoPerformantRow to ProfitshareRow format
  * This allows us to use the existing processBatch pipeline without changes
  */
-function adaptTwoPerformantRowToProfitshareRow(row: TwoPerformantRow): ProfitshareRow {
+function adaptTwoPerformantRowToProfitshareRow(
+  row: TwoPerformantRow,
+): ProfitshareRow {
   return {
     name: row.name,
     productUrl: row.productUrl,
@@ -181,8 +183,11 @@ async function processBatch(
   let createdListings = 0;
   let updatedListings = 0;
   let failedRows = 0;
-  const errors: { rowNumber: number; message: string; code: string | null }[] =
-    [];
+  const errors: {
+    rowNumber: number;
+    message: string;
+    code: string | null;
+  }[] = [];
 
   for (let i = 0; i < rows.length; i++) {
     const row = rows[i];
@@ -197,10 +202,10 @@ async function processBatch(
 
       // 2) Listing with affiliate metadata
       const { isNew: isNewListing, hasListing } = await upsertListing(
-        productId, 
-        row, 
-        metadata.provider, 
-        metadata.program
+        productId,
+        row,
+        metadata.provider,
+        metadata.program,
       );
       if (hasListing) {
         if (isNewListing) createdListings++;
@@ -214,7 +219,7 @@ async function processBatch(
         message,
         code: err?.code ?? null,
       });
-      console.error('[import-csv] Row failed', {
+      console.error("[import-csv] Row failed", {
         rowNumber: rowNum,
         message,
         rowPreview: {
@@ -256,12 +261,18 @@ export async function POST(req: NextRequest) {
     const file = formData.get("file");
 
     // Provider selection: read from form data and validate against registry
-    const providerParam = (formData.get('provider') as string | null) ?? 'profitshare';
-    const provider = isValidProvider(providerParam) 
-      ? providerParam 
-      : 'profitshare';
+    const providerParam =
+      (formData.get("provider") as string | null) ?? "profitshare";
+    const provider = isValidProvider(providerParam)
+      ? providerParam
+      : "profitshare";
 
-    console.log('[import-csv] Provider selection - param:', providerParam, 'validated:', provider);
+    console.log(
+      "[import-csv] Provider selection - param:",
+      providerParam,
+      "validated:",
+      provider,
+    );
 
     if (!file || !(file instanceof File)) {
       return NextResponse.json(
@@ -286,21 +297,29 @@ export async function POST(req: NextRequest) {
     }
 
     // 2) Parse CSV using provider registry
-    let parseResult;
+    let parseResult: any;
     try {
       const parser = AFFILIATE_INGEST_PARSERS[provider];
       parseResult = parser(content);
     } catch (err: any) {
       const message = err instanceof Error ? err.message : String(err);
-      console.error(`[admin/import-csv] CSV parse error for ${provider}:`, err);
+      console.error(
+        `[admin/import-csv] CSV parse error for ${provider}:`,
+        err,
+      );
       return NextResponse.json(
         { ok: false, error: `Failed to parse ${provider} CSV: ${message}` },
         { status: 500 },
       );
     }
 
-    const { rows, skippedMissingFields, parsedTotalRows, headerError } =
-      parseResult;
+    const {
+      rows,
+      skippedMissingFields,
+      parsedTotalRows,
+      totalRows: legacyTotalRows,
+      headerError,
+    } = parseResult;
 
     if (headerError) {
       return NextResponse.json(
@@ -312,12 +331,12 @@ export async function POST(req: NextRequest) {
     // Adapt rows based on provider
     let adaptedRows: ProfitshareRow[];
     let affiliateMetadata: { provider?: string; program?: string }[] = [];
-    
-    if (provider === '2performant') {
+
+    if (provider === "2performant") {
       const twoPerformantRows = rows as TwoPerformantRow[];
       adaptedRows = twoPerformantRows.map(adaptTwoPerformantRowToProfitshareRow);
       // Extract affiliate metadata from 2Performant rows
-      affiliateMetadata = twoPerformantRows.map(row => ({
+      affiliateMetadata = twoPerformantRows.map((row) => ({
         provider: row.affiliateProvider,
         program: row.affiliateProgram,
       }));
@@ -325,13 +344,21 @@ export async function POST(req: NextRequest) {
       adaptedRows = rows as ProfitshareRow[];
       // For Profitshare, set default affiliate metadata
       affiliateMetadata = rows.map(() => ({
-        provider: 'profitshare',
+        provider: "profitshare",
         program: undefined,
       }));
     }
 
-    const totalRows = adaptedRows.length;
+    // Prefer parser-reported total row count when available
+    const totalRows =
+      typeof parsedTotalRows === "number"
+        ? parsedTotalRows
+        : typeof legacyTotalRows === "number"
+          ? legacyTotalRows
+          : adaptedRows.length;
+
     const limitedRows = adaptedRows.slice(0, MAX_IMPORT_ROWS);
+    const limitedMetadata = affiliateMetadata.slice(0, MAX_IMPORT_ROWS);
     const isCapped = totalRows > MAX_IMPORT_ROWS;
 
     console.log(
@@ -360,6 +387,7 @@ export async function POST(req: NextRequest) {
           message: null,
           capped: isCapped,
           maxRowsPerImport: MAX_IMPORT_ROWS,
+          provider,
         },
         { status: 200 },
       );
@@ -378,7 +406,7 @@ export async function POST(req: NextRequest) {
 
     for (let i = 0; i < limitedRows.length; i += BATCH_SIZE) {
       const batch = limitedRows.slice(i, i + BATCH_SIZE);
-      const batchMetadata = affiliateMetadata.slice(i, i + BATCH_SIZE);
+      const batchMetadata = limitedMetadata.slice(i, i + BATCH_SIZE);
       const batchResult = await processBatch(batch, batchMetadata, i);
 
       createdProducts += batchResult.createdProducts;
@@ -404,9 +432,17 @@ export async function POST(req: NextRequest) {
 
     const skippedRows = skippedMissingFields; // externalId skipping is always 0 now
 
+    // New: compute a more realistic ok flag
+    const successCount =
+      createdProducts +
+      updatedProducts +
+      createdListings +
+      updatedListings;
+    const ok = successCount > 0;
+
     return NextResponse.json(
       {
-        ok: failedRows === 0,
+        ok,
         totalRows,
         processedRows: limitedRows.length,
         skippedRows,

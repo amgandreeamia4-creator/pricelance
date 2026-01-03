@@ -4,7 +4,7 @@
 // IMPORTANT: This is designed to work with the user's existing 2Performant CSV:
 // - Name:           "Product name"
 // - URLs:           "Product affiliate l", "Product link", and sometimes a 2P deeplink in "Category"
-// - Prices:         "Price with discou", "Price with VAT", "Price without VA"
+// - Prices:         "Price with discou", "Price with VAT", "Price without VA", or other price-like columns
 // - Currency:       "Currency"
 // and similar variants.
 //
@@ -30,9 +30,9 @@ export type TwoPerformantRow = {
 
 export type TwoPerformantParseResult = {
   ok: boolean;
-  totalRows: number;
-  processedRows: number;
-  skippedRows: number;
+  totalRows: number;          // number of data rows in the CSV (excluding header)
+  processedRows: number;      // number of rows that passed validation in this parser
+  skippedRows: number;        // number of rows skipped due to missing fields
   skipped: number;
   createdProducts: number;
   updatedProducts: number;
@@ -45,9 +45,12 @@ export type TwoPerformantParseResult = {
   errors: { rowNumber: number; message: string; code: string | null }[];
   rows: TwoPerformantRow[];
   headerError?: string;
+  // Optional compatibility field for callers that expect this name
+  parsedTotalRows?: number;
 };
 
 // Price header priority – first non-empty wins *per row*.
+// NOTE: We now ALSO treat any header whose normalized name contains "price" as a candidate.
 const PRICE_HEADER_CANDIDATES = [
   "price_with_discou", // "Price with discou" – discounted price (best)
   "price_with_vat",    // "Price with VAT"
@@ -60,7 +63,10 @@ const PRICE_HEADER_CANDIDATES = [
 
 // Column name → TwoPerformantRow field.
 // Keys here are *normalized* header names (see normalizeHeader).
-const COLUMN_MAPPINGS: Record<string, keyof TwoPerformantRow | "currency" | "availability" | "affiliateProgram" | "categoryRaw" | "sku" | "gtin"> = {
+const COLUMN_MAPPINGS: Record<
+  string,
+  keyof TwoPerformantRow | "currency" | "availability" | "affiliateProgram" | "categoryRaw" | "sku" | "gtin"
+> = {
   // Name
   "product_name": "name",
   "name": "name",
@@ -186,8 +192,16 @@ function parseCsv(content: string): string[][] {
  * Build header index map from the first row.
  * Maps TwoPerformantRow fields to their column indices.
  */
-function buildHeaderMap(headerRow: string[]): Map<keyof TwoPerformantRow | "currency" | "availability" | "affiliateProgram" | "categoryRaw" | "sku" | "gtin", number> {
-  const map = new Map<keyof TwoPerformantRow | "currency" | "availability" | "affiliateProgram" | "categoryRaw" | "sku" | "gtin", number>();
+function buildHeaderMap(
+  headerRow: string[],
+): Map<
+  keyof TwoPerformantRow | "currency" | "availability" | "affiliateProgram" | "categoryRaw" | "sku" | "gtin",
+  number
+> {
+  const map = new Map<
+    keyof TwoPerformantRow | "currency" | "availability" | "affiliateProgram" | "categoryRaw" | "sku" | "gtin",
+    number
+  >();
 
   for (let i = 0; i < headerRow.length; i++) {
     const normalized = normalizeHeader(headerRow[i]);
@@ -205,8 +219,18 @@ function buildHeaderMap(headerRow: string[]): Map<keyof TwoPerformantRow | "curr
  */
 function getCell(
   row: string[],
-  headerMap: Map<keyof TwoPerformantRow | "currency" | "availability" | "affiliateProgram" | "categoryRaw" | "sku" | "gtin", number>,
-  field: keyof TwoPerformantRow | "currency" | "availability" | "affiliateProgram" | "categoryRaw" | "sku" | "gtin"
+  headerMap: Map<
+    keyof TwoPerformantRow | "currency" | "availability" | "affiliateProgram" | "categoryRaw" | "sku" | "gtin",
+    number
+  >,
+  field:
+    | keyof TwoPerformantRow
+    | "currency"
+    | "availability"
+    | "affiliateProgram"
+    | "categoryRaw"
+    | "sku"
+    | "gtin",
 ): string {
   const idx = headerMap.get(field);
   if (idx === undefined || idx < 0 || idx >= row.length) return "";
@@ -261,11 +285,14 @@ function extractHost(url: string | undefined): string | undefined {
  * Validate that essential columns are present in the header.
  * For 2Performant we only require:
  * - a name column
- * - Price validation happens per-row since we have smart fallback
+ * Price validation happens per-row using flexible header detection.
  */
 function validateHeaders(
   headerRow: string[],
-  headerMap: Map<keyof TwoPerformantRow | "currency" | "availability" | "affiliateProgram" | "categoryRaw" | "sku" | "gtin", number>
+  headerMap: Map<
+    keyof TwoPerformantRow | "currency" | "availability" | "affiliateProgram" | "categoryRaw" | "sku" | "gtin",
+    number
+  >,
 ): string | null {
   const missing: string[] = [];
 
@@ -284,8 +311,7 @@ function validateHeaders(
  * Parse 2Performant CSV content into normalized rows.
  * - Uses Product name as product name.
  * - Pulls URLs from Product affiliate l / Product link / 2P deeplink column.
- * - For each row, scans Price with discou → Price with VAT → Price without VA
- *   (and other price-like headers) to find a usable price.
+ * - For each row, scans all "price-like" headers to find a usable price.
  */
 export function parseTwoPerformantCsv(content: string): TwoPerformantParseResult {
   const csvRows = parseCsv(content);
@@ -307,20 +333,22 @@ export function parseTwoPerformantCsv(content: string): TwoPerformantParseResult
       failed: 0,
       errors: [],
       rows: [],
+      parsedTotalRows: 0,
     };
   }
 
   const headerRow = csvRows[0];
   const headerMap = buildHeaderMap(headerRow);
 
-  console.log('[2Performant] Detected headers:', headerRow);
-  console.log('[2Performant] Header map keys:', Array.from(headerMap.keys()));
+  console.log("[2Performant] Detected headers:", headerRow);
+  console.log("[2Performant] Header map keys:", Array.from(headerMap.keys()));
 
   const headerError = validateHeaders(headerRow, headerMap);
   if (headerError) {
+    const totalDataRows = csvRows.length - 1;
     return {
       ok: false,
-      totalRows: csvRows.length - 1,
+      totalRows: totalDataRows,
       processedRows: 0,
       skippedRows: 0,
       skipped: 0,
@@ -335,6 +363,7 @@ export function parseTwoPerformantCsv(content: string): TwoPerformantParseResult
       errors: [],
       rows: [],
       headerError,
+      parsedTotalRows: totalDataRows,
     };
   }
 
@@ -342,20 +371,36 @@ export function parseTwoPerformantCsv(content: string): TwoPerformantParseResult
   const priceCandidateIndices: number[] = [];
   for (let col = 0; col < headerRow.length; col++) {
     const norm = normalizeHeader(headerRow[col]);
+
+    // Explicit known candidates
     if (PRICE_HEADER_CANDIDATES.includes(norm)) {
       priceCandidateIndices.push(col);
-      console.log(`[2Performant] Found price candidate: "${headerRow[col]}" -> ${norm} at column ${col}`);
+      console.log(
+        `[2Performant] Found explicit price candidate: "${headerRow[col]}" -> ${norm} at column ${col}`,
+      );
+      continue;
+    }
+
+    // Generic: any header whose normalized name contains "price"
+    if (norm.includes("price")) {
+      priceCandidateIndices.push(col);
+      console.log(
+        `[2Performant] Found generic price candidate: "${headerRow[col]}" -> ${norm} at column ${col}`,
+      );
     }
   }
 
-  console.log(`[2Performant] Total price candidates found: ${priceCandidateIndices.length}`);
+  console.log(
+    `[2Performant] Total price candidates found: ${priceCandidateIndices.length}`,
+  );
 
   const rows: TwoPerformantRow[] = [];
   let skippedMissingFields = 0;
 
-  console.log(`[2Performant] Processing ${csvRows.length - 1} data rows`);
-  
-  // Show first 3 rows for debugging
+  const totalDataRows = csvRows.length - 1;
+  console.log(`[2Performant] Processing ${totalDataRows} data rows`);
+
+  // Show first few rows for debugging
   for (let i = 1; i <= Math.min(4, csvRows.length - 1); i++) {
     console.log(`[2Performant] Row ${i}:`, csvRows[i]);
   }
@@ -363,7 +408,7 @@ export function parseTwoPerformantCsv(content: string): TwoPerformantParseResult
   for (let i = 1; i < csvRows.length; i++) {
     const rawRow = csvRows[i];
 
-    // Skip empty lines quickly
+    // Skip completely empty lines quickly
     if (!rawRow || rawRow.every((c) => !c || !c.toString().trim())) {
       continue;
     }
@@ -392,7 +437,7 @@ export function parseTwoPerformantCsv(content: string): TwoPerformantParseResult
       productUrl = affiliateUrl;
     }
 
-    // PRICE: try mapped "price" first, then fall back to candidates per row.
+    // PRICE: try mapped "price" first, then fall back to all discovered candidates per row.
     let priceStr = getCell(rawRow, headerMap, "price");
 
     if (!priceStr && priceCandidateIndices.length > 0) {
@@ -405,16 +450,21 @@ export function parseTwoPerformantCsv(content: string): TwoPerformantParseResult
       }
     }
 
-    // Critical field checks - only require name and price, URL is optional
+    // Critical field checks - require name and a usable price
+    const rowNumberForLogs = i + 1; // 1-based including header
     if (!name || !priceStr) {
-      console.log(`[2Performant] Row ${i+2} skipped - name: ${!!name}, priceStr: ${!!priceStr}`);
+      console.log(
+        `[2Performant] Row ${rowNumberForLogs} skipped - name present: ${!!name}, priceStr present: ${!!priceStr}`,
+      );
       skippedMissingFields++;
       continue;
     }
 
     const price = parsePrice(priceStr);
     if (price === null) {
-      console.log(`[2Performant] Row ${i+2} skipped - invalid price: "${priceStr}"`);
+      console.log(
+        `[2Performant] Row ${rowNumberForLogs} skipped - invalid price: "${priceStr}"`,
+      );
       skippedMissingFields++;
       continue;
     }
@@ -426,18 +476,20 @@ export function parseTwoPerformantCsv(content: string): TwoPerformantParseResult
     const sku = getCell(rawRow, headerMap, "sku") || undefined;
     const gtin = getCell(rawRow, headerMap, "gtin") || undefined;
     const availability = getCell(rawRow, headerMap, "availability") || undefined;
-    const affiliateProgram = getCell(rawRow, headerMap, "affiliateProgram") || undefined;
+    const affiliateProgram =
+      getCell(rawRow, headerMap, "affiliateProgram") || undefined;
 
     // Store name: prefer explicit advertiser_name; if missing, derive from productUrl or affiliateUrl.
     let storeName = getCell(rawRow, headerMap, "storeName");
     if (!storeName) {
-      storeName = extractHost(productUrl) || extractHost(affiliateUrl) || "unknown";
+      storeName =
+        extractHost(productUrl) || extractHost(affiliateUrl) || "unknown";
     }
 
     rows.push({
       name,
-      productUrl: productUrl || affiliateUrl || "", // allow empty if no URL
-      affiliateUrl: affiliateUrl || productUrl || "", // allow empty if no URL
+      productUrl: productUrl || affiliateUrl || "",
+      affiliateUrl: affiliateUrl || productUrl || "",
       imageUrl,
       price,
       currency,
@@ -451,10 +503,13 @@ export function parseTwoPerformantCsv(content: string): TwoPerformantParseResult
     });
   }
 
+  const processedRows = rows.length;
+  const ok = skippedMissingFields === 0;
+
   return {
-    ok: skippedMissingFields === 0,
-    totalRows: csvRows.length - 1,
-    processedRows: rows.length,
+    ok,
+    totalRows: totalDataRows,
+    processedRows,
     skippedRows: skippedMissingFields,
     skipped: skippedMissingFields,
     createdProducts: 0,
@@ -467,6 +522,7 @@ export function parseTwoPerformantCsv(content: string): TwoPerformantParseResult
     failed: skippedMissingFields,
     errors: [],
     rows,
+    parsedTotalRows: totalDataRows,
   };
 }
 
