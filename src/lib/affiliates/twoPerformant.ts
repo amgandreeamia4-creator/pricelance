@@ -313,6 +313,9 @@ export function parseTwoPerformantCsv(content: string): TwoPerformantParseResult
   const headerRow = csvRows[0];
   const headerMap = buildHeaderMap(headerRow);
 
+  console.log('[2Performant] Detected headers:', headerRow);
+  console.log('[2Performant] Header map keys:', Array.from(headerMap.keys()));
+
   const headerError = validateHeaders(headerRow, headerMap);
   if (headerError) {
     return {
@@ -341,8 +344,11 @@ export function parseTwoPerformantCsv(content: string): TwoPerformantParseResult
     const norm = normalizeHeader(headerRow[col]);
     if (PRICE_HEADER_CANDIDATES.includes(norm)) {
       priceCandidateIndices.push(col);
+      console.log(`[2Performant] Found price candidate: "${headerRow[col]}" -> ${norm} at column ${col}`);
     }
   }
+
+  console.log(`[2Performant] Total price candidates found: ${priceCandidateIndices.length}`);
 
   const rows: TwoPerformantRow[] = [];
   let skippedMissingFields = 0;
@@ -394,12 +400,14 @@ export function parseTwoPerformantCsv(content: string): TwoPerformantParseResult
 
     // Critical field checks - only require name and price, URL is optional
     if (!name || !priceStr) {
+      console.log(`[2Performant] Row ${i+2} skipped - name: ${!!name}, priceStr: ${!!priceStr}`);
       skippedMissingFields++;
       continue;
     }
 
     const price = parsePrice(priceStr);
     if (price === null) {
+      console.log(`[2Performant] Row ${i+2} skipped - invalid price: "${priceStr}"`);
       skippedMissingFields++;
       continue;
     }
