@@ -74,11 +74,14 @@ const COLUMN_MAPPINGS: Record<string, keyof TwoPerformantRow> = {
   product_image: "imageUrl",
   product_picture: "imageUrl",
   
-  // Price variations
+  // Price variations – just to tell us these are price-ish columns.
+  // We will still use PRICE_HEADER_CANDIDATES per row to pick the actual value.
+  price_with_discou: "price",
+  price_with_vat: "price",
+  price_without_va: "price",
   price: "price",
   current_price: "price",
   pret: "price",
-  price_with_vat: "price",
   final_price: "price",
   
   // Currency variations
@@ -124,6 +127,20 @@ const COLUMN_MAPPINGS: Record<string, keyof TwoPerformantRow> = {
   campaign: "affiliateProgram",
   campaign_name: "affiliateProgram",
 };
+
+/**
+ * Price header candidates in priority order for 2Performant feeds.
+ * We'll try these in order per row to find the first non-empty price.
+ */
+const PRICE_HEADER_CANDIDATES = [
+  "price_with_discou", // "Price with discou" – discounted price (best)
+  "price_with_vat",    // "Price with VAT"
+  "price_without_va",  // "Price without VA"
+  "price",             // generic
+  "current_price",
+  "pret",
+  "final_price",
+];
 
 /**
  * Normalize a header name: lowercase, trim, replace spaces/dashes with underscores.
@@ -329,6 +346,19 @@ export function parseTwoPerformantCsv(content: string): {
   
   const headerMap = buildHeaderMap(csvRows[0]);
   
+  // Build a prioritized list of column indices that look like price columns
+  const headerRow = csvRows[0];
+  const priceCandidateIndices: number[] = [];
+  for (let col = 0; col < headerRow.length; col++) {
+    const normalized = normalizeHeader(headerRow[col]);
+    const candidateIndex = PRICE_HEADER_CANDIDATES.indexOf(normalized);
+    if (candidateIndex !== -1) {
+      // Insert into priceCandidateIndices based on priority in PRICE_HEADER_CANDIDATES
+      // so we preserve "discounted > with VAT > without VAT > others"
+      priceCandidateIndices.push(col);
+    }
+  }
+  
   // If no affiliateUrl column was detected from headers, try to auto-detect it from data
   if (!headerMap.has("affiliateUrl")) {
     const maxRowsToCheck = Math.min(20, csvRows.length - 1);
@@ -388,8 +418,21 @@ export function parseTwoPerformantCsv(content: string): {
     
     const name = getCell(rawRow, headerMap, "name");
     const affiliateUrl = getCell(rawRow, headerMap, "affiliateUrl");
-    const priceStr = getCell(rawRow, headerMap, "price");
     
+    // Try mapped "price" first, if buildHeaderMap found one
+    let priceStr = getCell(rawRow, headerMap, "price");
+
+    // Fallback: if that is empty, scan all known price columns in priority order
+    if (!priceStr && priceCandidateIndices.length > 0) {
+      for (const colIdx of priceCandidateIndices) {
+        const raw = (rawRow[colIdx] ?? "").toString().trim();
+        if (raw) {
+          priceStr = raw;
+          break;
+        }
+      }
+    }
+
     // Check critical fields
     if (!name || !affiliateUrl || !priceStr) {
       skippedMissingFields++;
