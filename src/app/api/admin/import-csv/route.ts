@@ -261,6 +261,8 @@ export async function POST(req: NextRequest) {
       ? providerParam 
       : 'profitshare';
 
+    console.log('[import-csv] Provider selection - param:', providerParam, 'validated:', provider);
+
     if (!file || !(file instanceof File)) {
       return NextResponse.json(
         { ok: false, error: "Missing CSV file" },
