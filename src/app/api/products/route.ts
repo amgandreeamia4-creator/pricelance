@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { AFFILIATE_FLAGS } from '@/config/affiliates';
+import { isListingFromDisabledNetwork } from '@/config/affiliateNetworks';
 
 type ListingResponse = {
   id: string;
@@ -95,13 +95,13 @@ export async function GET(req: NextRequest) {
       // "relevance": keep DB order; can improve later
     }
 
-    // Profitshare filtering logic (in-memory)
-    const isProfitshare = (listing: any) =>
-      listing.affiliateProvider?.toLowerCase() === 'profitshare';
-
+    // Filter listings based on DISABLED_AFFILIATE_SOURCES configuration
     const filterListingsForVisibility = (listings: any[]) => {
-      if (!AFFILIATE_FLAGS.DISABLE_PROFITSHARE) return listings;
-      return listings.filter((l) => !isProfitshare(l));
+      return listings.filter((l) => !isListingFromDisabledNetwork({
+        affiliateProvider: l.affiliateProvider,
+        affiliateProgram: l.affiliateProgram,
+        url: l.url,
+      }));
     };
 
     const products: ProductResponse[] = sorted.map((p: any) => ({

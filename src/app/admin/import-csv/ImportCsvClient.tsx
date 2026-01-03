@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { AFFILIATE_INGEST_PROVIDERS, type AffiliateIngestProviderId } from '@/config/affiliateIngestion';
 
 type ImportState = {
   status: "idle" | "running" | "done" | "error";
@@ -10,6 +11,7 @@ type ImportState = {
 
 export default function ImportCsvClient() {
   const [file, setFile] = useState<File | null>(null);
+  const [provider, setProvider] = useState<AffiliateIngestProviderId>('profitshare');
   const [state, setState] = useState<ImportState>({
     status: "idle",
     message: null,
@@ -30,6 +32,7 @@ export default function ImportCsvClient() {
 
     const formData = new FormData();
     formData.append("file", file);
+    formData.append("provider", provider);
 
     setState({
       status: "running",
@@ -95,7 +98,7 @@ export default function ImportCsvClient() {
       >
         <div>
           <label className="block text-xs font-semibold uppercase tracking-[0.15em] text-[var(--pl-text-subtle)] mb-2">
-            Upload Profitshare CSV
+            Upload Affiliate CSV
           </label>
           <input
             type="file"
@@ -111,6 +114,27 @@ export default function ImportCsvClient() {
               Selected: {file.name} ({Math.round(file.size / 1024)} KB)
             </p>
           )}
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-1">Source</label>
+          <div className="space-y-1 mb-4">
+            {AFFILIATE_INGEST_PROVIDERS.map((p) => (
+              <label key={p.id} className="flex items-center gap-2">
+                <input
+                  type="radio"
+                  name="provider"
+                  value={p.id}
+                  checked={provider === p.id}
+                  onChange={() => setProvider(p.id)}
+                />
+                <span>{p.label}</span>
+                {p.description && (
+                  <span className="text-xs text-gray-500">— {p.description}</span>
+                )}
+              </label>
+            ))}
+          </div>
         </div>
 
         <button

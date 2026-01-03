@@ -26,17 +26,10 @@ export const DISABLED_AFFILIATE_SOURCES = {
     patterns: {
       affiliateProvider: ['profitshare'],
       affiliateProgram: ['profitshare'],
+      urlIncludes: [] as string[],
     },
   },
-  
-  // Future networks can be added here:
-  // TWOPERFORMANT: {
-  //   name: '2Performant',
-  //   patterns: {
-  //     affiliateProvider: ['2performant', 'twoperformant'],
-  //     affiliateProgram: ['2performant', 'twoperformant'],
-  //   },
-  // },
+  // ✅ 2Performant is NOT included here - will be visible in public search
 } as const;
 
 /**
@@ -46,6 +39,7 @@ export const DISABLED_AFFILIATE_SOURCES = {
 type ListingForNetworkCheck = {
   affiliateProvider?: string | null;
   affiliateProgram?: string | null;
+  url?: string | null;
 };
 
 /**
@@ -61,7 +55,7 @@ type ListingForNetworkCheck = {
 export function isListingFromDisabledNetwork(
   listing: ListingForNetworkCheck
 ): boolean {
-  const { affiliateProvider, affiliateProgram } = listing;
+  const { affiliateProvider, affiliateProgram, url } = listing;
   
   // Check each disabled network configuration
   for (const networkConfig of Object.values(DISABLED_AFFILIATE_SOURCES)) {
@@ -83,6 +77,16 @@ export function isListingFromDisabledNetwork(
       for (const pattern of patterns.affiliateProgram) {
         if (programLower.includes(pattern.toLowerCase())) {
           return true; // Found match in affiliateProgram
+        }
+      }
+    }
+    
+    // Check urlIncludes field (for networks like 2Performant)
+    if (url && patterns.urlIncludes) {
+      const urlLower = url.toLowerCase();
+      for (const pattern of patterns.urlIncludes) {
+        if (urlLower.includes(pattern.toLowerCase())) {
+          return true; // Found match in URL
         }
       }
     }
