@@ -24,7 +24,10 @@
 import { randomUUID } from "crypto";
 import { prisma } from "@/lib/db";
 import type { NormalizedListing } from "@/lib/affiliates/types";
-import { defaultCountryForStore, normalizeStoreName } from "@/lib/stores/registry";
+import {
+  defaultCountryForStore,
+  normalizeStoreName,
+} from "@/lib/stores/registry";
 
 export type ImportSummary = {
   productsCreated: number;
@@ -68,7 +71,7 @@ export interface ImportOptions {
   affiliateProgram?: string;
   /**
    * Affiliate network identifier (e.g., "PROFITSHARE", "TWOPERFORMANT").
-   * Used for filtering networks from public-facing features.
+   * NOTE: Currently kept only in options; Listing model does not yet have `network`.
    */
   network?: string;
 }
@@ -99,31 +102,12 @@ type ProductMatchResult = {
 
 /**
  * Finds or creates a Product using GTIN-first, then name+brand matching strategy.
- *
- * Matching rules (in order of priority):
- * 1. If GTIN is provided: find Product by exact GTIN match (case-insensitive)
- *    - Optionally also verify brand matches if both are available
- * 2. If GTIN match fails or GTIN is missing: fall back to name + brand match
- *    - Case-insensitive match on name
- *    - Case-insensitive match on brand (or null if no brand)
- * 3. If no match found: create a new Product
- *
- * This strategy ensures:
- * - Affiliate feeds with GTINs can match existing products reliably
- * - Duplicate products are avoided when GTIN is available
- * - Backward compatibility with name+brand matching for data without GTINs
- *
- * @param productTitle - Required product title/name
- * @param brand - Optional brand name
- * @param category - Optional category
- * @param gtin - Optional GTIN/UPC/EAN barcode
- * @returns ProductMatchResult with product ID and whether it was newly created
  */
 async function findOrCreateProduct(
   productTitle: string,
   brand: string | undefined,
   category: string | undefined,
-  gtin: string | undefined
+  gtin: string | undefined,
 ): Promise<ProductMatchResult> {
   const normalizedGtin = gtin?.trim() || undefined;
   const normalizedBrand = brand?.trim() || undefined;
@@ -132,15 +116,13 @@ async function findOrCreateProduct(
   // Strategy 1: Try GTIN-first matching if GTIN is provided
   if (normalizedGtin) {
     const gtinMatch = await (prisma.product.findFirst as any)({
-  where: {
-    gtin: { equals: normalizedGtin, mode: "insensitive" },
-  },
-  select: { id: true, brand: true },
-});
+      where: {
+        gtin: { equals: normalizedGtin, mode: "insensitive" },
+      },
+      select: { id: true, brand: true },
+    });
 
     if (gtinMatch) {
-      // Optional sanity check: if both have brand, they should roughly match
-      // But we don't reject - GTIN is authoritative
       return { id: gtinMatch.id, isNew: false };
     }
   }
@@ -157,13 +139,13 @@ async function findOrCreateProduct(
   });
 
   if (nameMatch) {
-  await (prisma.product.update as any)({
-    where: { id: nameMatch.id },
-    data: { gtin: normalizedGtin },
-  });
+    await (prisma.product.update as any)({
+      where: { id: nameMatch.id },
+      data: { gtin: normalizedGtin },
+    });
 
-  return { id: nameMatch.id, isNew: false };
-}
+    return { id: nameMatch.id, isNew: false };
+  }
 
   // Strategy 3: Create new product
   const created = await (prisma.product.create as any)({
@@ -181,16 +163,14 @@ async function findOrCreateProduct(
 
 /**
  * Determines if a row is "listing-capable" (has enough data to create a Listing).
- * A row is listing-capable if it has both:
- * - a non-empty url (valid absolute http/https URL)
- * - a valid numeric price (finite number > 0)
  */
 function isListingCapable(row: NormalizedListing): boolean {
   const url = row.url?.trim();
   const price = row.price;
 
   if (!url || !isValidAbsoluteUrl(url)) return false;
-  if (typeof price !== "number" || !Number.isFinite(price) || price <= 0) return false;
+  if (typeof price !== "number" || !Number.isFinite(price) || price <= 0)
+    return false;
 
   return true;
 }
@@ -208,7 +188,6 @@ async function isUrlReachable(url: string, timeoutMs: number): Promise<boolean> 
       });
 
       if (!res.ok) {
-        // Some servers don't support HEAD properly – fall back to GET once.
         res = await fetch(url, {
           method: "GET",
           redirect: "follow",
@@ -227,26 +206,10 @@ async function isUrlReachable(url: string, timeoutMs: number): Promise<boolean> 
 
 /**
  * Core import function for all product/listing data.
- *
- * AFFILIATE ADAPTER INTEGRATION:
- * Future affiliate adapters (CSV, XML, API feeds) MUST:
- * 1. Map their provider-specific data format → NormalizedListing[]
- * 2. Call this function with the normalized data
- * 3. Never bypass this pipeline by calling prisma.product/listing directly
- *
- * This ensures consistent:
- * - Product upsert logic (brand + name matching)
- * - Listing validation (URL, price, store fields)
- * - Price history tracking
- * - Error reporting
- *
- * @param rows - Array of normalized listings from any adapter
- * @param options - Import options (source, country code, validation flags)
- * @returns ImportSummary with counts and any errors
  */
 export async function importNormalizedListings(
   rows: NormalizedListing[],
-  options: ImportOptions
+  options: ImportOptions,
 ): Promise<ImportSummary> {
   const summary: ImportSummary = {
     productsCreated: 0,
@@ -267,7 +230,6 @@ export async function importNormalizedListings(
     urlTimeoutMs = 4000,
     affiliateProvider,
     affiliateProgram,
-    network,
   } = options;
 
   // Cache product lookups by GTIN or brand+title (case-insensitive)
@@ -303,31 +265,33 @@ export async function importNormalizedListings(
         continue;
       }
 
-      // === STEP 2: Find or Create Product (GTIN-first, then name+brand) ===
-      // Check cache first
+      // === STEP 2: Find or Create Product ===
       const gtinCacheKey = gtin?.toLowerCase();
       const nameCacheKey = `${(brand || "").toLowerCase()}|${productTitle.toLowerCase()}`;
-      
-      let productInfo = gtinCacheKey 
-        ? productCacheByGtin.get(gtinCacheKey) 
+
+      let productInfo = gtinCacheKey
+        ? productCacheByGtin.get(gtinCacheKey)
         : undefined;
-      
+
       if (!productInfo) {
         productInfo = productCacheByName.get(nameCacheKey);
       }
 
       if (!productInfo) {
-        // Use GTIN-first matching strategy
-        const result = await findOrCreateProduct(productTitle, brand, category, gtin);
+        const result = await findOrCreateProduct(
+          productTitle,
+          brand,
+          category,
+          gtin,
+        );
         productInfo = { id: result.id };
-        
+
         if (result.isNew) {
           summary.productsCreated++;
         } else {
           summary.productsMatched++;
         }
 
-        // Cache by both GTIN and name for future lookups
         if (gtinCacheKey) {
           productCacheByGtin.set(gtinCacheKey, productInfo);
         }
@@ -340,7 +304,6 @@ export async function importNormalizedListings(
       const listingCapable = isListingCapable(row);
 
       if (!listingCapable) {
-        // This is a product-only row - Product was upserted, no Listing created
         summary.productOnlyRows++;
         continue;
       }
@@ -348,15 +311,15 @@ export async function importNormalizedListings(
       // === STEP 4: Validate listing fields for listing-capable rows ===
       const storeIdRaw = row.storeId?.trim() ?? "";
       const storeNameRaw = row.storeName?.trim() ?? "";
-      const url = row.url!.trim(); // Safe because isListingCapable checked it
+      const url = row.url!.trim();
       const currency = row.currency?.trim().toUpperCase();
-      const price = row.price!; // Safe because isListingCapable checked it
+      const price = row.price!;
 
-      // For listing rows, we need storeId and storeName
       if (!storeIdRaw || !isValidStoreId(storeIdRaw)) {
         summary.errors.push({
           rowNumber,
-          message: "Listing row missing valid storeId (must be non-empty and use letters, numbers, dash or underscore)",
+          message:
+            "Listing row missing valid storeId (must be non-empty and use letters, numbers, dash or underscore)",
         });
         continue;
       }
@@ -372,7 +335,8 @@ export async function importNormalizedListings(
       if (!currency || currency.length < 3 || currency.length > 10) {
         summary.errors.push({
           rowNumber,
-          message: "Listing row has invalid currency (must be 3-10 characters)",
+          message:
+            "Listing row has invalid currency (must be 3-10 characters)",
         });
         continue;
       }
@@ -393,7 +357,7 @@ export async function importNormalizedListings(
       // === STEP 5: Create or update Listing ===
       const countryFromRegistry = defaultCountryForStore(
         storeIdRaw,
-        defaultCountryCode
+        defaultCountryCode,
       );
       const countryCode =
         row.countryCode?.trim().toUpperCase() ||
@@ -413,7 +377,11 @@ export async function importNormalizedListings(
       const fastDelivery =
         typeof row.fastDelivery === "boolean" ? row.fastDelivery : null;
 
-      // Relax Prisma typing for new metadata fields
+      const safePriceCents = Math.min(
+        Math.round(price * 100),
+        2147483647,
+      );
+
       const existingListing = await (prisma.listing.findFirst as any)({
         where: {
           productId,
@@ -432,14 +400,16 @@ export async function importNormalizedListings(
 
       if (existingListing) {
         const previousPrice =
-          typeof existingListing.price === "number" ? existingListing.price : 0;
+          typeof existingListing.price === "number"
+            ? existingListing.price
+            : 0;
         const priceChanged = previousPrice !== price;
 
         await (prisma.listing.update as any)({
           where: { id: existingListing.id },
           data: {
             price,
-            priceCents: Math.round(price * 100),
+            priceCents: safePriceCents,
             currency,
             deliveryTimeDays: deliveryDays,
             estimatedDeliveryDays: deliveryDays,
@@ -450,10 +420,8 @@ export async function importNormalizedListings(
             countryCode: countryCode ?? null,
             source: options.source,
             priceLastSeenAt: now,
-            // Affiliate metadata (only set if provided)
             ...(affiliateProvider && { affiliateProvider }),
             ...(affiliateProgram && { affiliateProgram }),
-            ...(network && { network }),
           },
         });
         summary.listingsUpdated++;
@@ -477,7 +445,7 @@ export async function importNormalizedListings(
             storeName,
             url,
             price,
-            priceCents: Math.round(price * 100),
+            priceCents: safePriceCents,
             currency,
             deliveryTimeDays: deliveryDays,
             estimatedDeliveryDays: deliveryDays,
@@ -488,10 +456,8 @@ export async function importNormalizedListings(
             countryCode: countryCode ?? null,
             source: options.source,
             priceLastSeenAt: now,
-            // Affiliate metadata (only set if provided)
             ...(affiliateProvider && { affiliateProvider }),
             ...(affiliateProgram && { affiliateProgram }),
-            ...(network && { network }),
           },
         });
         summary.listingsCreated++;
