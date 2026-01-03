@@ -353,6 +353,13 @@ export function parseTwoPerformantCsv(content: string): TwoPerformantParseResult
   const rows: TwoPerformantRow[] = [];
   let skippedMissingFields = 0;
 
+  console.log(`[2Performant] Processing ${csvRows.length - 1} data rows`);
+  
+  // Show first 3 rows for debugging
+  for (let i = 1; i <= Math.min(4, csvRows.length - 1); i++) {
+    console.log(`[2Performant] Row ${i}:`, csvRows[i]);
+  }
+
   for (let i = 1; i < csvRows.length; i++) {
     const rawRow = csvRows[i];
 
