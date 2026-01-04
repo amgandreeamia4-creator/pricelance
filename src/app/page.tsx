@@ -517,8 +517,11 @@ export default function Page() {
             </motion.button>
           </div>
 
-          <div className="hidden lg:block rounded-full border border-[var(--pl-card-border)] bg-[var(--pl-card)] px-3 py-1 text-[9px] text-[var(--pl-text-subtle)] whitespace-nowrap absolute right-6 top-6">
-            Ad slot preview · Header banner 776x90
+          {/* Desktop-only header ad slot preview */}
+          <div className="hidden md:flex justify-end mt-4">
+            <div className="rounded-full border border-[var(--pl-card-border)] bg-[var(--pl-card)] px-3 py-1 text-[9px] text-[var(--pl-text-subtle)] whitespace-nowrap">
+              Ad slot preview · Header banner 776x90
+            </div>
           </div>
 
           {/* Long description – desktop only */}
