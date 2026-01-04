@@ -148,6 +148,9 @@ export default function ProductList({
 
           const isBestDeal = product.id === bestDealProductId;
 
+          // Length-based layout for store names
+          const isLongStoreName = storeLabel ? storeLabel.length > 10 : false;
+
           // ✅ badges
           const hasFastDelivery = product.listings.some((l) => l.fastDelivery);
           const isPopular = product.listings.length >= 4;
@@ -183,7 +186,8 @@ export default function ProductList({
             >
               {/* Top labels container: Store name, Affiliate pill, and Best Price badge */}
               <div className="flex flex-col items-center gap-1 pt-2 px-3">
-                <div className="flex items-center justify-center gap-2">
+                {/* First row: always store name, and (only for short names) AFFILIATE */}
+                <div className="flex items-center justify-center gap-2 max-w-full">
                   {storeLabel && (
                     <button
                       type="button"
@@ -205,12 +209,23 @@ export default function ProductList({
                       {storeLabel}
                     </button>
                   )}
-                  {isAffiliate && (
+                  {!isLongStoreName && isAffiliate && (
                     <span className="rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-wide text-slate-600 bg-white/70 backdrop-blur">
                       Affiliate
                     </span>
                   )}
                 </div>
+
+                {/* Second row: only for long store names, show AFFILIATE below store pill */}
+                {isLongStoreName && isAffiliate && (
+                  <div className="flex items-center justify-center">
+                    <span className="rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-wide text-slate-600 bg-white/70 backdrop-blur">
+                      Affiliate
+                    </span>
+                  </div>
+                )}
+
+                {/* BEST PRICE badge (keep centered under the header as it is now) */}
                 {isBestDeal && (
                   <div className="rounded-full bg-sky-500 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-white shadow">
                     Best price
