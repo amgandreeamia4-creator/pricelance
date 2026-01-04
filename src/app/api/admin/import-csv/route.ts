@@ -14,8 +14,8 @@ import {
   type ProfitshareRow,
 } from "@/lib/affiliates/profitshare";
 import { isValidProvider } from "@/config/affiliateIngestion";
-import { twoPerformantAdapter } from "@/lib/affiliates/twoPerformantAdapter";
 import { importNormalizedListings } from "@/lib/importService";
+import { parse } from "csv-parse/sync";
 
 export const dynamic = "force-dynamic";
 
@@ -24,6 +24,58 @@ const MAX_IMPORT_ROWS = 300;
 
 // Use loose typing to avoid TS complaining if schema drifts
 const db: any = prisma;
+
+// Helper functions for 2Performant CSV processing
+function detectDelimiter(raw: string): string {
+  const firstLine = raw.split(/\r?\n/)[0] ?? "";
+  const candidates = [",", ";", "\t", "|"];
+  let best = ",";
+  let bestCount = 0;
+
+  for (const d of candidates) {
+    const regex = new RegExp(`\\${d}`, "g");
+    const count = (firstLine.match(regex) || []).length;
+    if (count > bestCount) {
+      best = d;
+      bestCount = count;
+    }
+  }
+
+  return best;
+}
+
+function normalizeHeaders<T extends Record<string, any>>(row: T): Record<string, any> {
+  const out: Record<string, any> = {};
+  for (const [key, value] of Object.entries(row)) {
+    const normalizedKey = key.trim().toLowerCase();
+    out[normalizedKey] = value;
+  }
+  return out;
+}
+
+function toNumber(value: unknown): number | null {
+  if (value == null) return null;
+  const s = String(value).trim();
+  if (!s) return null;
+
+  // Handles "392,4", "392.40", "392,40 lei", etc.
+  const normalized = s.replace(",", ".").replace(/[^0-9.]/g, "");
+  const num = Number(normalized);
+  return Number.isNaN(num) ? null : num;
+}
+
+type TwoPerformantImportRow = {
+  title: string;
+  affCode: string;
+  price: number;
+  campaignName?: string;
+  imageUrls?: string;
+  description?: string;
+  storeName?: string;
+  currency?: string;
+  categoryRaw?: string;
+  availability?: string;
+};
 
 /**
  * Find or create a Product based on name (and optional category).
@@ -258,47 +310,125 @@ export async function POST(req: NextRequest) {
     }
 
     // -----------------------------------------------------------------------
-    // 2Performant path — use adapter + importNormalizedListings
+    // 2Performant path — enhanced CSV parsing with delimiter auto-detection
     // -----------------------------------------------------------------------
     if (provider === "2performant") {
-      console.log("[import-csv] Using TwoPerformantAdapter pipeline");
+      console.log("[import-csv] Using enhanced 2Performant CSV parsing");
 
-      const normalized = twoPerformantAdapter.normalize(content);
-      const totalRows = normalized.length;
+      const raw = await file.text();
+      const delimiter = detectDelimiter(raw);
+      
+      console.log(`[import-csv] Detected delimiter: "${delimiter}"`);
+
+      const records = parse(raw, {
+        columns: true,
+        skip_empty_lines: true,
+        bom: true,
+        delimiter, // auto-detected , ; \t |
+        relax_column_count: true,
+        trim: true,
+      });
+
+      const normalizedRows = (records as Record<string, any>[]).map(normalizeHeaders);
+      const totalRows = normalizedRows.length;
       const isCapped = totalRows > MAX_IMPORT_ROWS;
-      const limitedRows = normalized.slice(0, MAX_IMPORT_ROWS);
+
+      console.log(`[import-csv] Parsed ${totalRows} rows with delimiter "${delimiter}"`);
+
+      // Validate and extract 2Performant rows
+      let invalidRows = 0;
+      const validRows: TwoPerformantImportRow[] = [];
+
+      for (const row of normalizedRows) {
+        const title = (row["title"] ?? row["product name"] ?? row["name"] ?? "").trim();
+        const affCode =
+          (row["aff_code"] ?? row["aff link"] ?? row["affiliate_link"] ?? row["product affiliate"] ?? row["url"] ?? "").trim();
+        const price = toNumber(row["price"] ?? row["sale_price"] ?? row["old_price"] ?? row["price with discount"] ?? row["price with vat"] ?? row["price without vat"]);
+
+        const campaignName = (row["campaign_name"] ?? row["program_name"] ?? row["advertiser name"] ?? "").trim();
+        const imageUrls = (row["image_urls"] ?? row["image_url"] ?? row["product picture"] ?? "").trim();
+        const description = (row["description"] ?? row["descriere"] ?? row["product description"] ?? "").trim();
+        const storeName = (row["store_name"] ?? row["advertiser name"] ?? campaignName ?? "").trim();
+        const currency = (row["currency"] ?? "RON").trim().toUpperCase();
+        const categoryRaw = (row["category"] ?? "").trim();
+        const availability = (row["availability"] ?? "").trim();
+
+        // Required fields validation
+        const hasRequiredFields = Boolean(title && affCode && price != null && price > 0);
+
+        if (!hasRequiredFields) {
+          invalidRows++;
+          console.log(`[import-csv] Invalid row - title: "${title}", affCode: "${affCode}", price: ${price}`);
+          continue;
+        }
+
+        validRows.push({
+          title,
+          affCode,
+          price: price as number,
+          campaignName: campaignName || undefined,
+          imageUrls: imageUrls || undefined,
+          description: description || undefined,
+          storeName: storeName || undefined,
+          currency: currency || "RON",
+          categoryRaw: categoryRaw || undefined,
+          availability: availability || undefined,
+        });
+      }
+
+      const limitedRows = validRows.slice(0, MAX_IMPORT_ROWS);
 
       if (limitedRows.length === 0) {
         return NextResponse.json(
           {
             ok: false,
-            totalRows,
+            message:
+              `Parsed ${normalizedRows.length} rows but 0 passed validation for 2Performant. ` +
+              `Required fields: non-empty title, non-empty aff_code/affiliate link, numeric price > 0. ` +
+              `Check that your CSV headers look like: title, aff_code, price, campaign_name, image_urls, description. ` +
+              `Detected delimiter: "${delimiter}".`,
+            totalRows: normalizedRows.length,
             processedRows: 0,
-            skippedRows: totalRows,
-            skipped: totalRows,
+            skippedRows: normalizedRows.length,
+            skipped: normalizedRows.length,
             createdProducts: 0,
             updatedProducts: 0,
             createdListings: 0,
             updatedListings: 0,
-            skippedMissingFields: totalRows,
+            skippedMissingFields: invalidRows,
             skippedMissingExternalId: 0,
-            failedRows: 0,
-            failed: 0,
+            failedRows: invalidRows,
+            failed: invalidRows,
             errors: [],
             truncated: isCapped,
-            message:
-              totalRows === 0
-                ? "No valid 2Performant rows found in CSV"
-                : "No valid 2Performant rows in the first batch",
             capped: isCapped,
             maxRowsPerImport: MAX_IMPORT_ROWS,
             provider,
+            sampleRow: normalizedRows[0] ?? null,
           },
-          { status: 200 },
+          { status: 400 },
         );
       }
 
-      const summary = await importNormalizedListings(limitedRows, {
+      // Convert valid rows to NormalizedListing format
+      const normalizedListings = limitedRows.map((row) => ({
+        productTitle: row.title,
+        brand: row.title.split(" ")[0] || "Unknown", // Simple brand extraction
+        category: row.categoryRaw || "General",
+        gtin: undefined,
+        storeId: row.storeName?.toLowerCase().replace(/[^a-z0-9\s]/g, "").replace(/\s+/g, "_") || "unknown",
+        storeName: row.storeName || "Unknown",
+        url: row.affCode,
+        price: row.price,
+        currency: row.currency || "RON",
+        deliveryDays: undefined,
+        fastDelivery: undefined,
+        inStock: true, // Default to true, could be enhanced with availability parsing
+        countryCode: "RO",
+        source: "affiliate" as const,
+      }));
+
+      const summary = await importNormalizedListings(normalizedListings, {
         source: "affiliate",
         defaultCountryCode: "RO",
         affiliateProvider: "2performant",
@@ -334,7 +464,7 @@ export async function POST(req: NextRequest) {
           updatedProducts: summary.productsMatched,
           createdListings: summary.listingsCreated,
           updatedListings: summary.listingsUpdated,
-          skippedMissingFields: skippedRows,
+          skippedMissingFields: invalidRows,
           skippedMissingExternalId: 0,
           failedRows,
           failed: failedRows,
