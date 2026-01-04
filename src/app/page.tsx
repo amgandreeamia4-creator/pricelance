@@ -79,8 +79,17 @@ export default function Page() {
 
   const [trendProductId, setTrendProductId] = useState<string | null>(null);
   const [trendHistory, setTrendHistory] = useState<
-    { date: string; price: number; currency: string }[]
+    { date: string; price: number; currency: string; storeName?: string; isSynthetic?: boolean }[]
   >([]);
+  const [trendTrend, setTrendTrend] = useState<{
+    direction: 'up' | 'down' | 'flat' | 'none';
+    percentChange?: number;
+    startPrice?: number;
+    endPrice?: number;
+    firstDate?: string;
+    lastDate?: string;
+    numPoints: number;
+  } | undefined>(undefined);
   const [isTrendLoading, setIsTrendLoading] = useState(false);
   const [trendError, setTrendError] = useState<string | null>(null);
 
@@ -224,6 +233,7 @@ export default function Page() {
     if (!visibleProducts.length) {
       setTrendProductId(null);
       setTrendHistory([]);
+      setTrendTrend(undefined);
       setTrendError(null);
       setIsTrendLoading(false);
       return;
@@ -258,6 +268,7 @@ export default function Page() {
           console.error("Price history request failed", res.status);
           if (!cancelled) {
             setTrendHistory([]);
+            setTrendTrend(undefined);
             setTrendError("No price history available yet for this product.");
           }
           return;
@@ -269,15 +280,18 @@ export default function Page() {
 
         if (data?.ok && Array.isArray(data.points)) {
           setTrendHistory(data.points);
+          setTrendTrend(data.trend || undefined);
           setTrendError(null);
         } else {
           setTrendHistory([]);
+          setTrendTrend(undefined);
           setTrendError("No price history available yet for this product.");
         }
       } catch (error) {
         console.error("Price history could not be loaded.", error);
         if (!cancelled) {
           setTrendHistory([]);
+          setTrendTrend(undefined);
           setTrendError("Price history could not be loaded.");
         }
       } finally {
@@ -786,6 +800,7 @@ export default function Page() {
 
             <PriceTrendChart
               points={trendHistory}
+              trend={trendTrend}
               isLoading={isTrendLoading}
               error={trendError}
               hasProductSelected={!!selectedProductId}

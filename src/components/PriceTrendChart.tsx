@@ -15,20 +15,33 @@ import {
 import { format, parseISO } from "date-fns";
 import { useSpring, animated } from '@react-spring/web';
 
-type Point = {
+type PriceHistoryPoint = {
   date: string;
   price: number;
   currency: string;
+  storeName?: string;
+  isSynthetic?: boolean;
+};
+
+type PriceHistoryTrend = {
+  direction: 'up' | 'down' | 'flat' | 'none';
+  percentChange?: number;
+  startPrice?: number;
+  endPrice?: number;
+  firstDate?: string;
+  lastDate?: string;
+  numPoints: number;
 };
 
 type Props = {
-  points: Point[];
+  points: PriceHistoryPoint[];
+  trend?: PriceHistoryTrend;
   isLoading: boolean;
   error: string | null;
   hasProductSelected: boolean;
 };
 
-export default function PriceTrendChart({ points, isLoading, error, hasProductSelected }: Props) {
+export default function PriceTrendChart({ points, trend, isLoading, error, hasProductSelected }: Props) {
   const hasData = Array.isArray(points) && points.length > 0;
 
   // Process data for better visualization
@@ -65,11 +78,48 @@ export default function PriceTrendChart({ points, isLoading, error, hasProductSe
           <p className="text-xs text-slate-600">
             {data.displayPrice} {data.currency}
           </p>
+          {data.storeName && (
+            <p className="text-xs text-slate-500">{data.storeName}</p>
+          )}
+          {data.isSynthetic && (
+            <p className="text-xs text-blue-600">Current price</p>
+          )}
         </div>
       );
     }
     return null;
   };
+
+  // Format trend summary
+  const getTrendSummary = () => {
+    if (!trend) return null;
+    
+    const { direction, percentChange, firstDate, numPoints } = trend;
+    
+    if (direction === 'none' && numPoints === 1) {
+      return "No history yet — tracking this price from today.";
+    }
+    
+    if (direction === 'none' && numPoints === 0) {
+      return null; // Will show default no-data message
+    }
+    
+    if (direction === 'up') {
+      return `Prices have increased by ~${percentChange}% since ${format(parseISO(firstDate!), "MMM yyyy")}.`;
+    }
+    
+    if (direction === 'down') {
+      return `Prices have decreased by ~${percentChange}% since ${format(parseISO(firstDate!), "MMM yyyy")}.`;
+    }
+    
+    if (direction === 'flat') {
+      return "Prices have been relatively stable over this period.";
+    }
+    
+    return null;
+  };
+
+  const trendSummary = getTrendSummary();
 
   return (
     <div className="rounded-2xl border border-[var(--pl-card-border)] bg-[var(--pl-card)] p-4">
@@ -95,7 +145,26 @@ export default function PriceTrendChart({ points, isLoading, error, hasProductSe
           <p className="text-[11px] text-[var(--pl-text-subtle)]">
             No price history available yet for this product.
           </p>
+        ) : points.length === 1 ? (
+          // Single point (synthetic fallback) - show simple panel
+          <div className="text-center px-4">
+            <p className="text-[11px] font-medium text-slate-700 dark:text-slate-200 mb-2">
+              Only current price available so far
+            </p>
+            <p className="text-[12px] text-slate-600 dark:text-slate-300">
+              {format(parseISO(points[0].date), "MMM d, yyyy")}
+            </p>
+            <p className="text-[14px] font-semibold text-slate-900 dark:text-slate-100">
+              {points[0].price} {points[0].currency}
+            </p>
+            {points[0].storeName && (
+              <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1">
+                {points[0].storeName}
+              </p>
+            )}
+          </div>
         ) : (
+          // Multiple points - show chart
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart
               data={chartData}
@@ -136,6 +205,15 @@ export default function PriceTrendChart({ points, isLoading, error, hasProductSe
           </ResponsiveContainer>
         )}
       </div>
+
+      {/* Trend summary */}
+      {trendSummary && (
+        <div className="mt-3 text-center">
+          <p className="text-[10px] text-slate-600 dark:text-slate-400 leading-relaxed">
+            {trendSummary}
+          </p>
+        </div>
+      )}
     </div>
   );
 }

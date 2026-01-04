@@ -195,7 +195,7 @@ export default function ProductList({
                       }}
                       disabled={shouldDisableLink || false}
                       className={clsx(
-                        'max-w-[140px] truncate rounded-full px-2 py-0.5 text-[11px] font-medium border border-transparent transition-colors',
+                        'inline-flex items-center justify-center rounded-full px-3 py-1 text-[11px] font-medium border border-transparent transition-colors',
                         storeTone,
                         finalListingUrl && !shouldDisableLink && 'hover:border-sky-400 hover:shadow-sm',
                         shouldDisableLink && 'opacity-50 cursor-not-allowed'
