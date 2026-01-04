@@ -11,11 +11,12 @@ type Listing = {
   price: number;
   currency: string;
   storeName: string;
-  url?: string | null; // ✅ link to retailer
+  url?: string | null; // link to retailer
   affiliateProvider?: string | null;
   source?: string | null;
   fastDelivery?: boolean | null;
   network?: string | null; // Legacy field - kept for compatibility
+  imageUrl?: string | null; // Listing-specific image URL
 };
 
 type Product = {
@@ -36,7 +37,7 @@ type ProductListProps = {
   isLoading: boolean;
 };
 
-// 🔒 how many we show in the main table
+// how many we show in the main table
 const MAX_VISIBLE_PRODUCTS = 6;
 
 // soft threshold for "Budget pick" badge
@@ -71,6 +72,26 @@ export default function ProductList({
   onToggleFavorite,
   isLoading,
 }: ProductListProps) {
+  // Flip card animation state
+  const [flippedCard, setFlippedCard] = React.useState<string | null>(null);
+
+  // Spring animation
+  const { transform, opacity } = useSpring({
+    opacity: flippedCard ? 1 : 0,
+    transform: flippedCard ? 'rotateY(180deg)' : 'rotateY(0deg)',
+    config: config.wobbly,
+  });
+
+  // helper to open URLs safely
+  const openListing = (url?: string | null) => {
+    if (!url) return;
+    try {
+      window.open(url, '_blank', 'noopener,noreferrer');
+    } catch {
+      // fail silently – no need to crash UI
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="w-full text-center py-10 text-sm text-muted-foreground">
@@ -106,26 +127,6 @@ export default function ProductList({
 
     return bestDeal.id;
   }, [visibleProducts]);
-
-  // helper to open URLs safely
-  const openListing = (url?: string | null) => {
-    if (!url) return;
-    try {
-      window.open(url, '_blank', 'noopener,noreferrer');
-    } catch {
-      // fail silently – no need to crash UI
-    }
-  };
-
-  // Flip card animation state
-  const [flippedCard, setFlippedCard] = React.useState<string | null>(null);
-
-  // Spring animation
-  const { transform, opacity } = useSpring({
-    opacity: flippedCard ? 1 : 0,
-    transform: flippedCard ? 'rotateY(180deg)' : 'rotateY(0deg)',
-    config: config.wobbly,
-  });
 
   return (
     <div className="w-full">
@@ -205,7 +206,7 @@ export default function ProductList({
               <div className="mt-8 mb-3 flex h-24 w-full items-center justify-center">
                 <div className="w-16 h-16 rounded-xl border overflow-hidden flex items-center justify-center">
                   <img
-                    src={product.imageUrl || '/placeholder.png'}
+                    src={bestListing?.imageUrl || product.imageUrl || '/placeholder.png'}
                     alt={product.displayName || product.name}
                     className="w-full h-full object-contain"
                   />

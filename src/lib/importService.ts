@@ -314,6 +314,22 @@ export async function importNormalizedListings(
       const url = row.url!.trim();
       const currency = row.currency?.trim().toUpperCase();
       const price = row.price!;
+      const imageUrl = row.imageUrl?.trim() || null;
+
+      // === STEP 4.5: Update Product imageUrl if empty and listing provides one ===
+      if (imageUrl) {
+        const currentProduct = await (prisma.product.findUnique as any)({
+          where: { id: productId },
+          select: { imageUrl: true },
+        });
+        
+        if (currentProduct && !currentProduct.imageUrl) {
+          await (prisma.product.update as any)({
+            where: { id: productId },
+            data: { imageUrl },
+          });
+        }
+      }
 
       if (!storeIdRaw || !isValidStoreId(storeIdRaw)) {
         summary.errors.push({
@@ -393,6 +409,7 @@ export async function importNormalizedListings(
           price: true,
           currency: true,
           storeName: true,
+          imageUrl: true,
         },
       });
 
@@ -420,6 +437,7 @@ export async function importNormalizedListings(
             countryCode: countryCode ?? null,
             source: options.source,
             priceLastSeenAt: now,
+            imageUrl, // Update imageUrl if provided
             ...(affiliateProvider && { affiliateProvider }),
             ...(affiliateProgram && { affiliateProgram }),
           },
@@ -456,6 +474,7 @@ export async function importNormalizedListings(
             countryCode: countryCode ?? null,
             source: options.source,
             priceLastSeenAt: now,
+            imageUrl, // Include imageUrl in new listings
             ...(affiliateProvider && { affiliateProvider }),
             ...(affiliateProgram && { affiliateProgram }),
           },

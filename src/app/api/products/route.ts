@@ -12,6 +12,7 @@ type ListingResponse = {
   affiliateProvider: string | null;
   source: string | null;
   fastDelivery: boolean | null;
+  imageUrl: string | null;
 };
 
 type ProductResponse = {
@@ -85,7 +86,7 @@ export async function GET(req: NextRequest) {
     });
 
     // --- In-memory sorting based on best price, if requested ---
-    let sorted = [...dbProducts];
+    const sorted = [...dbProducts];
 
     if (sort === 'price-asc') {
       sorted.sort((a, b) => getBestPrice(a) - getBestPrice(b));
@@ -122,11 +123,12 @@ export async function GET(req: NextRequest) {
           affiliateProvider: l.affiliateProvider ?? null,
           source: l.source ?? null,
           fastDelivery: l.fastDelivery ?? null,
+          imageUrl: l.imageUrl ?? null, // Include listing image URL
         }),
       ),
     }));
 
-    // 🔹 keep only products that actually have visible offers
+    // keep only products that actually have visible offers
     const visibleProducts = products.filter((p) => p.listings.length > 0);
 
     return NextResponse.json({

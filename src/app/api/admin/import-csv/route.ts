@@ -346,7 +346,33 @@ export async function POST(req: NextRequest) {
         const price = toNumber(row["price"] ?? row["sale_price"] ?? row["old_price"] ?? row["price with discount"] ?? row["price with vat"] ?? row["price without vat"]);
 
         const campaignName = (row["campaign_name"] ?? row["program_name"] ?? row["advertiser name"] ?? "").trim();
-        const imageUrls = (row["image_urls"] ?? row["image_url"] ?? row["product picture"] ?? "").trim();
+        
+        // Robust image URL extraction
+        const imageUrlsRaw =
+          (row["image_urls"] ??
+            row["image_url"] ??
+            row["image"] ??
+            row["img"] ??
+            row["product picture"] ??
+            "").trim();
+        
+        let extractedImageUrl: string | null = null;
+        
+        if (imageUrlsRaw) {
+          const parts = imageUrlsRaw
+            .split(/[|,]/)
+            .map((p: string) => p.trim())
+            .filter(Boolean);
+          
+          if (parts.length > 0) {
+            const candidate = parts[0];
+            extractedImageUrl = candidate && candidate.toLowerCase().startsWith("http")
+              ? candidate
+              : null;
+          }
+        }
+        
+        const imageUrls = extractedImageUrl || undefined;
         const description = (row["description"] ?? row["descriere"] ?? row["product description"] ?? "").trim();
         const storeName = (row["store_name"] ?? row["advertiser name"] ?? campaignName ?? "").trim();
         const currency = (row["currency"] ?? "RON").trim().toUpperCase();
@@ -367,7 +393,7 @@ export async function POST(req: NextRequest) {
           affCode,
           price: price as number,
           campaignName: campaignName || undefined,
-          imageUrls: imageUrls || undefined,
+          imageUrls,
           description: description || undefined,
           storeName: storeName || undefined,
           currency: currency || "RON",
@@ -421,6 +447,7 @@ export async function POST(req: NextRequest) {
         url: row.affCode,
         price: row.price,
         currency: row.currency || "RON",
+        imageUrl: row.imageUrls, // Pass the extracted image URL
         deliveryDays: undefined,
         fastDelivery: undefined,
         inStock: true, // Default to true, could be enhanced with availability parsing

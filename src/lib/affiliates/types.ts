@@ -17,6 +17,7 @@ export type NormalizedListing = {
   url?: string;
   price?: number;
   currency?: string;
+  imageUrl?: string; // Product image URL for listing
 
   // Optional listing metadata
   deliveryDays?: number;
