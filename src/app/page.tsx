@@ -566,8 +566,8 @@ export default function Page() {
       {/* THREE-COLUMN LAYOUT */}
       <div className="mx-auto w-full max-w-6xl px-3 sm:px-4 lg:px-6 xl:px-8 mt-4 sm:mt-6 pb-4 sm:pb-6">
         <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-[260px,minmax(0,1fr),320px] items-start">
-          {/* LEFT COLUMN */}
-          <div className="flex flex-col gap-4">
+          {/* LEFT COLUMN - Mobile order 6 (secondary sections) */}
+          <div className="flex flex-col gap-4 order-6 lg:order-1">
             {/* LOCATION */}
             <div className={`${cardStyle} p-3 sm:p-4`}>
               <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-slate-700 dark:text-slate-200 mb-3">
@@ -694,8 +694,8 @@ export default function Page() {
               </button>
             </div>
 
-            {/* Sidebar ad preview - collapsible on mobile */}
-            <div className={`${cardStyle} overflow-hidden`}>
+            {/* Sidebar ad preview - hidden on mobile */}
+            <div className={`${cardStyle} overflow-hidden hidden md:block`}>
               {/* Mobile collapsible header */}
               <div 
                 className="sm:hidden flex items-center justify-between p-3 cursor-pointer hover:bg-[var(--pl-bg)]/50 transition-colors"
@@ -726,7 +726,7 @@ export default function Page() {
             </div>
 
             {/* Favorites */}
-            <div className={`${cardStyle} p-3 sm:p-4`}>
+            <div className={`${cardStyle} p-3 sm:p-4 hidden md:block`}>
               <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-slate-700 dark:text-slate-200 mb-1.5">
                 My Favorites
               </h3>
@@ -757,11 +757,11 @@ export default function Page() {
             </div>
           </div>
 
-          {/* CENTER COLUMN */}
-          <div className="flex flex-col gap-4">
+          {/* CENTER COLUMN - Mobile order 3 (results area) */}
+          <div className="flex flex-col gap-4 order-3 lg:order-2">
             <div className={`${cardStyle} px-6 py-5 min-h-[180px]`}>
               {visibleProducts.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-6 text-center">
+                <div className="hidden md:flex flex-col items-center justify-center py-6 text-center">
                   <h3 className="text-[13px] font-medium text-[var(--pl-text)] mb-1">
                     No results found
                   </h3>
@@ -821,60 +821,36 @@ export default function Page() {
               </div>
               </div>
             </div>
-
-            {/* Favorites */}
-            <div className={`${cardStyle} p-3 sm:p-4`}>
-              <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-slate-700 dark:text-slate-200 mb-1.5">
-                My Favorites
-              </h3>
-              {favoriteRows.length === 0 ? (
-                <p className="text-xs leading-relaxed text-slate-700 dark:text-slate-300">
-                  No favorites yet. Tap the ★ on a product to save it.
-                </p>
-              ) : (
-                <div className="max-h-[160px] overflow-y-auto pr-1 space-y-1">
-                  {favoriteRows.map((row) => (
-                    <div
-                      key={row.key}
-                      className="flex items-center justify-between text-xs py-0.5"
-                    >
-                      <span className="line-clamp-1 text-[var(--pl-text)]">
-                        {row.productName}
-                      </span>
-                      <span className="ml-2 text-[10px] text-[var(--pl-text-subtle)]">
-                        {row.price != null
-                          ? `${row.price} ${row.currency ?? ""}`
-                          : "No price"}
-                        {row.storeName ? ` · ${row.storeName}` : ""}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
           </div>
 
-          {/* RIGHT COLUMN */}
-          <div className="space-y-3 sm:space-y-4 lg:space-y-5">
-            <ProductSummary
-              product={activeProduct as any}
-              selectedProductId={selectedProductId}
-              totalProducts={totalProducts}
-              totalOffers={totalOffers}
-            />
-
-            <div className="p-4 text-sm sm:p-6 sm:text-base">
-              <PriceTrendChart
-                points={trendHistory}
-                trend={trendTrend}
-                isLoading={isTrendLoading}
-                error={trendError}
-                hasProductSelected={!!selectedProductId}
+          {/* RIGHT COLUMN - Mobile order 4-5 (best options + price trend) */}
+          <div className="space-y-3 sm:space-y-4 lg:space-y-5 order-4 lg:order-3">
+            {/* Product Summary - hidden on mobile */}
+            <div className="order-4 lg:order-1 hidden md:block">
+              <ProductSummary
+                product={activeProduct as any}
+                selectedProductId={selectedProductId}
+                totalProducts={totalProducts}
+                totalOffers={totalOffers}
               />
             </div>
 
-            {/* Assistant - collapsible on mobile, hidden until results */}
-            {(visibleProducts.length > 0 || !products.length) && (
+            {/* Price Trend - hidden on mobile */}
+            <div className="order-5 lg:order-2 hidden md:block">
+              <div className="p-4 text-sm sm:p-6 sm:text-base">
+                <PriceTrendChart
+                  points={trendHistory}
+                  trend={trendTrend}
+                  isLoading={isTrendLoading}
+                  error={trendError}
+                  hasProductSelected={!!selectedProductId}
+                />
+              </div>
+            </div>
+
+            {/* Assistant - hidden on mobile */}
+            <div className="order-6 lg:order-3 hidden md:block">
+              {(visibleProducts.length > 0 || !products.length) && (
               <div className={`${cardStyle} overflow-hidden`}>
                 {/* Mobile collapsible header */}
                 <div 
@@ -912,6 +888,7 @@ export default function Page() {
                 </div>
               </div>
             )}
+            </div>
           </div>
         </div>
       </div>
