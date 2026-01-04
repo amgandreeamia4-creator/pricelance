@@ -556,31 +556,29 @@ export default function Page() {
 
       {/* SEARCH BAR */}
       <div className="w-full px-6 mt-1 md:mt-2">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex items-center gap-3">
-            <div className="flex-1 relative">
-              <input
-                type="text"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && runSearch(query)}
-                placeholder='Search products (e.g. "laptop gaming", "monitor 27", "iPhone 15")'
-                className="w-full px-5 py-3 rounded-2xl bg-[var(--pl-card)] border border-[var(--pl-card-border)] text-[12px] text-[var(--pl-text)] placeholder:text-[var(--pl-text-subtle)] focus:outline-none focus:border-blue-500 focus:shadow-[0_0_15px_var(--pl-primary-glow)] transition-all"
-              />
-            </div>
+        <div className="mx-auto w-full max-w-3xl">
+          <form onSubmit={(e) => { e.preventDefault(); runSearch(query); }}>
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && runSearch(query)}
+              placeholder='Search products (e.g. "laptop gaming", "monitor 27", "iPhone 15")'
+              className="w-full px-5 py-3 rounded-2xl bg-[var(--pl-card)] border border-[var(--pl-card-border)] text-[12px] text-[var(--pl-text)] placeholder:text-[var(--pl-text-subtle)] focus:outline-none focus:border-blue-500 focus:shadow-[0_0_15px_var(--pl-primary-glow)] transition-all"
+            />
             <button
-              onClick={() => runSearch(query)}
-              disabled={isSearching}
-              className="px-7 py-3 rounded-2xl bg-[var(--pl-primary)] hover:brightness-110 text-[12px] font-semibold text-white shadow-[0_0_20px_var(--pl-primary-glow)] disabled:opacity-50 transition-all"
+              type="submit"
+              className="sr-only"
+              aria-label="Search"
             >
-              {isSearching ? "Searching..." : "Search"}
+              Search
             </button>
-          </div>
+          </form>
           {process.env.NODE_ENV !== 'production' && (
-  <p className="mt-2 text-[10px] text-[var(--pl-text-subtle)]">
-    Debug: no enrichment data for last search.
-  </p>
-)}
+            <p className="mt-2 text-[10px] text-[var(--pl-text-subtle)]">
+              Debug: no enrichment data for last search.
+            </p>
+          )}
         </div>
       </div>
 
