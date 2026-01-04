@@ -768,7 +768,7 @@ export default function Page() {
 
           {/* CENTER COLUMN - Mobile order 3 (results area) */}
           <div className="flex flex-col gap-4 order-3 lg:order-2">
-            <div className={`${cardStyle} px-6 py-5 min-h-[180px]`}>
+            <div className={`${cardStyle} px-6 py-5 min-h-0 md:min-h-[180px]`}>
               {visibleProducts.length === 0 ? (
                 <div className="hidden md:flex flex-col items-center justify-center py-6 text-center">
                   <h3 className="text-[13px] font-medium text-[var(--pl-text)] mb-1">
