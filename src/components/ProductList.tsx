@@ -42,19 +42,20 @@ const MAX_VISIBLE_PRODUCTS = 6;
 // soft threshold for "Budget pick" badge
 const BUDGET_THRESHOLD = 1000;
 
-// map store label to a soft color chip
-function getStoreToneClasses(storeLabel?: string | null) {
-  if (!storeLabel) return 'bg-slate-100 text-slate-600';
-
-  const label = storeLabel.toLowerCase();
-
-  if (label.includes('emag')) return 'bg-sky-100 text-sky-700';
-  if (label.includes('altex')) return 'bg-amber-100 text-amber-700';
-  if (label.includes('pcgarage')) return 'bg-rose-100 text-rose-700';
-  if (label.includes('evomag')) return 'bg-indigo-100 text-indigo-700';
-  if (label.includes('flanco')) return 'bg-emerald-100 text-emerald-700';
-
-  return 'bg-slate-100 text-slate-600';
+// Standardized store chips component with neutral styling
+function StoreChips({ storeName, isAffiliate }: { storeName: string; isAffiliate: boolean }) {
+  return (
+    <div className="flex flex-col items-center gap-1 mt-2">
+      <span className="rounded-full bg-slate-100 text-slate-700 text-[11px] font-medium px-3 py-1">
+        {storeName}
+      </span>
+      {isAffiliate && (
+        <span className="rounded-full border border-slate-200 bg-slate-50 text-slate-500 text-[11px] px-3 py-1">
+          AFFILIATE
+        </span>
+      )}
+    </div>
+  );
 }
 
 function getBestListing(listings: Listing[] | undefined | null): Listing | null {
@@ -142,16 +143,12 @@ export default function ProductList({
           const bestListingUrl = bestListing?.url ?? undefined;
           const isAffiliate = Boolean(bestListing?.affiliateProvider || bestListing?.source);
 
+          const isBestDeal = product.id === bestDealProductId;
+
           // Check if this listing should be disabled (secondary safety layer)
           const shouldDisableLink = isListingFromDisabledNetwork(bestListing || {});
           const finalListingUrl = shouldDisableLink ? undefined : bestListingUrl;
 
-          const isBestDeal = product.id === bestDealProductId;
-
-          // Length-based layout for store names
-          const isLongStoreName = storeLabel ? storeLabel.length > 10 : false;
-
-          // ✅ badges
           const hasFastDelivery = product.listings.some((l) => l.fastDelivery);
           const isPopular = product.listings.length >= 4;
           const isBudget = typeof minPrice === 'number' && minPrice <= BUDGET_THRESHOLD;
@@ -168,8 +165,6 @@ export default function ProductList({
             isBestDeal && 'ring-2 ring-sky-400 shadow-xl bg-sky-50/90'
           );
 
-          const storeTone = getStoreToneClasses(storeLabel);
-
           return (
             <div
               key={product.id}
@@ -184,54 +179,27 @@ export default function ProductList({
               }}
               className={cardClasses}
             >
-              {/* Top labels container: Store name, Affiliate pill, and Best Price badge */}
-              <div className="flex flex-col items-center gap-1 pt-2 px-3">
-                {/* First row: always store name, and (only for short names) AFFILIATE */}
-                <div className="flex items-center justify-center gap-2 max-w-full">
-                  {storeLabel && (
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (finalListingUrl) {
-                          openListing(finalListingUrl);
-                        }
-                      }}
-                      disabled={shouldDisableLink || false}
-                      className={clsx(
-                        'inline-flex items-center justify-center rounded-full px-3 py-1 text-[11px] font-medium border border-transparent transition-colors',
-                        storeTone,
-                        finalListingUrl && !shouldDisableLink && 'hover:border-sky-400 hover:shadow-sm',
-                        shouldDisableLink && 'opacity-50 cursor-not-allowed'
-                      )}
-                      title={shouldDisableLink ? 'Temporarily unavailable' : undefined}
-                    >
-                      {storeLabel}
-                    </button>
-                  )}
-                  {!isLongStoreName && isAffiliate && (
-                    <span className="rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-wide text-slate-600 bg-white/70 backdrop-blur">
-                      Affiliate
-                    </span>
-                  )}
+              {/* BEST PRICE badge */}
+              {isBestDeal && (
+                <div className="rounded-full bg-sky-500 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-white shadow">
+                  Best price
                 </div>
+              )}
 
-                {/* Second row: only for long store names, show AFFILIATE below store pill */}
-                {isLongStoreName && isAffiliate && (
-                  <div className="flex items-center justify-center">
-                    <span className="rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-wide text-slate-600 bg-white/70 backdrop-blur">
-                      Affiliate
-                    </span>
-                  </div>
-                )}
-
-                {/* BEST PRICE badge (keep centered under the header as it is now) */}
-                {isBestDeal && (
-                  <div className="rounded-full bg-sky-500 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-white shadow">
-                    Best price
-                  </div>
-                )}
-              </div>
+              {/* Store chips - standardized neutral styling */}
+              {storeLabel && (
+                <div
+                  className="cursor-pointer"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (finalListingUrl) {
+                      openListing(finalListingUrl);
+                    }
+                  }}
+                >
+                  <StoreChips storeName={storeLabel} isAffiliate={isAffiliate} />
+                </div>
+              )}
 
               {/* Product image */}
               <div className="mt-8 mb-3 flex h-24 w-full items-center justify-center">
