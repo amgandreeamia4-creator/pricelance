@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
-import { SlidersHorizontal, MessageCircle } from "lucide-react";
+import { SlidersHorizontal, MessageCircle, ChevronDown, ChevronUp } from "lucide-react";
 import { useSpring, animated, config } from '@react-spring/web';
 
 import ThemeToggle from "@/components/ThemeToggle";
@@ -42,6 +42,10 @@ type ProductWithListings = {
 const FAST_SHIPPING_DAYS = 3;
 
 export default function Page() {
+  // Mobile collapsible states
+  const [savedSearchesOpen, setSavedSearchesOpen] = useState(false);
+  const [adPreviewOpen, setAdPreviewOpen] = useState(false);
+  const [assistantOpen, setAssistantOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [products, setProducts] = useState<ProductWithListings[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -489,18 +493,18 @@ export default function Page() {
   return (
     <main className="min-h-screen bg-slate-100 text-slate-900 dark:bg-gradient-to-br dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 dark:text-slate-50 dark:bg-noise-soft">
       {/* HEADER */}
-      <header className="relative w-full pt-6 pb-4 px-6">
+      <header className="relative w-full pt-4 sm:pt-6 pb-3 sm:pb-4 px-6">
         <div className="max-w-7xl mx-auto text-center">
           <div className="inline-block px-5 py-1.5 rounded-full border border-[var(--pl-card-border)] bg-[var(--pl-card)] text-[12px] font-semibold tracking-[0.2em] uppercase text-[var(--pl-text)]">
             PRICELANCE
           </div>
-          <p className="mt-3 text-[12px] text-[var(--pl-text-muted)] leading-relaxed">
+          <p className="mt-2 sm:mt-3 text-[11px] sm:text-[12px] text-[var(--pl-text-muted)] leading-relaxed">
             PriceLance is an informational service that compares tech prices
             from multiple online retailers. Prices come from manually curated
             data, official feeds, and affiliate feeds where available — no
             scraping.
           </p>
-          <p className="mt-2 max-w-xl text-sm text-slate-600 dark:text-slate-300">
+          <p className="mt-1 sm:mt-2 max-w-xl text-xs sm:text-sm text-slate-600 dark:text-slate-300">
             PriceLance este un comparator independent de prețuri pentru electronice în România. Caută un produs, vezi ofertele din mai multe magazine online și alege rapid varianta care ți se potrivește.
           </p>
           <p className="mt-1 text-[11px] text-[var(--pl-text-subtle)]">
@@ -560,12 +564,12 @@ export default function Page() {
       </div>
 
       {/* THREE-COLUMN LAYOUT */}
-      <div className="mx-auto w-full max-w-6xl px-4 lg:px-6 xl:px-8 mt-6 pb-6">
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[260px,minmax(0,1fr),320px] items-start">
+      <div className="mx-auto w-full max-w-6xl px-3 sm:px-4 lg:px-6 xl:px-8 mt-4 sm:mt-6 pb-4 sm:pb-6">
+        <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-[260px,minmax(0,1fr),320px] items-start">
           {/* LEFT COLUMN */}
           <div className="flex flex-col gap-4">
             {/* LOCATION */}
-            <div className={`${cardStyle} p-4`}>
+            <div className={`${cardStyle} p-3 sm:p-4`}>
               <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-slate-700 dark:text-slate-200 mb-3">
                 Your Location
               </h3>
@@ -592,7 +596,7 @@ export default function Page() {
             </div>
 
             {/* FILTERS */}
-            <div className={`${cardStyle} p-4 overflow-x-hidden`}>
+            <div className={`${cardStyle} p-3 sm:p-4 overflow-x-hidden`}>
               <div className="flex items-center gap-2 text-[11px] font-semibold tracking-[0.15em] uppercase text-slate-700 dark:text-slate-200 mb-3">
                 <SlidersHorizontal className="h-4 w-4" />
                 <span>Filters</span>
@@ -690,21 +694,66 @@ export default function Page() {
               </button>
             </div>
 
-            {/* Sidebar ad preview */}
-            <div className={`${cardStyle} p-3`}>
-              <div className="flex items-center justify-between mb-1.5">
+            {/* Sidebar ad preview - collapsible on mobile */}
+            <div className={`${cardStyle} overflow-hidden`}>
+              {/* Mobile collapsible header */}
+              <div 
+                className="sm:hidden flex items-center justify-between p-3 cursor-pointer hover:bg-[var(--pl-bg)]/50 transition-colors"
+                onClick={() => setAdPreviewOpen(!adPreviewOpen)}
+              >
+                <span className="text-[11px] font-semibold tracking-[0.15em] uppercase text-slate-700 dark:text-slate-200">
+                  Ad
+                </span>
+                {adPreviewOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+              </div>
+              
+              {/* Desktop always-visible header */}
+              <div className="hidden sm:flex items-center justify-between mb-1.5 p-4 pt-0">
                 <span className="text-[11px] font-semibold tracking-[0.15em] uppercase text-slate-700 dark:text-slate-200">
                   Ad
                 </span>
                 <span className="text-[11px] font-semibold tracking-[0.15em] uppercase text-slate-700 dark:text-slate-200">
-                  Sidebar ad preview
+                  Preview
                 </span>
               </div>
-              <div className="w-full h-[150px] rounded-lg bg-[var(--pl-bg)] border border-[var(--pl-card-border)] flex items-center justify-center">
-                <span className="text-xs leading-relaxed text-slate-700 dark:text-slate-300">
-                  300 × 250
-                </span>
+              
+              {/* Collapsible content */}
+              <div className={`${adPreviewOpen ? 'block' : 'hidden'} sm:block p-3 sm:p-4 pt-0 sm:pt-0`}>
+                <div className="flex items-center justify-center h-32 sm:h-40 w-full border-2 border-dashed border-[var(--pl-card-border)] rounded-lg bg-[var(--pl-bg)]/50">
+                  <span className="text-[10px] text-[var(--pl-text-subtle)]">300×250</span>
+                </div>
               </div>
+            </div>
+
+            {/* Favorites */}
+            <div className={`${cardStyle} p-3 sm:p-4`}>
+              <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-slate-700 dark:text-slate-200 mb-1.5">
+                My Favorites
+              </h3>
+              {favoriteRows.length === 0 ? (
+                <p className="text-xs leading-relaxed text-slate-700 dark:text-slate-300">
+                  No favorites yet. Tap the ★ on a product to save it.
+                </p>
+              ) : (
+                <div className="max-h-[160px] overflow-y-auto pr-1 space-y-1">
+                  {favoriteRows.map((row) => (
+                    <div
+                      key={row.key}
+                      className="flex items-center justify-between text-xs py-0.5"
+                    >
+                      <span className="line-clamp-1 text-[var(--pl-text)]">
+                        {row.productName}
+                      </span>
+                      <span className="ml-2 text-[10px] text-[var(--pl-text-subtle)]">
+                        {row.price != null
+                          ? `${row.price} ${row.currency ?? ""}`
+                          : "No price"}
+                        {row.storeName ? ` · ${row.storeName}` : ""}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
@@ -732,11 +781,26 @@ export default function Page() {
               )}
             </div>
 
-            {/* Saved searches */}
-            <div className={`${cardStyle} p-4`}>
-              <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-slate-700 dark:text-slate-200 mb-2">
-                Saved Searches
-              </h3>
+            {/* Saved searches - collapsible on mobile */}
+            <div className={`${cardStyle} overflow-hidden`}>
+              {/* Mobile collapsible header */}
+              <div 
+                className="sm:hidden flex items-center justify-between p-3 cursor-pointer hover:bg-[var(--pl-bg)]/50 transition-colors"
+                onClick={() => setSavedSearchesOpen(!savedSearchesOpen)}
+              >
+                <span className="text-[11px] font-semibold tracking-[0.15em] uppercase text-slate-700 dark:text-slate-200">
+                  Saved Searches
+                </span>
+                {savedSearchesOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+              </div>
+              
+              {/* Desktop always-visible header */}
+              <div className="hidden sm:flex items-center gap-2 text-[11px] font-semibold tracking-[0.15em] uppercase text-slate-700 dark:text-slate-200 mb-3 p-4 pt-0">
+                <span>Saved Searches</span>
+              </div>
+              
+              {/* Collapsible content */}
+              <div className={`${savedSearchesOpen ? 'block' : 'hidden'} sm:block p-3 sm:p-4 pt-0 sm:pt-0`}>
               <div className="max-h-[140px] overflow-y-auto pr-1 space-y-0.5">
                 {savedSearches.map((s, i) => (
                   <div
@@ -755,10 +819,11 @@ export default function Page() {
                   </div>
                 ))}
               </div>
+              </div>
             </div>
 
             {/* Favorites */}
-            <div className={`${cardStyle} p-4`}>
+            <div className={`${cardStyle} p-3 sm:p-4`}>
               <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-slate-700 dark:text-slate-200 mb-1.5">
                 My Favorites
               </h3>
@@ -790,7 +855,7 @@ export default function Page() {
           </div>
 
           {/* RIGHT COLUMN */}
-          <div className="space-y-4 lg:space-y-5">
+          <div className="space-y-3 sm:space-y-4 lg:space-y-5">
             <ProductSummary
               product={activeProduct as any}
               selectedProductId={selectedProductId}
@@ -798,22 +863,55 @@ export default function Page() {
               totalOffers={totalOffers}
             />
 
-            <PriceTrendChart
-              points={trendHistory}
-              trend={trendTrend}
-              isLoading={isTrendLoading}
-              error={trendError}
-              hasProductSelected={!!selectedProductId}
-            />
-
-            <div id="ai-assistant-panel">
-              <ChatAssistant
-                products={visibleProducts}
-                searchQuery={query}
-                location={location}
-                disabled={visibleProducts.length === 0}
+            <div className="p-4 text-sm sm:p-6 sm:text-base">
+              <PriceTrendChart
+                points={trendHistory}
+                trend={trendTrend}
+                isLoading={isTrendLoading}
+                error={trendError}
+                hasProductSelected={!!selectedProductId}
               />
             </div>
+
+            {/* Assistant - collapsible on mobile, hidden until results */}
+            {(visibleProducts.length > 0 || !products.length) && (
+              <div className={`${cardStyle} overflow-hidden`}>
+                {/* Mobile collapsible header */}
+                <div 
+                  className="sm:hidden flex items-center justify-between p-3 cursor-pointer hover:bg-[var(--pl-bg)]/50 transition-colors"
+                  onClick={() => setAssistantOpen(!assistantOpen)}
+                >
+                  <span className="text-[11px] font-semibold tracking-[0.15em] uppercase text-slate-700 dark:text-slate-200">
+                    AI Assistant
+                  </span>
+                  {assistantOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                </div>
+                
+                {/* Desktop always-visible content */}
+                <div className="hidden sm:block">
+                  <div id="ai-assistant-panel">
+                    <ChatAssistant
+                      products={visibleProducts}
+                      searchQuery={query}
+                      location={location}
+                      disabled={visibleProducts.length === 0}
+                    />
+                  </div>
+                </div>
+                
+                {/* Mobile collapsible content */}
+                <div className={`${assistantOpen ? 'block' : 'hidden'} sm:hidden`}>
+                  <div id="ai-assistant-panel">
+                    <ChatAssistant
+                      products={visibleProducts}
+                      searchQuery={query}
+                      location={location}
+                      disabled={visibleProducts.length === 0}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
