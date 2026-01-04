@@ -181,39 +181,40 @@ export default function ProductList({
               }}
               className={cardClasses}
             >
-              {isBestDeal && (
-                <div className="absolute right-3 top-3 rounded-full bg-sky-500 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-white shadow z-10">
-                  Best price
+              {/* Top labels container: Store name, Affiliate pill, and Best Price badge */}
+              <div className="flex flex-col items-center gap-1 pt-2 px-3">
+                <div className="flex items-center justify-center gap-2">
+                  {storeLabel && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (finalListingUrl) {
+                          openListing(finalListingUrl);
+                        }
+                      }}
+                      disabled={shouldDisableLink || false}
+                      className={clsx(
+                        'max-w-[140px] truncate rounded-full px-2 py-0.5 text-[11px] font-medium border border-transparent transition-colors',
+                        storeTone,
+                        finalListingUrl && !shouldDisableLink && 'hover:border-sky-400 hover:shadow-sm',
+                        shouldDisableLink && 'opacity-50 cursor-not-allowed'
+                      )}
+                      title={shouldDisableLink ? 'Temporarily unavailable' : undefined}
+                    >
+                      {storeLabel}
+                    </button>
+                  )}
+                  {isAffiliate && (
+                    <span className="rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-wide text-slate-600 bg-white/70 backdrop-blur">
+                      Affiliate
+                    </span>
+                  )}
                 </div>
-              )}
-
-              {/* Store name + Affiliate pill (store chip is now a link if url exists) */}
-              <div className="absolute inset-x-0 top-2 flex items-center justify-center gap-2 px-3">
-                {storeLabel && (
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (finalListingUrl) {
-                        openListing(finalListingUrl);
-                      }
-                    }}
-                    disabled={shouldDisableLink || false}
-                    className={clsx(
-                      'max-w-[140px] truncate rounded-full px-2 py-0.5 text-[11px] font-medium border border-transparent transition-colors',
-                      storeTone,
-                      finalListingUrl && !shouldDisableLink && 'hover:border-sky-400 hover:shadow-sm',
-                      shouldDisableLink && 'opacity-50 cursor-not-allowed'
-                    )}
-                    title={shouldDisableLink ? 'Temporarily unavailable' : undefined}
-                  >
-                    {storeLabel}
-                  </button>
-                )}
-                {isAffiliate && (
-                  <span className="rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-wide text-slate-600 bg-white/70 backdrop-blur">
-                    Affiliate
-                  </span>
+                {isBestDeal && (
+                  <div className="rounded-full bg-sky-500 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-white shadow">
+                    Best price
+                  </div>
                 )}
               </div>
 
