@@ -259,7 +259,7 @@ export default function ProductList({
                 <div>
                   {bestListing ? (
                     <>
-                      <div className="text-[10px] text-slate-500 text-center">Best price</div>
+                      <div className="text-[10px] text-slate-500 text-center">Price</div>
                       <div className="text-sm font-semibold text-slate-900">
                         {minPrice} {currency}
                       </div>
