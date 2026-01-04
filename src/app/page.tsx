@@ -70,14 +70,11 @@ export default function Page() {
   // Saved searches (mock)
   const [savedSearches] = useState([
     "laptop",
-    "coffee",
-    "coffee",
-    "laptop",
-    "nike",
-    "honey",
-    "coffee",
-    "iphone",
-    "samsung",
+    "monitor", 
+    "telefon",
+    "casti",
+    "tastatura",
+    "mouse",
   ]);
 
   const [trendProductId, setTrendProductId] = useState<string | null>(null);
@@ -422,7 +419,11 @@ export default function Page() {
       const data = await res.json();
       const nextProducts = Array.isArray(data.products) ? data.products : [];
       setProducts(nextProducts);
-      setSelectedProductId(null);
+      
+      // Auto-select first product if no product is currently selected
+      if (nextProducts.length > 0 && !selectedProductId) {
+        setSelectedProductId(nextProducts[0].id);
+      }
     } catch (error) {
       console.error("Search error in page.tsx", error);
       setProducts([]);
@@ -486,8 +487,7 @@ export default function Page() {
             scraping.
           </p>
           <p className="mt-2 max-w-xl text-sm text-slate-600 dark:text-slate-300">
-            PriceLance este un comparator independent de prețuri pentru electronice în România. Caută un produs, vezi ofertele
-            din mai multe magazine online și alege rapid varianta care ți se potrivește.
+            PriceLance este un comparator independent de prețuri pentru electronice în România. Caută un produs, vezi ofertele din mai multe magazine online și alege rapid varianta care ți se potrivește.
           </p>
           <p className="mt-1 text-[11px] text-[var(--pl-text-subtle)]">
             Coverage is continuously expanding, starting from Romania and
@@ -510,7 +510,7 @@ export default function Page() {
             whileTap={{ scale: 0.97, y: 0 }}
             transition={{ type: "spring", stiffness: 260, damping: 18 }}
           >
-            AI Assistant
+            AI Assistant (Beta)
           </motion.button>
         </div>
       </header>
@@ -525,7 +525,7 @@ export default function Page() {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && runSearch(query)}
-                placeholder='Search products (e.g. "iphone 15", "nescafe", "dior sauvage")'
+                placeholder='Search products (e.g. "laptop gaming", "monitor 27", "iPhone 15")'
                 className="w-full px-5 py-3 rounded-2xl bg-[var(--pl-card)] border border-[var(--pl-card-border)] text-[12px] text-[var(--pl-text)] placeholder:text-[var(--pl-text-subtle)] focus:outline-none focus:border-blue-500 focus:shadow-[0_0_15px_var(--pl-primary-glow)] transition-all"
               />
             </div>
@@ -567,11 +567,14 @@ export default function Page() {
                 <option value="United Kingdom">United Kingdom</option>
               </select>
               <button
-                onClick={handleUseLocation}
-                className="mt-3 w-full py-2 rounded-lg bg-[var(--pl-primary)] hover:brightness-110 text-sm font-medium text-white shadow-[0_0_15px_var(--pl-primary-glow)] transition-all"
+                disabled
+                className="mt-3 w-full py-2 rounded-lg bg-[var(--pl-primary)] text-sm font-medium text-white shadow-[0_0_15px_var(--pl-primary-glow)] opacity-50 cursor-not-allowed transition-all"
               >
-                Use my location (stub)
+                Use my location
               </button>
+              <p className="mt-2 text-[10px] text-[var(--pl-text-subtle)] text-center">
+                Location-based results coming soon.
+              </p>
             </div>
 
             {/* FILTERS */}
@@ -785,6 +788,7 @@ export default function Page() {
               points={trendHistory}
               isLoading={isTrendLoading}
               error={trendError}
+              hasProductSelected={!!selectedProductId}
             />
 
             <div id="ai-assistant-panel">

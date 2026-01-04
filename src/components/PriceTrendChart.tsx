@@ -25,9 +25,10 @@ type Props = {
   points: Point[];
   isLoading: boolean;
   error: string | null;
+  hasProductSelected: boolean;
 };
 
-export default function PriceTrendChart({ points, isLoading, error }: Props) {
+export default function PriceTrendChart({ points, isLoading, error, hasProductSelected }: Props) {
   const hasData = Array.isArray(points) && points.length > 0;
 
   // Process data for better visualization
@@ -86,6 +87,10 @@ export default function PriceTrendChart({ points, isLoading, error }: Props) {
           </p>
         ) : error ? (
           <p className="text-[11px] text-[var(--pl-text-subtle)]">{error}</p>
+        ) : !hasProductSelected ? (
+          <p className="text-[11px] text-[var(--pl-text-subtle)]">
+            Select a product to see its price history.
+          </p>
         ) : !hasData ? (
           <p className="text-[11px] text-[var(--pl-text-subtle)]">
             No price history available yet for this product.

@@ -134,7 +134,7 @@ export default function ProductSummary({
 
       {!hasProduct || !product?.listings?.length ? (
         <p className="text-[11px] text-[var(--pl-text-subtle)]">
-          Select a product in the list to see the best overall and fastest
+          Select a product from the list to see the best overall and fastest
           delivery options.
         </p>
       ) : (
@@ -240,7 +240,7 @@ export default function ProductSummary({
                             {storeLabel}
                           </span>
                           <span className="text-[11px] text-slate-500 dark:text-slate-400">
-                            {listing.price} {listing.currency ?? 'LEI'}
+                            {listing.price} {listing.currency ?? 'RON'}
                           </span>
                         </div>
 

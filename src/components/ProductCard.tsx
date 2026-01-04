@@ -11,7 +11,7 @@ type Props = {
 export default function ProductCard({ product, isSelected, onSelect }: Props) {
   const listings = product.listings;
   const minPrice = Math.min(...listings.map((l: { price: number }) => l.price));
-  const currency = listings[0]?.currency ?? 'EUR';
+  const currency = listings[0]?.currency ?? 'RON';
   const source = listings[0]?.source ?? 'Affiliate';
   const storeLogoUrl = listings[0]?.storeLogoUrl;
   const storeName = listings[0]?.store || listings[0]?.storeName || 'Affiliate';

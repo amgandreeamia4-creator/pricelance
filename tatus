@@ -1,0 +1,85 @@
+[1mdiff --git a/src/lib/affiliates/twoPerformant.ts b/src/lib/affiliates/twoPerformant.ts[m
+[1mindex 5ec0e96..7239f2a 100644[m
+[1m--- a/src/lib/affiliates/twoPerformant.ts[m
+[1m+++ b/src/lib/affiliates/twoPerformant.ts[m
+[36m@@ -74,11 +74,14 @@[m [mconst COLUMN_MAPPINGS: Record<string, keyof TwoPerformantRow> = {[m
+   product_image: "imageUrl",[m
+   product_picture: "imageUrl",[m
+   [m
+[31m-  // Price variations[m
+[32m+[m[32m  // Price variations – just to tell us these are price-ish columns.[m
+[32m+[m[32m  // We will still use PRICE_HEADER_CANDIDATES per row to pick the actual value.[m
+[32m+[m[32m  price_with_discou: "price",[m
+[32m+[m[32m  price_with_vat: "price",[m
+[32m+[m[32m  price_without_va: "price",[m
+   price: "price",[m
+   current_price: "price",[m
+   pret: "price",[m
+[31m-  price_with_vat: "price",[m
+   final_price: "price",[m
+   [m
+   // Currency variations[m
+[36m@@ -125,6 +128,20 @@[m [mconst COLUMN_MAPPINGS: Record<string, keyof TwoPerformantRow> = {[m
+   campaign_name: "affiliateProgram",[m
+ };[m
+ [m
+[32m+[m[32m/**[m
+[32m+[m[32m * Price header candidates in priority order for 2Performant feeds.[m
+[32m+[m[32m * We'll try these in order per row to find the first non-empty price.[m
+[32m+[m[32m */[m
+[32m+[m[32mconst PRICE_HEADER_CANDIDATES = [[m
+[32m+[m[32m  "price_with_discou", // "Price with discou" – discounted price (best)[m
+[32m+[m[32m  "price_with_vat",    // "Price with VAT"[m
+[32m+[m[32m  "price_without_va",  // "Price without VA"[m
+[32m+[m[32m  "price",             // generic[m
+[32m+[m[32m  "current_price",[m
+[32m+[m[32m  "pret",[m
+[32m+[m[32m  "final_price",[m
+[32m+[m[32m];[m
+[32m+[m
+ /**[m
+  * Normalize a header name: lowercase, trim, replace spaces/dashes with underscores.[m
+  */[m
+[36m@@ -329,6 +346,19 @@[m [mexport function parseTwoPerformantCsv(content: string): {[m
+   [m
+   const headerMap = buildHeaderMap(csvRows[0]);[m
+   [m
+[32m+[m[32m  // Build a prioritized list of column indices that look like price columns[m
+[32m+[m[32m  const headerRow = csvRows[0];[m
+[32m+[m[32m  const priceCandidateIndices: number[] = [];[m
+[32m+[m[32m  for (let col = 0; col < headerRow.length; col++) {[m
+[32m+[m[32m    const normalized = normalizeHeader(headerRow[col]);[m
+[32m+[m[32m    const candidateIndex = PRICE_HEADER_CANDIDATES.indexOf(normalized);[m
+[32m+[m[32m    if (candidateIndex !== -1) {[m
+[32m+[m[32m      // Insert into priceCandidateIndices based on priority in PRICE_HEADER_CANDIDATES[m
+[32m+[m[32m      // so we preserve "discounted > with VAT > without VAT > others"[m
+[32m+[m[32m      priceCandidateIndices.push(col);[m
+[32m+[m[32m    }[m
+[32m+[m[32m  }[m
+[32m+[m[41m  [m
+   // If no affiliateUrl column was detected from headers, try to auto-detect it from data[m
+   if (!headerMap.has("affiliateUrl")) {[m
+     const maxRowsToCheck = Math.min(20, csvRows.length - 1);[m
+[36m@@ -388,8 +418,21 @@[m [mexport function parseTwoPerformantCsv(content: string): {[m
+     [m
+     const name = getCell(rawRow, headerMap, "name");[m
+     const affiliateUrl = getCell(rawRow, headerMap, "affiliateUrl");[m
+[31m-    const priceStr = getCell(rawRow, headerMap, "price");[m
+     [m
+[32m+[m[32m    // Try mapped "price" first, if buildHeaderMap found one[m
+[32m+[m[32m    let priceStr = getCell(rawRow, headerMap, "price");[m
+[32m+[m
+[32m+[m[32m    // Fallback: if that is empty, scan all known price columns in priority order[m
+[32m+[m[32m    if (!priceStr && priceCandidateIndices.length > 0) {[m
+[32m+[m[32m      for (const colIdx of priceCandidateIndices) {[m
+[32m+[m[32m        const raw = (rawRow[colIdx] ?? "").toString().trim();[m
+[32m+[m[32m        if (raw) {[m
+[32m+[m[32m          priceStr = raw;[m
+[32m+[m[32m          break;[m
+[32m+[m[32m        }[m
+[32m+[m[32m      }[m
+[32m+[m[32m    }[m
+[32m+[m
+     // Check critical fields[m
+     if (!name || !affiliateUrl || !priceStr) {[m
+       skippedMissingFields++;[m

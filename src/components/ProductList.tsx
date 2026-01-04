@@ -137,7 +137,7 @@ export default function ProductList({
           const offerCount = product.listings?.length ?? 0;
 
           const minPrice = bestListing?.price;
-          const currency = bestListing?.currency ?? 'LEI';
+          const currency = bestListing?.currency ?? 'RON';
           const storeLabel = getStoreDisplayName(bestListing || {});
           const bestListingUrl = bestListing?.url ?? undefined;
           const isAffiliate = Boolean(bestListing?.affiliateProvider || bestListing?.source);
