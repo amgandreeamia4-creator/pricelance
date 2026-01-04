@@ -493,9 +493,9 @@ export default function Page() {
   return (
     <main className="min-h-screen bg-slate-100 text-slate-900 dark:bg-gradient-to-br dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 dark:text-slate-50 dark:bg-noise-soft">
       {/* HEADER */}
-      <header className="relative w-full pt-4 sm:pt-6 pb-3 sm:pb-4 px-6">
+      <header className="relative w-full pt-2 md:pt-4 pb-2 md:pb-3 px-6">
         <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-2 md:gap-3 sm:flex-row sm:items-center sm:justify-between">
             {/* left side: PRICELANCE + theme toggle */}
             <div className="inline-flex items-center gap-2">
               <div className="inline-block px-5 py-1.5 rounded-full border border-[var(--pl-card-border)] bg-[var(--pl-card)] text-[12px] font-semibold tracking-[0.2em] uppercase text-[var(--pl-text)]">
@@ -518,14 +518,14 @@ export default function Page() {
           </div>
 
           {/* Desktop-only header ad slot preview */}
-          <div className="hidden md:flex justify-end mt-4">
+          <div className="hidden md:flex justify-end mt-2 md:mt-4">
             <div className="rounded-full border border-[var(--pl-card-border)] bg-[var(--pl-card)] px-3 py-1 text-[9px] text-[var(--pl-text-subtle)] whitespace-nowrap">
               Ad slot preview · Header banner 776x90
             </div>
           </div>
 
           {/* Long description – desktop only */}
-          <div className="hidden md:block text-center mt-2 sm:mt-3">
+          <div className="hidden md:block text-center mt-1 md:mt-2 sm:mt-3">
             <p className="text-[11px] sm:text-[12px] text-[var(--pl-text-muted)] leading-relaxed">
               PriceLance is an informational service that compares tech prices
               from multiple online retailers. Prices come from manually curated
@@ -544,14 +544,14 @@ export default function Page() {
           </div>
 
           {/* Short description – mobile only */}
-          <p className="mt-3 block md:hidden text-sm leading-relaxed text-slate-200/90 text-center">
+          <p className="mt-2 md:mt-3 block md:hidden text-sm leading-relaxed text-slate-200/90 text-center">
             Compare tech prices from multiple online stores and quickly see offers that fit your budget.
           </p>
         </div>
       </header>
 
       {/* SEARCH BAR */}
-      <div className="w-full px-6 mt-2">
+      <div className="w-full px-6 mt-1 md:mt-2">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center gap-3">
             <div className="flex-1 relative">
