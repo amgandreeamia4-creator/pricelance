@@ -50,7 +50,14 @@ export default function ProductCard({ product, isSelected, onSelect }: Props) {
                 className="h-3 w-3 object-contain flex-shrink-0"
               />
             ) : (
-              <span className="text-[10px] text-gray-600 font-medium truncate max-w-20">{storeName}</span>
+              <div className="inline-flex max-w-[140px] items-center justify-center rounded-full bg-neutral-50 px-3 py-1">
+                <span
+                  className="truncate text-[11px] font-medium text-neutral-700"
+                  title={storeName}
+                >
+                  {storeName}
+                </span>
+              </div>
             )}
             <span className="affiliate-label text-[10px] bg-gray-200 text-gray-600 px-1 py-0.5 rounded uppercase whitespace-nowrap">
               Affiliate
