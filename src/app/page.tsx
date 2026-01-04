@@ -556,7 +556,7 @@ export default function Page() {
 
       {/* SEARCH BAR */}
       <div className="w-full px-6 mt-1 md:mt-2">
-        <div className="mx-auto w-full max-w-3xl">
+        <div className="mx-auto w-full max-w-5xl">
           <form onSubmit={(e) => { e.preventDefault(); runSearch(query); }}>
             <input
               type="text"
