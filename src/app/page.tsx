@@ -494,14 +494,36 @@ export default function Page() {
     <main className="min-h-screen bg-slate-100 text-slate-900 dark:bg-gradient-to-br dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 dark:text-slate-50 dark:bg-noise-soft">
       {/* HEADER */}
       <header className="relative w-full pt-4 sm:pt-6 pb-3 sm:pb-4 px-6">
-        <div className="max-w-7xl mx-auto text-center">
-          <div className="inline-block px-5 py-1.5 rounded-full border border-[var(--pl-card-border)] bg-[var(--pl-card)] text-[12px] font-semibold tracking-[0.2em] uppercase text-[var(--pl-text)]">
-            PRICELANCE
+        <div className="max-w-7xl mx-auto">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            {/* left side: PRICELANCE + theme toggle */}
+            <div className="inline-flex items-center gap-2">
+              <div className="inline-block px-5 py-1.5 rounded-full border border-[var(--pl-card-border)] bg-[var(--pl-card)] text-[12px] font-semibold tracking-[0.2em] uppercase text-[var(--pl-text)]">
+                PRICELANCE
+              </div>
+              <ThemeToggle />
+            </div>
+
+            {/* right side: AI Assistant button */}
+            <motion.button
+              type="button"
+              onClick={scrollToAssistant}
+              className="w-full sm:w-auto px-4 py-2 rounded-full bg-[var(--pl-primary)] hover:brightness-110 text-[12px] font-medium text-white shadow-[0_0_20px_var(--pl-primary-glow)] transition-all"
+              whileHover={{ scale: 1.04, y: -1 }}
+              whileTap={{ scale: 0.97, y: 0 }}
+              transition={{ type: "spring", stiffness: 260, damping: 18 }}
+            >
+              AI Assistant (Beta)
+            </motion.button>
+          </div>
+
+          <div className="hidden lg:block rounded-full border border-[var(--pl-card-border)] bg-[var(--pl-card)] px-3 py-1 text-[9px] text-[var(--pl-text-subtle)] whitespace-nowrap absolute right-6 top-6">
+            Ad slot preview · Header banner 776x90
           </div>
 
           {/* Long description – desktop only */}
-          <div className="hidden md:block">
-            <p className="mt-2 sm:mt-3 text-[11px] sm:text-[12px] text-[var(--pl-text-muted)] leading-relaxed">
+          <div className="hidden md:block text-center mt-2 sm:mt-3">
+            <p className="text-[11px] sm:text-[12px] text-[var(--pl-text-muted)] leading-relaxed">
               PriceLance is an informational service that compares tech prices
               from multiple online retailers. Prices come from manually curated
               data, official feeds, and affiliate feeds where available — no
@@ -519,26 +541,9 @@ export default function Page() {
           </div>
 
           {/* Short description – mobile only */}
-          <p className="mt-3 block md:hidden text-sm leading-relaxed text-slate-200/90">
+          <p className="mt-3 block md:hidden text-sm leading-relaxed text-slate-200/90 text-center">
             Compare tech prices from multiple online stores and quickly see offers that fit your budget.
           </p>
-        </div>
-
-        <div className="absolute right-6 top-6 flex items-center gap-3">
-          <div className="hidden lg:block rounded-full border border-[var(--pl-card-border)] bg-[var(--pl-card)] px-3 py-1 text-[9px] text-[var(--pl-text-subtle)] whitespace-nowrap">
-            Ad slot preview · Header banner 776x90
-          </div>
-          <ThemeToggle />
-          <motion.button
-            type="button"
-            onClick={scrollToAssistant}
-            className="px-4 py-2 rounded-full bg-[var(--pl-primary)] hover:brightness-110 text-[12px] font-medium text-white shadow-[0_0_20px_var(--pl-primary-glow)] transition-all"
-            whileHover={{ scale: 1.04, y: -1 }}
-            whileTap={{ scale: 0.97, y: 0 }}
-            transition={{ type: "spring", stiffness: 260, damping: 18 }}
-          >
-            AI Assistant (Beta)
-          </motion.button>
         </div>
       </header>
 
@@ -768,27 +773,19 @@ export default function Page() {
 
           {/* CENTER COLUMN - Mobile order 3 (results area) */}
           <div className="flex flex-col gap-4 order-3 lg:order-2">
-            <div className={`${cardStyle} px-6 py-5 min-h-0 md:min-h-[180px]`}>
-              {visibleProducts.length === 0 ? (
-                <div className="hidden md:flex flex-col items-center justify-center py-6 text-center">
-                  <h3 className="text-[13px] font-medium text-[var(--pl-text)] mb-1">
-                    No results found
-                  </h3>
-                  <p className="text-xs leading-relaxed text-slate-700 dark:text-slate-300">
-                    Try searching for a product above to see matching items.
-                  </p>
-                </div>
-              ) : (
+            {/* Only show results card when there are products to display */}
+            {visibleProducts.length > 0 && (
+              <div className={`${cardStyle} px-6 py-5`}>
                 <ProductList
                   products={visibleProducts}
-  selectedProductId={selectedProductId}
-  onSelectProduct={(id: string) => setSelectedProductId(id)}
-  favoriteIds={favoriteIds}
-  onToggleFavorite={toggleFavorite}
-  isLoading={isSearching}
+                  selectedProductId={selectedProductId}
+                  onSelectProduct={(id: string) => setSelectedProductId(id)}
+                  favoriteIds={favoriteIds}
+                  onToggleFavorite={toggleFavorite}
+                  isLoading={isSearching}
                 />
-              )}
-            </div>
+              </div>
+            )}
 
             {/* Saved searches - collapsible on mobile */}
             <div className={`${cardStyle} overflow-hidden`}>
