@@ -498,20 +498,29 @@ export default function Page() {
           <div className="inline-block px-5 py-1.5 rounded-full border border-[var(--pl-card-border)] bg-[var(--pl-card)] text-[12px] font-semibold tracking-[0.2em] uppercase text-[var(--pl-text)]">
             PRICELANCE
           </div>
-          <p className="mt-2 sm:mt-3 text-[11px] sm:text-[12px] text-[var(--pl-text-muted)] leading-relaxed">
-            PriceLance is an informational service that compares tech prices
-            from multiple online retailers. Prices come from manually curated
-            data, official feeds, and affiliate feeds where available — no
-            scraping.
-          </p>
-          <p className="mt-1 sm:mt-2 max-w-xl text-xs sm:text-sm text-slate-600 dark:text-slate-300">
-            PriceLance este un comparator independent de prețuri pentru electronice în România. Caută un produs, vezi ofertele din mai multe magazine online și alege rapid varianta care ți se potrivește.
-          </p>
-          <p className="mt-1 text-[11px] text-[var(--pl-text-subtle)]">
-            Coverage is continuously expanding, starting from Romania and
-            extending deeper into the EU. Always verify the final price,
-            delivery costs, and product details on the retailer&apos;s website
-            before buying.
+
+          {/* Long description – desktop only */}
+          <div className="hidden md:block">
+            <p className="mt-2 sm:mt-3 text-[11px] sm:text-[12px] text-[var(--pl-text-muted)] leading-relaxed">
+              PriceLance is an informational service that compares tech prices
+              from multiple online retailers. Prices come from manually curated
+              data, official feeds, and affiliate feeds where available — no
+              scraping.
+            </p>
+            <p className="mt-1 sm:mt-2 max-w-xl text-xs sm:text-sm text-slate-600 dark:text-slate-300">
+              PriceLance este un comparator independent de prețuri pentru electronice în România. Caută un produs, vezi ofertele din mai multe magazine online și alege rapid varianta care ți se potrivește.
+            </p>
+            <p className="mt-1 text-[11px] text-[var(--pl-text-subtle)]">
+              Coverage is continuously expanding, starting from Romania and
+              extending deeper into the EU. Always verify the final price,
+              delivery costs, and product details on the retailer&apos;s website
+              before buying.
+            </p>
+          </div>
+
+          {/* Short description – mobile only */}
+          <p className="mt-3 block md:hidden text-sm leading-relaxed text-slate-200/90">
+            Compare tech prices from multiple online stores and quickly see offers that fit your budget.
           </p>
         </div>
 

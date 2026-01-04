@@ -14,6 +14,18 @@ export default function AboutPage() {
         About PriceLance
       </h1>
 
+      <section className="mt-6 space-y-4 text-slate-200/90 text-sm sm:text-base leading-relaxed">
+        <p>
+          PriceLance is an informational service that compares tech prices from multiple online retailers. Prices come from manually curated data, official feeds, and affiliate feeds where available — no scraping.
+        </p>
+        <p>
+          PriceLance este un comparator independent de prețuri pentru electronice în România. Caută un produs, vezi ofertele din mai multe magazine online și alege rapid varianta care ți se potrivește.
+        </p>
+        <p className="text-slate-200/80 text-xs sm:text-sm">
+          Coverage is continuously expanding, starting from Romania and extending deeper into the EU. Always verify the final price, delivery costs, and product details on the retailer's website before buying.
+        </p>
+      </section>
+
       <p className="mb-4 text-sm text-gray-800 dark:text-gray-100">
         PriceLance is an informational service that helps you compare prices for
         technology products from multiple online retailers. PriceLance does not
