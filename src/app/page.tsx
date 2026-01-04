@@ -455,6 +455,10 @@ export default function Page() {
     setTimeout(() => setLocation("Romania"), 800);
   }
 
+  function handleQuickPick(term: string) {
+    runSearch(term);
+  }
+
   function scrollToAssistant() {
     document
       .getElementById("ai-assistant-panel")
@@ -577,6 +581,24 @@ export default function Page() {
     Debug: no enrichment data for last search.
   </p>
 )}
+        </div>
+      </div>
+
+      {/* QUICK PICKS - Mobile only */}
+      <div className="w-full px-6 mt-3 md:hidden">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex flex-wrap gap-2">
+            {savedSearches.slice(0, 5).map((term) => (
+              <button
+                key={term}
+                type="button"
+                className="rounded-full border border-[var(--pl-card-border)] px-3 py-1 text-xs font-medium text-[var(--pl-text)] bg-[var(--pl-card)]/80 hover:bg-[var(--pl-card)] shadow-sm transition-all"
+                onClick={() => handleQuickPick(term)}
+              >
+                {term}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
