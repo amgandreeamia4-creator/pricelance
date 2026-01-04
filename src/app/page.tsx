@@ -502,7 +502,7 @@ export default function Page() {
           <div className="flex flex-col gap-2 md:gap-3 sm:flex-row sm:items-center sm:justify-between">
             {/* left side: PRICELANCE + theme toggle */}
             <div className="inline-flex items-center gap-2">
-              <div className="inline-block px-5 py-1.5 rounded-full border border-[var(--pl-card-border)] bg-[var(--pl-card)] text-[12px] font-semibold tracking-[0.2em] uppercase text-[var(--pl-text)]">
+              <div className="inline-block px-3 py-1 md:px-5 md:py-1.5 rounded-full border border-[var(--pl-card-border)] bg-[var(--pl-card)] text-[10px] md:text-[12px] font-semibold tracking-[0.2em] uppercase text-[var(--pl-text)]">
                 PRICELANCE
               </div>
               <ThemeToggle />
@@ -548,7 +548,7 @@ export default function Page() {
           </div>
 
           {/* Short description – mobile only */}
-          <p className="mt-2 md:mt-3 block md:hidden text-sm leading-relaxed text-slate-200/90 text-center">
+          <p className="mt-2 md:mt-3 hidden md:block text-sm leading-relaxed text-slate-200/90 text-center">
             Compare tech prices from multiple online stores and quickly see offers that fit your budget.
           </p>
         </div>
@@ -585,7 +585,7 @@ export default function Page() {
       </div>
 
       {/* QUICK PICKS - Mobile only */}
-      <div className="w-full px-6 mt-3 md:hidden">
+      <div className="w-full px-6 mt-2 md:mt-3 md:hidden">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-wrap gap-2">
             {savedSearches.slice(0, 5).map((term) => (
