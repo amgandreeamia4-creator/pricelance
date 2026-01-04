@@ -504,11 +504,11 @@ export default function Page() {
               <ThemeToggle />
             </div>
 
-            {/* right side: AI Assistant button */}
+            {/* right side: AI Assistant button - hidden on mobile */}
             <motion.button
               type="button"
               onClick={scrollToAssistant}
-              className="w-full sm:w-auto px-4 py-2 rounded-full bg-[var(--pl-primary)] hover:brightness-110 text-[12px] font-medium text-white shadow-[0_0_20px_var(--pl-primary-glow)] transition-all"
+              className="hidden md:flex w-full sm:w-auto px-4 py-2 rounded-full bg-[var(--pl-primary)] hover:brightness-110 text-[12px] font-medium text-white shadow-[0_0_20px_var(--pl-primary-glow)] transition-all"
               whileHover={{ scale: 1.04, y: -1 }}
               whileTap={{ scale: 0.97, y: 0 }}
               transition={{ type: "spring", stiffness: 260, damping: 18 }}
@@ -861,31 +861,8 @@ export default function Page() {
             <div className="order-6 lg:order-3 hidden md:block">
               {(visibleProducts.length > 0 || !products.length) && (
               <div className={`${cardStyle} overflow-hidden`}>
-                {/* Mobile collapsible header */}
-                <div 
-                  className="sm:hidden flex items-center justify-between p-3 cursor-pointer hover:bg-[var(--pl-bg)]/50 transition-colors"
-                  onClick={() => setAssistantOpen(!assistantOpen)}
-                >
-                  <span className="text-[11px] font-semibold tracking-[0.15em] uppercase text-slate-700 dark:text-slate-200">
-                    AI Assistant
-                  </span>
-                  {assistantOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                </div>
-                
                 {/* Desktop always-visible content */}
-                <div className="hidden sm:block">
-                  <div id="ai-assistant-panel">
-                    <ChatAssistant
-                      products={visibleProducts}
-                      searchQuery={query}
-                      location={location}
-                      disabled={visibleProducts.length === 0}
-                    />
-                  </div>
-                </div>
-                
-                {/* Mobile collapsible content */}
-                <div className={`${assistantOpen ? 'block' : 'hidden'} sm:hidden`}>
+                <div className="block">
                   <div id="ai-assistant-panel">
                     <ChatAssistant
                       products={visibleProducts}
