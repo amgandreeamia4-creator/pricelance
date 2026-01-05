@@ -92,23 +92,11 @@ export default function ProductList({
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="w-full text-center py-10 text-sm text-muted-foreground">
-        Loading products...
-      </div>
-    );
-  }
-
-  if (!products || products.length === 0) {
-    return (
-      <div className="w-full text-center py-10 text-sm text-muted-foreground">
-        No results found.
-      </div>
-    );
-  }
-
-  const visibleProducts = products.slice(0, MAX_VISIBLE_PRODUCTS);
+  // Calculate visible products and best deal
+  const visibleProducts = React.useMemo(() => {
+    if (!products || products.length === 0) return [];
+    return products.slice(0, MAX_VISIBLE_PRODUCTS);
+  }, [products]);
 
   // Best deal = lowest price among visible products
   const bestDealProductId = React.useMemo(() => {
@@ -127,6 +115,22 @@ export default function ProductList({
 
     return bestDeal.id;
   }, [visibleProducts]);
+
+  if (isLoading) {
+    return (
+      <div className="w-full text-center py-10 text-sm text-muted-foreground">
+        Loading products...
+      </div>
+    );
+  }
+
+  if (!products || products.length === 0) {
+    return (
+      <div className="w-full text-center py-10 text-sm text-muted-foreground">
+        No results found.
+      </div>
+    );
+  }
 
   return (
     <div className="w-full">
