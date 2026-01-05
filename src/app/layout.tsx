@@ -2,6 +2,7 @@
 import "./globals.css";
 import type { Metadata } from "next";
 import Link from "next/link";
+import Script from "next/script";
 import ThemeProvider from "@/components/ThemeProvider";
 
 export const metadata: Metadata = {
@@ -37,6 +38,20 @@ export default function RootLayout({
   return (
     <html lang="ro" suppressHydrationWarning>
       <body className="min-h-screen antialiased selection:bg-blue-600/40 selection:text-white">
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-6NM0RTYT3T"
+          strategy="afterInteractive"
+        />
+        <Script id="ga4-gtag-init" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-6NM0RTYT3T', {
+              page_path: window.location.pathname,
+            });
+          `}
+        </Script>
         <ThemeProvider>
           <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-neutral-950">
             <header className="w-full border-b border-slate-200/80 dark:border-slate-800 bg-white/80 dark:bg-neutral-950/80 backdrop-blur">
