@@ -36,16 +36,37 @@ export function inferCategorySlugFromIngestion(input: IngestionCategoryInput): C
   if (campaignName) {
     const campaignLower = campaignName.toLowerCase();
     
-    // ManukaShop and similar wellness campaigns → Wellness & Supplements
-    if (campaignLower.includes('manuka') || 
-        campaignLower.includes('manukashop') ||
-        campaignLower.includes('honey') ||
-        campaignLower.includes('supplement') ||
-        campaignLower.includes('wellness')) {
-      return 'Wellness & Supplements';
+    // Manuka/ManukaShop campaigns - special handling with deterministic rules
+    const isManuka =
+      campaignLower.includes("manuka") ||
+      campaignLower.includes("manukashop");
+    
+    if (isManuka) {
+      // Build searchable text from title and description
+      const searchableText = [
+        title || '',
+        description || ''
+      ].join(' ').toLowerCase();
+      
+      // Personal care keywords for Manuka products
+      const personalCareKeywords = [
+        "crema", "cream", "balsam", "balsam de buze",
+        "lip balm", "pasta de dinti", "toothpaste",
+        "gel de dus", "shower gel", "soap", "sapun",
+        "spray bucal", "spray oral pentru gat", "lotune",
+        "hand cream", "foot cream"
+      ];
+      
+      // Check if product matches personal care keywords
+      const isPersonalCare = personalCareKeywords.some(keyword => 
+        searchableText.includes(keyword)
+      );
+      
+      // Return deterministic category for Manuka products
+      return isPersonalCare ? 'Personal Care' : 'Wellness & Supplements';
     }
     
-    // Personal care campaigns → Personal Care
+    // Other campaign defaults (existing logic)
     if (campaignLower.includes('cosmetic') ||
         campaignLower.includes('beauty') ||
         campaignLower.includes('skin') ||
