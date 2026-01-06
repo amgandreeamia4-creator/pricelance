@@ -17,6 +17,33 @@ type Category = {
   label: string;
 };
 
+type CategorySearchConfig = {
+  query?: string;
+  categoryFilter?: string;
+};
+
+const CATEGORY_SEARCH_CONFIG: Record<string, CategorySearchConfig> = {
+  // Core tech - use exact category names from our data
+  laptops: { query: "laptop", categoryFilter: "Laptops" },
+  phones: { query: "phone", categoryFilter: "Phones" },
+  monitors: { query: "monitor", categoryFilter: "Monitors" },
+  audio: { query: "headphone", categoryFilter: "Headphones" },
+  "keyboards-mice": { query: "keyboard" },
+
+  "tv-display": { query: "tv" },
+  tablets: { query: "tablet" },
+  smartwatch: { query: "smartwatch" },
+
+  // Categories that exist in our data
+  "home-garden": { query: "kitchen", categoryFilter: "Kitchen" },
+  "personal-care": { query: "personal" },
+  "small-appliances": { query: "appliance" },
+  wellness: { query: "wellness" },
+  "gifts-lifestyle": { query: "gift" },
+  "books-media": { query: "book" },
+  "toys-games": { query: "game" },
+};
+
 const DESKTOP_CATEGORIES: Category[] = [
   // Row 1 – core tech
   { key: "laptops", label: "Laptops" },
@@ -92,7 +119,7 @@ export default function Page() {
       <button
         type="button"
         onClick={() => onClick(category.key)}
-        className="px-6 py-3 rounded-3xl bg-[var(--pl-card)] border border-[var(--pl-card-border)] shadow-[0_0_15px_var(--pl-primary-glow)] text-[12px] font-medium text-[var(--pl-text)] hover:-translate-y-[1px] hover:shadow-[0_0_18px_var(--pl-primary-glow)] transition-all"
+        className="px-4 py-2.5 rounded-2xl bg-[var(--pl-card)] border border-[var(--pl-card-border)] shadow-[0_0_15px_var(--pl-primary-glow)] text-[11px] font-medium text-[var(--pl-text)] hover:-translate-y-[1px] hover:shadow-[0_0_18px_var(--pl-primary-glow)] transition-all text-center"
       >
         {category.label}
       </button>
@@ -456,29 +483,61 @@ export default function Page() {
   };
 
   const handleCategoryClick = (key: string) => {
-    const defaultQueryByKey: Record<string, string> = {
-      laptops: "laptop",
-      phones: "telefon",
-      monitors: "monitor",
-      audio: "casti",
-      "keyboards-mice": "tastatura mouse",
-      "tv-display": "televizor",
-      tablets: "tableta",
-      smartwatch: "smartwatch",
-      "home-garden": "home garden",
-      "personal-care": "ingrijire personala",
-      "small-appliances": "electrocasnice mici",
-      wellness: "suplimente",
-      "gifts-lifestyle": "cadouri",
-      "books-media": "carte",
-      "toys-games": "jucarii",
-    };
+    const cfg = CATEGORY_SEARCH_CONFIG[key];
+    if (!cfg) return;
 
-    const query = defaultQueryByKey[key] ?? "";
-    if (!query) return;
+    // Use category filter if available (more precise)
+    if (cfg.categoryFilter) {
+      setQuery(cfg.categoryFilter);
+      runSearchWithCategory(cfg.categoryFilter);
+      return;
+    }
 
-    setQuery(query);
-    runSearch(query);
+    // Fallback to text search
+    if (cfg.query) {
+      setQuery(cfg.query);
+      runSearch(cfg.query);
+      return;
+    }
+  };
+
+  // Search with category filter
+  async function runSearchWithCategory(category: string) {
+    setIsSearching(true);
+    try {
+      const params = new URLSearchParams({ category });
+
+      if (storeFilter !== "all") {
+        params.set("store", storeFilter);
+      }
+      if (fastOnly) {
+        params.set("fastOnly", "true");
+      }
+
+      const res = await fetch(`/api/products?${params.toString()}`, {
+        method: "GET",
+      });
+
+      if (!res.ok) {
+        console.error("Category search failed", res.status);
+        setProducts([]);
+        return;
+      }
+
+      const data = await res.json();
+      const nextProducts = Array.isArray(data.products) ? data.products : [];
+      setProducts(nextProducts);
+      
+      // Auto-select first product if no product is currently selected
+      if (nextProducts.length > 0 && !selectedProductId) {
+        setSelectedProductId(nextProducts[0].id);
+      }
+    } catch (error) {
+      console.error("Category search error in page.tsx", error);
+      setProducts([]);
+    } finally {
+      setIsSearching(false);
+    }
   };
 
   // Resilient search function backed by /api/products
@@ -619,51 +678,35 @@ export default function Page() {
         </div>
       </header>
 
-      {/* Mobile: 2 rows × 3 highlight categories */}
-      <div className="flex md:hidden flex-col items-center gap-3 mb-6">
-        <div className="grid grid-cols-3 gap-3 w-full max-w-md">
-          {MOBILE_CATEGORIES.map((cat) => (
-            <CategoryPill
-              key={cat.key}
-              category={cat}
-              onClick={handleCategoryClick}
-            />
-          ))}
+      {/* Mobile categories (keep existing logic, only for <sm) */}
+      <div className="mt-6 sm:hidden">
+        <div className="flex flex-col items-center gap-3 mb-6">
+          <div className="grid grid-cols-3 gap-3 w-full max-w-md">
+            {MOBILE_CATEGORIES.map((cat) => (
+              <CategoryPill
+                key={cat.key}
+                category={cat}
+                onClick={handleCategoryClick}
+              />
+            ))}
+          </div>
         </div>
       </div>
 
-      {/* Desktop & tablet: 3 rows of categories */}
-      <div className="hidden md:flex flex-col items-center gap-3 mb-6">
-        {/* Row 1 */}
-        <div className="flex flex-wrap justify-center gap-4">
-          {DESKTOP_CATEGORIES.slice(0, 5).map((cat) => (
-            <CategoryPill
+      {/* Categories grid (desktop / tablet) */}
+      <div className="mt-8 hidden sm:block">
+        <div className="mx-auto max-w-5xl grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+          {DESKTOP_CATEGORIES.map((cat) => (
+            <button
               key={cat.key}
-              category={cat}
-              onClick={handleCategoryClick}
-            />
-          ))}
-        </div>
-
-        {/* Row 2 */}
-        <div className="flex flex-wrap justify-center gap-4">
-          {DESKTOP_CATEGORIES.slice(5, 10).map((cat) => (
-            <CategoryPill
-              key={cat.key}
-              category={cat}
-              onClick={handleCategoryClick}
-            />
-          ))}
-        </div>
-
-        {/* Row 3 */}
-        <div className="flex flex-wrap justify-center gap-4">
-          {DESKTOP_CATEGORIES.slice(10, 15).map((cat) => (
-            <CategoryPill
-              key={cat.key}
-              category={cat}
-              onClick={handleCategoryClick}
-            />
+              type="button"
+              onClick={() => handleCategoryClick(cat.key)}
+              className="group w-full text-sm font-medium rounded-xl border border-slate-200 bg-white/90 px-4 py-3 text-slate-800 shadow-sm hover:border-blue-400 hover:bg-blue-50/80 hover:shadow-md transition-colors transition-shadow duration-150 ease-out"
+            >
+              <span className="block text-center leading-snug">
+                {cat.label}
+              </span>
+            </button>
           ))}
         </div>
       </div>
