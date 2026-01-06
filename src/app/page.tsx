@@ -734,14 +734,14 @@ export default function Page() {
 
       {/* Mobile category grid (6 compact pills) */}
       <div className="md:hidden">
-        <div className="mx-auto mt-4 max-w-xs">
-          <div className="grid grid-cols-2 gap-3">
+        <div className="mx-auto mt-3 max-w-xs">
+          <div className="grid grid-cols-2 gap-2">
             {MOBILE_PRIMARY_CATEGORIES.map((label) => (
               <button
                 key={label}
                 type="button"
                 onClick={() => handleCategoryClickByLabel(label)}
-                className="w-full rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-800 shadow-sm hover:border-blue-400 hover:bg-blue-50 hover:shadow transition-colors"
+                className="w-full rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] leading-tight font-medium text-slate-800 shadow-sm hover:border-blue-400 hover:bg-blue-50 transition-colors"
               >
                 {label}
               </button>
