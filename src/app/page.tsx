@@ -71,6 +71,15 @@ const HOME_CATEGORIES = [
   "Kitchen",
 ];
 
+const MOBILE_PRIMARY_CATEGORIES = [
+  "Laptops",
+  "Phones",
+  "Monitors",
+  "Headphones & Audio",
+  "TV & Display",
+  "Home & Garden",
+];
+
 type Category = {
   key: string;
   label: string;
@@ -723,32 +732,21 @@ export default function Page() {
         </div>
       </div>
 
-      {/* Mobile categories only */}
-      <div className="mt-8 md:hidden">
-        <div className="grid grid-cols-2 gap-3 px-2">
-          {TOP_CATEGORIES.map((cat) => {
-            const isActive = selectedCategory === cat.key;
-            return (
+      {/* Mobile category grid (6 compact pills) */}
+      <div className="md:hidden">
+        <div className="mx-auto mt-4 max-w-xs">
+          <div className="grid grid-cols-2 gap-3">
+            {MOBILE_PRIMARY_CATEGORIES.map((label) => (
               <button
-                key={cat.key}
+                key={label}
                 type="button"
-                onClick={() => handleCategoryClick(cat.key)}
-                className={`
-                  w-full
-                  rounded-xl border text-xs font-medium
-                  py-2 px-2
-                  transition-all duration-150 ease-out text-center leading-snug
-                  ${
-                    isActive
-                      ? 'bg-sky-100 border-sky-400 text-sky-900 shadow-sm'
-                      : 'bg-white/90 border-slate-200 text-slate-800 shadow-sm hover:border-blue-400 hover:bg-blue-50/80 hover:shadow-md'
-                  }
-                }`}
+                onClick={() => handleCategoryClickByLabel(label)}
+                className="w-full rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-800 shadow-sm hover:border-blue-400 hover:bg-blue-50 hover:shadow transition-colors"
               >
-                <span className="block">{cat.label}</span>
+                {label}
               </button>
-            );
-          })}
+            ))}
+          </div>
         </div>
       </div>
 
