@@ -12,72 +12,39 @@ import { STORES, StoreId } from "@/config/catalog";
 import PriceTrendChart from "@/components/PriceTrendChart";
 import ProductSummary from "@/components/ProductSummary";
 
-type TopCategoryKey =
-  | 'laptops'
-  | 'phones'
-  | 'monitors'
-  | 'headphones_audio'
-  | 'keyboards_mouse'
-  | 'tv_display'
-  | 'tablets'
-  | 'smartwatches'
-  | 'home_garden'
-  | 'personal_care'
-  | 'small_appliances'
-  | 'wellness_supplements'
-  | 'gifts_lifestyle'
-  | 'books_media'
-  | 'toys_games'
-  | 'kitchen';
+import type { CategoryKey } from '@/config/categoryFilters';
 
-const TOP_CATEGORIES: { key: TopCategoryKey; label: string }[] = [
-  { key: 'laptops', label: 'Laptops' },
-  { key: 'phones', label: 'Phones' },
-  { key: 'monitors', label: 'Monitors' },
-  { key: 'headphones_audio', label: 'Headphones & Audio' },
+type CategoryPill = {
+  key: CategoryKey;
+  label: string;
+};
 
-  { key: 'keyboards_mouse', label: 'Keyboards & Mouse' },
-  { key: 'tv_display', label: 'TV & Display' },
-  { key: 'tablets', label: 'Tablets' },
-  { key: 'smartwatches', label: 'Smartwatches' },
-
-  { key: 'home_garden', label: 'Home & Garden' },
-  { key: 'personal_care', label: 'Personal Care' },
-  { key: 'small_appliances', label: 'Small Appliances' },
-  { key: 'wellness_supplements', label: 'Wellness & Supplements' },
-
-  { key: 'gifts_lifestyle', label: 'Gifts & Lifestyle' },
-  { key: 'books_media', label: 'Books & Media' },
-  { key: 'toys_games', label: 'Toys & Games' },
-  { key: 'kitchen', label: 'Kitchen' },
+const PRIMARY_CATEGORIES: CategoryPill[] = [
+  { key: 'Laptops', label: 'Laptops' },
+  { key: 'Phones', label: 'Phones' },
+  { key: 'Monitors', label: 'Monitors' },
+  { key: 'Headphones & Audio', label: 'Headphones & Audio' },
+  { key: 'Keyboards & Mouse', label: 'Keyboards & Mouse' },
+  { key: 'TV & Display', label: 'TV & Display' },
+  { key: 'Tablets', label: 'Tablets' },
+  { key: 'Smartwatches', label: 'Smartwatches' },
+  { key: 'Home & Garden', label: 'Home & Garden' },
+  { key: 'Personal Care', label: 'Personal Care' },
+  { key: 'Small Appliances', label: 'Small Appliances' },
+  { key: 'Wellness & Supplements', label: 'Wellness & Supplements' },
+  { key: 'Gifts & Lifestyle', label: 'Gifts & Lifestyle' },
+  { key: 'Books & Media', label: 'Books & Media' },
+  { key: 'Toys & Games', label: 'Toys & Games' },
+  { key: 'Kitchen', label: 'Kitchen' },
 ];
 
-const HOME_CATEGORIES = [
-  "Laptops",
-  "Phones",
-  "Monitors",
-  "Headphones & Audio",
-  "Keyboards & Mouse",
-  "TV & Display",
-  "Tablets",
-  "Smartwatches",
-  "Home & Garden",
-  "Personal Care",
-  "Small Appliances",
-  "Wellness & Supplements",
-  "Gifts & Lifestyle",
-  "Books & Media",
-  "Toys & Games",
-  "Kitchen",
-];
-
-const MOBILE_PRIMARY_CATEGORIES = [
-  "Laptops",
-  "Phones",
-  "Monitors",
-  "Headphones & Audio",
-  "TV & Display",
-  "Home & Garden",
+const MOBILE_PRIMARY_CATEGORIES: CategoryPill[] = [
+  { key: 'Laptops', label: 'Laptops' },
+  { key: 'Phones', label: 'Phones' },
+  { key: 'Monitors', label: 'Monitors' },
+  { key: 'Headphones & Audio', label: 'Headphones & Audio' },
+  { key: 'TV & Display', label: 'TV & Display' },
+  { key: 'Home & Garden', label: 'Home & Garden' },
 ];
 
 type Category = {
@@ -218,7 +185,7 @@ export default function Page() {
   const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
 
   // Category selection state
-  const [selectedCategory, setSelectedCategory] = useState<TopCategoryKey | null>(null);
+  const [activeCategory, setActiveCategory] = React.useState<CategoryKey | null>(null);
 
   // Dynamic categories from DB
   const [categories, setCategories] = useState<string[]>([]);
@@ -553,24 +520,15 @@ export default function Page() {
     );
   };
 
-  const handleCategoryClick = (key: TopCategoryKey) => {
-    setSelectedCategory((current) => (current === key ? null : key));
-    
-    // Trigger search with the selected category
-    triggerSearch(query, key);
-  };
+  function handleCategoryClick(category: CategoryKey) {
+    setActiveCategory(category);
+    // Clear text query when selecting a category
+    setQuery('');
+    executeSearch({ query: '', category: category });
+  }
 
-  const handleCategoryClickByLabel = (label: string) => {
-    // Find the category key by label
-    const category = TOP_CATEGORIES.find(cat => cat.label === label);
-    if (category) {
-      handleCategoryClick(category.key);
-    }
-  };
-
-  // Updated search function that accepts category parameter
-  const triggerSearch = async (searchQuery: string, category?: TopCategoryKey | null) => {
-    const trimmed = searchQuery.trim();
+  async function executeSearch({ query, category }: { query: string; category: CategoryKey | null }) {
+    const trimmed = query.trim();
     setQuery(trimmed);
 
     if (!trimmed && !category) {
@@ -620,11 +578,10 @@ export default function Page() {
     } finally {
       setIsSearching(false);
     }
-  };
+  }
 
-  // Resilient search function backed by /api/products (updated to use triggerSearch)
-  async function runSearch(q: string) {
-    await triggerSearch(q, selectedCategory);
+  function handleSearchSubmit() {
+    executeSearch({ query, category: activeCategory });
   }
 
   function handleUseLocation() {
@@ -633,7 +590,7 @@ export default function Page() {
   }
 
   function handleQuickPick(term: string) {
-    runSearch(term);
+    executeSearch({ query: term, category: activeCategory });
   }
 
   function scrollToAssistant() {
@@ -718,14 +675,14 @@ export default function Page() {
       <div className="hidden md:block">
         <div className="mx-auto mt-8 max-w-5xl">
           <div className="grid grid-cols-4 gap-4">
-            {HOME_CATEGORIES.map((label) => (
+            {PRIMARY_CATEGORIES.map((pill) => (
               <button
-                key={label}
+                key={pill.key}
                 type="button"
-                onClick={() => handleCategoryClickByLabel(label)}
+                onClick={() => handleCategoryClick(pill.key)}
                 className="w-full rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-800 shadow-sm hover:border-blue-400 hover:bg-blue-50 hover:shadow transition-colors"
               >
-                {label}
+                {pill.label}
               </button>
             ))}
           </div>
@@ -736,14 +693,14 @@ export default function Page() {
       <div className="md:hidden">
         <div className="mx-auto mt-3 max-w-xs">
           <div className="grid grid-cols-2 gap-2 justify-items-center">
-            {MOBILE_PRIMARY_CATEGORIES.map((label) => (
+            {MOBILE_PRIMARY_CATEGORIES.map((pill) => (
               <button
-                key={label}
+                key={pill.key}
                 type="button"
-                onClick={() => handleCategoryClickByLabel(label)}
+                onClick={() => handleCategoryClick(pill.key)}
                 className="inline-flex w-28 items-center justify-center rounded-full border border-slate-200 bg-white px-2 py-1 text-[10px] leading-tight font-medium text-slate-800 shadow-sm hover:border-blue-400 hover:bg-blue-50 transition-colors whitespace-nowrap"
               >
-                {label}
+                {pill.label}
               </button>
             ))}
           </div>
@@ -753,12 +710,12 @@ export default function Page() {
       {/* SEARCH BAR */}
       <div className="w-full px-6 mt-1 md:mt-2">
         <div className="mx-auto w-full max-w-5xl">
-          <form onSubmit={(e) => { e.preventDefault(); triggerSearch(query, selectedCategory); }}>
+          <form onSubmit={(e) => { e.preventDefault(); handleSearchSubmit(); }}>
             <input
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && runSearch(query)}
+              onKeyDown={(e) => e.key === "Enter" && handleSearchSubmit()}
               placeholder='Search products (e.g. "laptop gaming", "monitor 27", "iPhone 15")'
               className="w-full px-5 py-3 rounded-2xl bg-[var(--pl-card)] border border-[var(--pl-card-border)] text-[12px] text-[var(--pl-text)] placeholder:text-[var(--pl-text-subtle)] focus:outline-none focus:border-blue-500 focus:shadow-[0_0_15px_var(--pl-primary-glow)] transition-all"
             />
