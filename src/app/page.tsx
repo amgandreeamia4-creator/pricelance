@@ -119,7 +119,7 @@ export default function Page() {
       <button
         type="button"
         onClick={() => onClick(category.key)}
-        className="px-4 py-2.5 rounded-2xl bg-[var(--pl-card)] border border-[var(--pl-card-border)] shadow-[0_0_15px_var(--pl-primary-glow)] text-[11px] font-medium text-[var(--pl-text)] hover:-translate-y-[1px] hover:shadow-[0_0_18px_var(--pl-primary-glow)] transition-all text-center"
+        className="px-3 py-2 rounded-xl bg-[var(--pl-card)] border border-[var(--pl-card-border)] shadow-[0_0_10px_var(--pl-primary-glow)] text-[10px] font-medium text-[var(--pl-text)] hover:-translate-y-[0.5px] hover:shadow-[0_0_12px_var(--pl-primary-glow)] transition-all text-center"
       >
         {category.label}
       </button>
@@ -701,7 +701,7 @@ export default function Page() {
               key={cat.key}
               type="button"
               onClick={() => handleCategoryClick(cat.key)}
-              className="group w-full text-sm font-medium rounded-xl border border-slate-200 bg-white/90 px-4 py-3 text-slate-800 shadow-sm hover:border-blue-400 hover:bg-blue-50/80 hover:shadow-md transition-colors transition-shadow duration-150 ease-out"
+              className="group w-full text-sm font-medium rounded-xl border border-slate-200 bg-white/90 px-4 py-3 text-slate-800 shadow-sm hover:border-blue-400 hover:bg-blue-50/80 hover:shadow-md transition-all duration-150 ease-out"
             >
               <span className="block text-center leading-snug">
                 {cat.label}
@@ -736,24 +736,6 @@ export default function Page() {
               Debug: no enrichment data for last search.
             </p>
           )}
-        </div>
-      </div>
-
-      {/* QUICK PICKS - Mobile only */}
-      <div className="w-full px-6 mt-2 md:mt-3 md:hidden">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex flex-wrap gap-2">
-            {savedSearches.slice(0, 5).map((term) => (
-              <button
-                key={term}
-                type="button"
-                className="rounded-full border border-[var(--pl-card-border)] px-3 py-1 text-xs font-medium text-[var(--pl-text)] bg-[var(--pl-card)]/80 hover:bg-[var(--pl-card)] shadow-sm transition-all"
-                onClick={() => handleQuickPick(term)}
-              >
-                {term}
-              </button>
-            ))}
-          </div>
         </div>
       </div>
 
