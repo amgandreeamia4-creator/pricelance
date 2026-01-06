@@ -119,7 +119,7 @@ export default function Page() {
       <button
         type="button"
         onClick={() => onClick(category.key)}
-        className="px-3 py-2 rounded-xl bg-[var(--pl-card)] border border-[var(--pl-card-border)] shadow-[0_0_10px_var(--pl-primary-glow)] text-[10px] font-medium text-[var(--pl-text)] hover:-translate-y-[0.5px] hover:shadow-[0_0_12px_var(--pl-primary-glow)] transition-all text-center"
+        className="px-2 py-1.5 rounded-lg bg-[var(--pl-card)] border border-[var(--pl-card-border)] shadow-[0_0_8px_var(--pl-primary-glow)] text-[9px] font-medium text-[var(--pl-text)] hover:-translate-y-[0.5px] hover:shadow-[0_0_10px_var(--pl-primary-glow)] transition-all text-center"
       >
         {category.label}
       </button>
