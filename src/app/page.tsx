@@ -41,25 +41,37 @@ type ProductWithListings = {
 
 const FAST_SHIPPING_DAYS = 3;
 
-const FEATURED_CATEGORIES = [
-  // TECH
-  { id: "laptops",        label: "Laptopuri",          query: "laptop" },
-  { id: "phones",         label: "Telefoane",          query: "telefon" },
-  { id: "monitors",       label: "Monitoare",          query: "monitor" },
-  { id: "audio",          label: "Căști & Audio",      query: "casti audio" },
-  { id: "peripherals",    label: "Tastaturi & Mouse",  query: "tastatura mouse" },
-  { id: "tv-display",     label: "TV & Display",       query: "televizor" },
-  { id: "tablets",        label: "Tablete",            query: "tableta" },
-  { id: "smartwatch",     label: "Smartwatch",         query: "smartwatch" },
+type HomeCategory = {
+  id: string;
+  label: string;
+  query: string;
+};
 
-  // HOME / LIFESTYLE
-  { id: "home-garden",    label: "Casă & Grădină",     query: "casa gradina" },
-  { id: "appliances",     label: "Electrocasnice mici", query: "aspirator cafetiera" },
-  { id: "personal-care",  label: "Îngrijire personală", query: "ingrijire personala" },
-  { id: "wellness",       label: "Suplimente & Wellness", query: "herbagetica suplimente" },
-  { id: "gifts",          label: "Cadouri & Lifestyle", query: "cadouri decor luxury" },
-  { id: "books",          label: "Cărți & Media",      query: "carti" },
-  { id: "toys-games",     label: "Jocuri & Jucării",   query: "jocuri jucarii" },
+const FEATURED_CATEGORY_ROWS: HomeCategory[][] = [
+  // Row 1 – core tech
+  [
+    { id: "laptops",       label: "Laptops",               query: "laptop" },
+    { id: "phones",        label: "Phones",                query: "telefon phone" },
+    { id: "monitors",      label: "Monitors",              query: "monitor" },
+    { id: "tv-display",    label: "TV & Display",          query: "televizor tv" },
+    { id: "audio",         label: "Headphones & Audio",    query: "casti audio" },
+  ],
+  // Row 2 – more tech
+  [
+    { id: "peripherals",   label: "Keyboards & Mouse",     query: "tastatura mouse" },
+    { id: "tablets",       label: "Tablets",               query: "tableta" },
+    { id: "smartwatches",  label: "Smartwatches",          query: "smartwatch" },
+    { id: "gaming",        label: "Gaming & Consoles",     query: "gaming consola" },
+    { id: "appliances",    label: "Small Appliances",      query: "electrocasnice mici aspirator cafetiera" },
+  ],
+  // Row 3 – home & lifestyle
+  [
+    { id: "home-garden",   label: "Home & Garden",         query: "casa gradina" },
+    { id: "personal-care", label: "Personal Care",         query: "ingrijire personala" },
+    { id: "wellness",      label: "Wellness & Supplements",query: "suplimente herbagetica" },
+    { id: "gifts",         label: "Gifts & Lifestyle",     query: "cadouri decor luxury" },
+    { id: "books-media",   label: "Books & Media",         query: "carti jocuri jucarii" },
+  ],
 ];
 
 export default function Page() {
@@ -420,6 +432,11 @@ export default function Page() {
     );
   };
 
+  const handleCategoryClick = (cat: HomeCategory) => {
+    setQuery(cat.query);
+    runSearch(cat.query);
+  };
+
   // Resilient search function backed by /api/products
   async function runSearch(q: string) {
     const trimmed = q.trim();
@@ -558,20 +575,24 @@ export default function Page() {
         </div>
       </header>
 
-      {/* FEATURED CATEGORIES - Glowing pills */}
-      <div className="mt-6 flex flex-wrap justify-center gap-4 max-w-5xl mx-auto">
-        {FEATURED_CATEGORIES.map((cat) => (
-          <button
-            key={cat.id}
-            type="button"
-            onClick={() => {
-              setQuery(cat.query);
-              runSearch(cat.query);
-            }}
-            className="px-4 py-2 rounded-3xl bg-[var(--pl-card)] border border-[var(--pl-card-border)] shadow-[0_0_15px_var(--pl-primary-glow)] text-[12px] font-medium text-[var(--pl-text)] hover:-translate-y-[1px] hover:shadow-[0_0_18px_var(--pl-primary-glow)] transition-all"
+      {/* FEATURED CATEGORIES - 3 connected rows */}
+      <div className="mt-8 space-y-3 max-w-6xl mx-auto">
+        {FEATURED_CATEGORY_ROWS.map((row, rowIndex) => (
+          <div
+            key={rowIndex}
+            className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3"
           >
-            {cat.label}
-          </button>
+            {row.map((cat) => (
+              <button
+                key={cat.id}
+                type="button"
+                onClick={() => handleCategoryClick(cat)}
+                className="px-6 py-3 rounded-3xl bg-[var(--pl-card)] border border-[var(--pl-card-border)] shadow-[0_0_15px_var(--pl-primary-glow)] text-[12px] font-medium text-[var(--pl-text)] hover:-translate-y-[1px] hover:shadow-[0_0_18px_var(--pl-primary-glow)] transition-all"
+              >
+                {cat.label}
+              </button>
+            ))}
+          </div>
         ))}
       </div>
 
