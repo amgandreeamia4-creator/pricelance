@@ -678,34 +678,14 @@ export default function Page() {
         </div>
       </header>
 
-      {/* Mobile categories (keep existing logic, only for <sm) */}
-      <div className="mt-6 sm:hidden">
-        <div className="flex flex-col items-center gap-3 mb-6">
-          <div className="grid grid-cols-3 gap-3 w-full max-w-md">
-            {TOP_CATEGORIES.slice(0, 6).map((cat) => {
-              const isActive = selectedCategory === cat.key;
-              return (
-                <button
-                  key={cat.key}
-                  type="button"
-                  onClick={() => handleCategoryClick(cat.key)}
-                  className={`px-2 py-1.5 rounded-lg border shadow-[0_0_8px_var(--pl-primary-glow)] text-[9px] font-medium text-center transition-all ${
-                    isActive
-                      ? 'bg-sky-100 border-sky-400 text-sky-900'
-                      : 'bg-[var(--pl-card)] border-[var(--pl-card-border)] text-[var(--pl-text)] hover:-translate-y-[0.5px] hover:shadow-[0_0_10px_var(--pl-primary-glow)]'
-                  }`}
-                >
-                  {cat.label}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-
-      {/* Categories grid (desktop / tablet) */}
-      <div className="mt-8 hidden sm:block">
-        <div className="mx-auto max-w-5xl grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+      {/* Categories - responsive layout */}
+      <div className="mt-8">
+        <div
+          className="
+            grid grid-cols-2 gap-3 px-2
+            sm:flex sm:flex-wrap sm:justify-center sm:gap-4 sm:px-0
+          "
+        >
           {TOP_CATEGORIES.map((cat) => {
             const isActive = selectedCategory === cat.key;
             return (
@@ -713,10 +693,18 @@ export default function Page() {
                 key={cat.key}
                 type="button"
                 onClick={() => handleCategoryClick(cat.key)}
-                className={`group w-full text-sm font-medium rounded-xl border transition-all duration-150 ease-out px-4 py-3 text-center leading-snug ${
-                  isActive
-                    ? 'bg-sky-100 border-sky-400 text-sky-900 shadow-sm'
-                    : 'bg-white/90 border-slate-200 text-slate-800 shadow-sm hover:border-blue-400 hover:bg-blue-50/80 hover:shadow-md'
+                className={`
+                  w-full
+                  rounded-xl border text-xs font-medium
+                  py-2 px-2
+                  sm:w-auto sm:min-w-[160px]
+                  sm:text-sm sm:py-3 sm:px-4
+                  transition-all duration-150 ease-out text-center leading-snug
+                  ${
+                    isActive
+                      ? 'bg-sky-100 border-sky-400 text-sky-900 shadow-sm'
+                      : 'bg-white/90 border-slate-200 text-slate-800 shadow-sm hover:border-blue-400 hover:bg-blue-50/80 hover:shadow-md'
+                  }
                 }`}
               >
                 <span className="block">{cat.label}</span>
