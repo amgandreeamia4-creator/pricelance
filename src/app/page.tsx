@@ -52,6 +52,25 @@ const TOP_CATEGORIES: { key: TopCategoryKey; label: string }[] = [
   { key: 'kitchen', label: 'Kitchen' },
 ];
 
+const HOME_CATEGORIES = [
+  "Laptops",
+  "Phones",
+  "Monitors",
+  "Headphones & Audio",
+  "Keyboards & Mouse",
+  "TV & Display",
+  "Tablets",
+  "Smartwatches",
+  "Home & Garden",
+  "Personal Care",
+  "Small Appliances",
+  "Wellness & Supplements",
+  "Gifts & Lifestyle",
+  "Books & Media",
+  "Toys & Games",
+  "Kitchen",
+];
+
 type Category = {
   key: string;
   label: string;
@@ -532,6 +551,14 @@ export default function Page() {
     triggerSearch(query, key);
   };
 
+  const handleCategoryClickByLabel = (label: string) => {
+    // Find the category key by label
+    const category = TOP_CATEGORIES.find(cat => cat.label === label);
+    if (category) {
+      handleCategoryClick(category.key);
+    }
+  };
+
   // Updated search function that accepts category parameter
   const triggerSearch = async (searchQuery: string, category?: TopCategoryKey | null) => {
     const trimmed = searchQuery.trim();
@@ -678,14 +705,27 @@ export default function Page() {
         </div>
       </header>
 
-      {/* Categories - responsive layout */}
-      <div className="mt-8">
-        <div
-          className="
-            grid grid-cols-2 gap-3 px-2
-            sm:flex sm:flex-wrap sm:justify-center sm:gap-4 sm:px-0
-          "
-        >
+      {/* Desktop category grid - fixed 3-row layout */}
+      <div className="hidden md:block">
+        <div className="mx-auto mt-8 max-w-5xl">
+          <div className="grid grid-cols-4 gap-4">
+            {HOME_CATEGORIES.map((label) => (
+              <button
+                key={label}
+                type="button"
+                onClick={() => handleCategoryClickByLabel(label)}
+                className="w-full rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-800 shadow-sm hover:border-blue-400 hover:bg-blue-50 hover:shadow transition-colors"
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Mobile categories only */}
+      <div className="mt-8 md:hidden">
+        <div className="grid grid-cols-2 gap-3 px-2">
           {TOP_CATEGORIES.map((cat) => {
             const isActive = selectedCategory === cat.key;
             return (
@@ -697,8 +737,6 @@ export default function Page() {
                   w-full
                   rounded-xl border text-xs font-medium
                   py-2 px-2
-                  sm:w-auto sm:min-w-[160px]
-                  sm:text-sm sm:py-3 sm:px-4
                   transition-all duration-150 ease-out text-center leading-snug
                   ${
                     isActive
