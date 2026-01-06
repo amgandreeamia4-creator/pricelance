@@ -11,6 +11,7 @@ import ChatAssistant from "@/components/ChatAssistant";
 import { STORES, StoreId } from "@/config/catalog";
 import PriceTrendChart from "@/components/PriceTrendChart";
 import ProductSummary from "@/components/ProductSummary";
+import HomeCategoryStrip from "@/components/HomeCategoryStrip";
 
 type Listing = {
   id: string;
@@ -579,6 +580,13 @@ export default function Page() {
               Debug: no enrichment data for last search.
             </p>
           )}
+        </div>
+      </div>
+
+      {/* CATEGORY STRIP - desktop only for now */}
+      <div className="w-full px-6 mt-3 hidden md:block">
+        <div className="mx-auto w-full max-w-5xl">
+          <HomeCategoryStrip onSelectCategory={handleQuickPick} />
         </div>
       </div>
 
