@@ -12,6 +12,7 @@ import { STORES, StoreId } from "@/config/catalog";
 import PriceTrendChart from "@/components/PriceTrendChart";
 import ProductSummary from "@/components/ProductSummary";
 import HomeCategoryStrip from "@/components/HomeCategoryStrip";
+import TopCategoryGrid from "@/components/TopCategoryGrid";
 
 type Listing = {
   id: string;
@@ -498,7 +499,7 @@ export default function Page() {
   return (
     <main className="min-h-screen bg-slate-100 text-slate-900 dark:bg-gradient-to-br dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 dark:text-slate-50 dark:bg-noise-soft">
       {/* HEADER */}
-      <header className="relative w-full pt-2 md:pt-4 pb-2 md:pb-3 px-6">
+      <header className="relative w-full pt-1 md:pt-3 pb-2 md:pb-3 px-6">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col gap-2 md:gap-3 sm:flex-row sm:items-center sm:justify-between">
             {/* left side: PRICELANCE + theme toggle */}
@@ -530,7 +531,7 @@ export default function Page() {
           </div>
 
           {/* Compact hero description – single sentence */}
-          <div className="text-center mt-2 md:mt-3">
+          <div className="text-center mt-1 md:mt-2">
             <p className="text-[11px] sm:text-[12px] text-[var(--pl-text-muted)] leading-relaxed">
               PriceLance is an informational service that compares tech prices from multiple online retailers.
             </p>
@@ -538,15 +539,15 @@ export default function Page() {
         </div>
       </header>
 
-      {/* CATEGORY STRIP - desktop only for now (above search) */}
-      <div className="w-full px-6 mt-2 hidden md:block">
-        <div className="mx-auto w-full max-w-5xl">
-          <HomeCategoryStrip onSelectCategory={handleQuickPick} />
-        </div>
-      </div>
+      {/* Top category grid (replaces old pill row) */}
+      <TopCategoryGrid
+        onCategoryClick={(query) => {
+          runSearch(query);
+        }}
+      />
 
       {/* SEARCH BAR */}
-      <div className="w-full px-6 mt-2">
+      <div className="w-full px-6 mt-1 md:mt-2">
         <div className="mx-auto w-full max-w-5xl">
           <form onSubmit={(e) => { e.preventDefault(); runSearch(query); }}>
             <input
