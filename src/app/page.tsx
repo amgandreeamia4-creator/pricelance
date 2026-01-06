@@ -47,71 +47,6 @@ const MOBILE_PRIMARY_CATEGORIES: CategoryPill[] = [
   { key: 'Home & Garden', label: 'Home & Garden' },
 ];
 
-type Category = {
-  key: string;
-  label: string;
-};
-
-type CategorySearchConfig = {
-  query?: string;
-  categoryFilter?: string;
-};
-
-const CATEGORY_SEARCH_CONFIG: Record<string, CategorySearchConfig> = {
-  // Core tech - use exact category names from our data
-  laptops: { query: "laptop", categoryFilter: "Laptops" },
-  phones: { query: "phone", categoryFilter: "Phones" },
-  monitors: { query: "monitor", categoryFilter: "Monitors" },
-  audio: { query: "headphone", categoryFilter: "Headphones" },
-  "keyboards-mice": { query: "keyboard" },
-
-  "tv-display": { query: "tv" },
-  tablets: { query: "tablet" },
-  smartwatch: { query: "smartwatch" },
-
-  // Categories that exist in our data
-  "home-garden": { query: "kitchen", categoryFilter: "Kitchen" },
-  "personal-care": { query: "personal" },
-  "small-appliances": { query: "appliance" },
-  wellness: { query: "wellness" },
-  "gifts-lifestyle": { query: "gift" },
-  "books-media": { query: "book" },
-  "toys-games": { query: "game" },
-};
-
-const DESKTOP_CATEGORIES: Category[] = [
-  // Row 1 – core tech
-  { key: "laptops", label: "Laptops" },
-  { key: "phones", label: "Phones" },
-  { key: "monitors", label: "Monitors" },
-  { key: "audio", label: "Headphones & Audio" },
-  { key: "keyboards-mice", label: "Keyboards & Mouse" },
-
-  // Row 2 – extended tech + lifestyle
-  { key: "tv-display", label: "TV & Display" },
-  { key: "tablets", label: "Tablets" },
-  { key: "smartwatch", label: "Smartwatches" },
-  { key: "home-garden", label: "Home & Garden" },
-  { key: "personal-care", label: "Personal Care" },
-
-  // Row 3 – extra / future waves
-  { key: "small-appliances", label: "Small Appliances" },
-  { key: "wellness", label: "Wellness & Supplements" },
-  { key: "gifts-lifestyle", label: "Gifts & Lifestyle" },
-  { key: "books-media", label: "Books & Media" },
-  { key: "toys-games", label: "Toys & Games" },
-];
-
-const MOBILE_CATEGORIES: Category[] = DESKTOP_CATEGORIES.filter((c) =>
-  [
-    "laptops",
-    "phones",
-    "tv-display",
-    "audio",
-    "home-garden",
-    "personal-care",
-  ].includes(c.key)
-);
 
 type Listing = {
   id: string;
@@ -143,23 +78,6 @@ type ProductWithListings = {
 const FAST_SHIPPING_DAYS = 3;
 
 export default function Page() {
-  function CategoryPill({
-    category,
-    onClick,
-  }: {
-    category: Category;
-    onClick: (key: string) => void;
-  }) {
-    return (
-      <button
-        type="button"
-        onClick={() => onClick(category.key)}
-        className="px-2 py-1.5 rounded-lg bg-[var(--pl-card)] border border-[var(--pl-card-border)] shadow-[0_0_8px_var(--pl-primary-glow)] text-[9px] font-medium text-[var(--pl-text)] hover:-translate-y-[0.5px] hover:shadow-[0_0_10px_var(--pl-primary-glow)] transition-all text-center"
-      >
-        {category.label}
-      </button>
-    );
-  }
   // Mobile collapsible states
   const [savedSearchesOpen, setSavedSearchesOpen] = useState(false);
   const [adPreviewOpen, setAdPreviewOpen] = useState(false);
@@ -972,7 +890,7 @@ export default function Page() {
                     className="flex items-center justify-between py-0.5 group"
                   >
                     <span
-                      onClick={() => runSearch(s)}
+                      onClick={() => executeSearch({ query: s, category: activeCategory })}
                       className="text-xs leading-relaxed text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 cursor-pointer transition-colors"
                     >
                       {s}
