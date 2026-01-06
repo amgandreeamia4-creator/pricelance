@@ -741,7 +741,7 @@ export default function Page() {
                 key={label}
                 type="button"
                 onClick={() => handleCategoryClickByLabel(label)}
-                className="inline-flex w-28 max-w-full items-center justify-center rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] leading-tight font-medium text-slate-800 shadow-sm hover:border-blue-400 hover:bg-blue-50 transition-colors"
+                className="inline-flex w-28 items-center justify-center rounded-full border border-slate-200 bg-white px-2 py-1 text-[10px] leading-tight font-medium text-slate-800 shadow-sm hover:border-blue-400 hover:bg-blue-50 transition-colors whitespace-nowrap"
               >
                 {label}
               </button>
