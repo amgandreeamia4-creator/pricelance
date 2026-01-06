@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { isListingFromDisabledNetwork } from '@/config/affiliateNetworks';
+import type { Prisma } from '@prisma/client';
 
 type ListingResponse = {
   id: string;
@@ -25,6 +26,136 @@ type ProductResponse = {
   listings: ListingResponse[];
 };
 
+type TopCategoryKey =
+  | 'laptops'
+  | 'phones'
+  | 'monitors'
+  | 'headphones_audio'
+  | 'keyboards_mouse'
+  | 'tv_display'
+  | 'tablets'
+  | 'smartwatches'
+  | 'home_garden'
+  | 'personal_care'
+  | 'small_appliances'
+  | 'wellness_supplements'
+  | 'gifts_lifestyle'
+  | 'books_media'
+  | 'toys_games'
+  | 'kitchen';
+
+const CATEGORY_FILTERS: Record<TopCategoryKey, Prisma.ProductWhereInput> = {
+  laptops: {
+    OR: [
+      { name: { contains: 'laptop', mode: 'insensitive' } },
+      { category: { contains: 'laptop', mode: 'insensitive' } },
+    ],
+  },
+  phones: {
+    OR: [
+      { name: { contains: 'telefon', mode: 'insensitive' } },
+      { name: { contains: 'phone', mode: 'insensitive' } },
+      { category: { contains: 'phone', mode: 'insensitive' } },
+    ],
+  },
+  monitors: {
+    OR: [
+      { name: { contains: 'monitor', mode: 'insensitive' } },
+      { category: { contains: 'monitor', mode: 'insensitive' } },
+    ],
+  },
+  headphones_audio: {
+    OR: [
+      { name: { contains: 'căști', mode: 'insensitive' } },
+      { name: { contains: 'casti', mode: 'insensitive' } },
+      { name: { contains: 'headphone', mode: 'insensitive' } },
+      { category: { contains: 'audio', mode: 'insensitive' } },
+    ],
+  },
+  keyboards_mouse: {
+    OR: [
+      { name: { contains: 'tastatur', mode: 'insensitive' } },
+      { name: { contains: 'keyboard', mode: 'insensitive' } },
+      { name: { contains: 'mouse', mode: 'insensitive' } },
+    ],
+  },
+  tv_display: {
+    OR: [
+      { name: { contains: 'monitor', mode: 'insensitive' } },
+      { name: { contains: 'tv ', mode: 'insensitive' } },
+      { category: { contains: 'televizor', mode: 'insensitive' } },
+    ],
+  },
+  tablets: {
+    OR: [
+      { name: { contains: 'tablet', mode: 'insensitive' } },
+      { category: { contains: 'tablet', mode: 'insensitive' } },
+    ],
+  },
+  smartwatches: {
+    OR: [
+      { name: { contains: 'watch', mode: 'insensitive' } },
+      { name: { contains: 'ceas', mode: 'insensitive' } },
+    ],
+  },
+  home_garden: {
+    OR: [
+      { category: { contains: 'home', mode: 'insensitive' } },
+      { category: { contains: 'gard', mode: 'insensitive' } },
+      { name: { contains: 'decor', mode: 'insensitive' } },
+    ],
+  },
+  personal_care: {
+    OR: [
+      { category: { contains: 'ingrijire', mode: 'insensitive' } },
+      { category: { contains: 'personal care', mode: 'insensitive' } },
+      { name: { contains: 'gel de dus', mode: 'insensitive' } },
+      { name: { contains: 'shower gel', mode: 'insensitive' } },
+    ],
+  },
+  small_appliances: {
+    OR: [
+      { category: { contains: 'electrocasnice mici', mode: 'insensitive' } },
+      { category: { contains: 'small appliance', mode: 'insensitive' } },
+    ],
+  },
+  wellness_supplements: {
+    OR: [
+      { category: { contains: 'supliment', mode: 'insensitive' } },
+      { category: { contains: 'supplement', mode: 'insensitive' } },
+    ],
+  },
+  gifts_lifestyle: {
+    OR: [
+      { category: { contains: 'cadouri', mode: 'insensitive' } },
+      { category: { contains: 'gift', mode: 'insensitive' } },
+    ],
+  },
+  books_media: {
+    OR: [
+      { category: { contains: 'cărți', mode: 'insensitive' } },
+      { category: { contains: 'carti', mode: 'insensitive' } },
+      { category: { contains: 'books', mode: 'insensitive' } },
+      { category: { contains: 'media', mode: 'insensitive' } },
+    ],
+  },
+  toys_games: {
+    OR: [
+      { category: { contains: 'jocuri', mode: 'insensitive' } },
+      { category: { contains: 'toys', mode: 'insensitive' } },
+      { category: { contains: 'games', mode: 'insensitive' } },
+    ],
+  },
+  kitchen: {
+    OR: [
+      { category: { contains: 'bucatar', mode: 'insensitive' } },
+      { category: { contains: 'kitchen', mode: 'insensitive' } },
+      { name: { contains: 'bucatar', mode: 'insensitive' } },
+      { name: { contains: 'kitchen', mode: 'insensitive' } },
+    ],
+  },
+};
+
 function getBestPrice(product: { listings: { price: number | null }[] }) {
   if (!product.listings || product.listings.length === 0) return Infinity;
   const prices = product.listings.map((l) =>
@@ -38,6 +169,8 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
 
     const q = (searchParams.get('q') ?? '').trim();
+    const categoryKey = searchParams.get('category') as TopCategoryKey | null;
+    const categoryFilter = categoryKey && CATEGORY_FILTERS[categoryKey] ? CATEGORY_FILTERS[categoryKey] : undefined;
     const store = searchParams.get('store') || undefined;
     const sort = searchParams.get('sort') || 'relevance'; // relevance | price-asc | price-desc
     const pageParam = searchParams.get('page') ?? '1';
@@ -61,7 +194,23 @@ export async function GET(req: NextRequest) {
         { name: { contains: q, mode: 'insensitive' } },
         { displayName: { contains: q, mode: 'insensitive' } },
         { brand: { contains: q, mode: 'insensitive' } },
+        { category: { contains: q, mode: 'insensitive' } },
       ];
+    }
+
+    // Add category filtering support
+    if (categoryFilter) {
+      if (q && where.OR) {
+        // If both text search and category filter, combine with AND
+        where.AND = [
+          { OR: where.OR },
+          categoryFilter
+        ];
+        delete where.OR;
+      } else {
+        // Only category filter
+        Object.assign(where, categoryFilter);
+      }
     }
 
     if (store) {

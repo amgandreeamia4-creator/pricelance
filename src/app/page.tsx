@@ -12,6 +12,46 @@ import { STORES, StoreId } from "@/config/catalog";
 import PriceTrendChart from "@/components/PriceTrendChart";
 import ProductSummary from "@/components/ProductSummary";
 
+type TopCategoryKey =
+  | 'laptops'
+  | 'phones'
+  | 'monitors'
+  | 'headphones_audio'
+  | 'keyboards_mouse'
+  | 'tv_display'
+  | 'tablets'
+  | 'smartwatches'
+  | 'home_garden'
+  | 'personal_care'
+  | 'small_appliances'
+  | 'wellness_supplements'
+  | 'gifts_lifestyle'
+  | 'books_media'
+  | 'toys_games'
+  | 'kitchen';
+
+const TOP_CATEGORIES: { key: TopCategoryKey; label: string }[] = [
+  { key: 'laptops', label: 'Laptops' },
+  { key: 'phones', label: 'Phones' },
+  { key: 'monitors', label: 'Monitors' },
+  { key: 'headphones_audio', label: 'Headphones & Audio' },
+
+  { key: 'keyboards_mouse', label: 'Keyboards & Mouse' },
+  { key: 'tv_display', label: 'TV & Display' },
+  { key: 'tablets', label: 'Tablets' },
+  { key: 'smartwatches', label: 'Smartwatches' },
+
+  { key: 'home_garden', label: 'Home & Garden' },
+  { key: 'personal_care', label: 'Personal Care' },
+  { key: 'small_appliances', label: 'Small Appliances' },
+  { key: 'wellness_supplements', label: 'Wellness & Supplements' },
+
+  { key: 'gifts_lifestyle', label: 'Gifts & Lifestyle' },
+  { key: 'books_media', label: 'Books & Media' },
+  { key: 'toys_games', label: 'Toys & Games' },
+  { key: 'kitchen', label: 'Kitchen' },
+];
+
 type Category = {
   key: string;
   label: string;
@@ -148,6 +188,9 @@ export default function Page() {
 
   // Favorites (local only for now)
   const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
+
+  // Category selection state
+  const [selectedCategory, setSelectedCategory] = useState<TopCategoryKey | null>(null);
 
   // Dynamic categories from DB
   const [categories, setCategories] = useState<string[]>([]);
@@ -482,70 +525,19 @@ export default function Page() {
     );
   };
 
-  const handleCategoryClick = (key: string) => {
-    const cfg = CATEGORY_SEARCH_CONFIG[key];
-    if (!cfg) return;
-
-    // Use category filter if available (more precise)
-    if (cfg.categoryFilter) {
-      setQuery(cfg.categoryFilter);
-      runSearchWithCategory(cfg.categoryFilter);
-      return;
-    }
-
-    // Fallback to text search
-    if (cfg.query) {
-      setQuery(cfg.query);
-      runSearch(cfg.query);
-      return;
-    }
+  const handleCategoryClick = (key: TopCategoryKey) => {
+    setSelectedCategory((current) => (current === key ? null : key));
+    
+    // Trigger search with the selected category
+    triggerSearch(query, key);
   };
 
-  // Search with category filter
-  async function runSearchWithCategory(category: string) {
-    setIsSearching(true);
-    try {
-      const params = new URLSearchParams({ category });
-
-      if (storeFilter !== "all") {
-        params.set("store", storeFilter);
-      }
-      if (fastOnly) {
-        params.set("fastOnly", "true");
-      }
-
-      const res = await fetch(`/api/products?${params.toString()}`, {
-        method: "GET",
-      });
-
-      if (!res.ok) {
-        console.error("Category search failed", res.status);
-        setProducts([]);
-        return;
-      }
-
-      const data = await res.json();
-      const nextProducts = Array.isArray(data.products) ? data.products : [];
-      setProducts(nextProducts);
-      
-      // Auto-select first product if no product is currently selected
-      if (nextProducts.length > 0 && !selectedProductId) {
-        setSelectedProductId(nextProducts[0].id);
-      }
-    } catch (error) {
-      console.error("Category search error in page.tsx", error);
-      setProducts([]);
-    } finally {
-      setIsSearching(false);
-    }
-  };
-
-  // Resilient search function backed by /api/products
-  async function runSearch(q: string) {
-    const trimmed = q.trim();
+  // Updated search function that accepts category parameter
+  const triggerSearch = async (searchQuery: string, category?: TopCategoryKey | null) => {
+    const trimmed = searchQuery.trim();
     setQuery(trimmed);
 
-    if (!trimmed) {
+    if (!trimmed && !category) {
       setProducts([]);
       setSelectedProductId(null);
       return;
@@ -553,8 +545,11 @@ export default function Page() {
 
     setIsSearching(true);
     try {
-      const params = new URLSearchParams({ q: trimmed });
+      const params = new URLSearchParams();
+      if (trimmed) params.set('q', trimmed);
+      if (category) params.set('category', category);
 
+      // Add other filters
       if (categoryFilter !== "all") {
         params.set("category", categoryFilter);
       }
@@ -589,6 +584,11 @@ export default function Page() {
     } finally {
       setIsSearching(false);
     }
+  };
+
+  // Resilient search function backed by /api/products (updated to use triggerSearch)
+  async function runSearch(q: string) {
+    await triggerSearch(q, selectedCategory);
   }
 
   function handleUseLocation() {
@@ -682,13 +682,23 @@ export default function Page() {
       <div className="mt-6 sm:hidden">
         <div className="flex flex-col items-center gap-3 mb-6">
           <div className="grid grid-cols-3 gap-3 w-full max-w-md">
-            {MOBILE_CATEGORIES.map((cat) => (
-              <CategoryPill
-                key={cat.key}
-                category={cat}
-                onClick={handleCategoryClick}
-              />
-            ))}
+            {TOP_CATEGORIES.slice(0, 6).map((cat) => {
+              const isActive = selectedCategory === cat.key;
+              return (
+                <button
+                  key={cat.key}
+                  type="button"
+                  onClick={() => handleCategoryClick(cat.key)}
+                  className={`px-2 py-1.5 rounded-lg border shadow-[0_0_8px_var(--pl-primary-glow)] text-[9px] font-medium text-center transition-all ${
+                    isActive
+                      ? 'bg-sky-100 border-sky-400 text-sky-900'
+                      : 'bg-[var(--pl-card)] border-[var(--pl-card-border)] text-[var(--pl-text)] hover:-translate-y-[0.5px] hover:shadow-[0_0_10px_var(--pl-primary-glow)]'
+                  }`}
+                >
+                  {cat.label}
+                </button>
+              );
+            })}
           </div>
         </div>
       </div>
@@ -696,25 +706,30 @@ export default function Page() {
       {/* Categories grid (desktop / tablet) */}
       <div className="mt-8 hidden sm:block">
         <div className="mx-auto max-w-5xl grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-          {DESKTOP_CATEGORIES.map((cat) => (
-            <button
-              key={cat.key}
-              type="button"
-              onClick={() => handleCategoryClick(cat.key)}
-              className="group w-full text-sm font-medium rounded-xl border border-slate-200 bg-white/90 px-4 py-3 text-slate-800 shadow-sm hover:border-blue-400 hover:bg-blue-50/80 hover:shadow-md transition-all duration-150 ease-out"
-            >
-              <span className="block text-center leading-snug">
-                {cat.label}
-              </span>
-            </button>
-          ))}
+          {TOP_CATEGORIES.map((cat) => {
+            const isActive = selectedCategory === cat.key;
+            return (
+              <button
+                key={cat.key}
+                type="button"
+                onClick={() => handleCategoryClick(cat.key)}
+                className={`group w-full text-sm font-medium rounded-xl border transition-all duration-150 ease-out px-4 py-3 text-center leading-snug ${
+                  isActive
+                    ? 'bg-sky-100 border-sky-400 text-sky-900 shadow-sm'
+                    : 'bg-white/90 border-slate-200 text-slate-800 shadow-sm hover:border-blue-400 hover:bg-blue-50/80 hover:shadow-md'
+                }`}
+              >
+                <span className="block">{cat.label}</span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
       {/* SEARCH BAR */}
       <div className="w-full px-6 mt-1 md:mt-2">
         <div className="mx-auto w-full max-w-5xl">
-          <form onSubmit={(e) => { e.preventDefault(); runSearch(query); }}>
+          <form onSubmit={(e) => { e.preventDefault(); triggerSearch(query, selectedCategory); }}>
             <input
               type="text"
               value={query}
