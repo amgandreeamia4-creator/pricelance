@@ -28,6 +28,7 @@ import {
   defaultCountryForStore,
   normalizeStoreName,
 } from "@/lib/stores/registry";
+import { inferCategorySlugFromIngestion } from "@/lib/categoryInference";
 
 export type ImportSummary = {
   productsCreated: number;
@@ -241,11 +242,21 @@ export async function importNormalizedListings(
     const rowNumber = startRowNumber + i;
 
     try {
-      // === STEP 1: Validate product fields ===
+      // === STEP 1: Validate product fields and infer category ===
       const productTitle = row.productTitle?.trim();
       const brand = row.brand?.trim();
-      const category = row.category?.trim();
+      const rawCategory = row.category?.trim();
       const gtin = row.gtin?.trim();
+
+      // Infer category using existing synonym logic and campaign defaults
+      const inferredCategory = inferCategorySlugFromIngestion({
+        title: productTitle,
+        description: null, // NormalizedListing doesn't have description field
+        campaignName: row.storeName, // Use storeName as campaign hint
+        explicitCategorySlug: rawCategory,
+      });
+
+      const category = inferredCategory || rawCategory; // Use inferred, fallback to raw
 
       // A row must have at least product_title to be valid
       if (!productTitle) {
