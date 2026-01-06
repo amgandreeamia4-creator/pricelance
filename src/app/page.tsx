@@ -11,8 +11,6 @@ import ChatAssistant from "@/components/ChatAssistant";
 import { STORES, StoreId } from "@/config/catalog";
 import PriceTrendChart from "@/components/PriceTrendChart";
 import ProductSummary from "@/components/ProductSummary";
-import HomeCategoryStrip from "@/components/HomeCategoryStrip";
-import TopCategoryGrid from "@/components/TopCategoryGrid";
 
 type Listing = {
   id: string;
@@ -42,6 +40,27 @@ type ProductWithListings = {
 };
 
 const FAST_SHIPPING_DAYS = 3;
+
+const FEATURED_CATEGORIES = [
+  // TECH
+  { id: "laptops",        label: "Laptopuri",          query: "laptop" },
+  { id: "phones",         label: "Telefoane",          query: "telefon" },
+  { id: "monitors",       label: "Monitoare",          query: "monitor" },
+  { id: "audio",          label: "Căști & Audio",      query: "casti audio" },
+  { id: "peripherals",    label: "Tastaturi & Mouse",  query: "tastatura mouse" },
+  { id: "tv-display",     label: "TV & Display",       query: "televizor" },
+  { id: "tablets",        label: "Tablete",            query: "tableta" },
+  { id: "smartwatch",     label: "Smartwatch",         query: "smartwatch" },
+
+  // HOME / LIFESTYLE
+  { id: "home-garden",    label: "Casă & Grădină",     query: "casa gradina" },
+  { id: "appliances",     label: "Electrocasnice mici", query: "aspirator cafetiera" },
+  { id: "personal-care",  label: "Îngrijire personală", query: "ingrijire personala" },
+  { id: "wellness",       label: "Suplimente & Wellness", query: "herbagetica suplimente" },
+  { id: "gifts",          label: "Cadouri & Lifestyle", query: "cadouri decor luxury" },
+  { id: "books",          label: "Cărți & Media",      query: "carti" },
+  { id: "toys-games",     label: "Jocuri & Jucării",   query: "jocuri jucarii" },
+];
 
 export default function Page() {
   // Mobile collapsible states
@@ -539,12 +558,22 @@ export default function Page() {
         </div>
       </header>
 
-      {/* Top category grid (replaces old pill row) */}
-      <TopCategoryGrid
-        onCategoryClick={(query) => {
-          runSearch(query);
-        }}
-      />
+      {/* FEATURED CATEGORIES - Glowing pills */}
+      <div className="mt-6 flex flex-wrap justify-center gap-4 max-w-5xl mx-auto">
+        {FEATURED_CATEGORIES.map((cat) => (
+          <button
+            key={cat.id}
+            type="button"
+            onClick={() => {
+              setQuery(cat.query);
+              runSearch(cat.query);
+            }}
+            className="px-4 py-2 rounded-3xl bg-[var(--pl-card)] border border-[var(--pl-card-border)] shadow-[0_0_15px_var(--pl-primary-glow)] text-[12px] font-medium text-[var(--pl-text)] hover:-translate-y-[1px] hover:shadow-[0_0_18px_var(--pl-primary-glow)] transition-all"
+          >
+            {cat.label}
+          </button>
+        ))}
+      </div>
 
       {/* SEARCH BAR */}
       <div className="w-full px-6 mt-1 md:mt-2">
