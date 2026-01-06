@@ -12,6 +12,45 @@ import { STORES, StoreId } from "@/config/catalog";
 import PriceTrendChart from "@/components/PriceTrendChart";
 import ProductSummary from "@/components/ProductSummary";
 
+type Category = {
+  key: string;
+  label: string;
+};
+
+const DESKTOP_CATEGORIES: Category[] = [
+  // Row 1 – core tech
+  { key: "laptops", label: "Laptops" },
+  { key: "phones", label: "Phones" },
+  { key: "monitors", label: "Monitors" },
+  { key: "audio", label: "Headphones & Audio" },
+  { key: "keyboards-mice", label: "Keyboards & Mouse" },
+
+  // Row 2 – extended tech + lifestyle
+  { key: "tv-display", label: "TV & Display" },
+  { key: "tablets", label: "Tablets" },
+  { key: "smartwatch", label: "Smartwatches" },
+  { key: "home-garden", label: "Home & Garden" },
+  { key: "personal-care", label: "Personal Care" },
+
+  // Row 3 – extra / future waves
+  { key: "small-appliances", label: "Small Appliances" },
+  { key: "wellness", label: "Wellness & Supplements" },
+  { key: "gifts-lifestyle", label: "Gifts & Lifestyle" },
+  { key: "books-media", label: "Books & Media" },
+  { key: "toys-games", label: "Toys & Games" },
+];
+
+const MOBILE_CATEGORIES: Category[] = DESKTOP_CATEGORIES.filter((c) =>
+  [
+    "laptops",
+    "phones",
+    "tv-display",
+    "audio",
+    "home-garden",
+    "personal-care",
+  ].includes(c.key)
+);
+
 type Listing = {
   id: string;
   storeId?: StoreId | string;
@@ -41,40 +80,24 @@ type ProductWithListings = {
 
 const FAST_SHIPPING_DAYS = 3;
 
-type HomeCategory = {
-  id: string;
-  label: string;
-  query: string;
-};
-
-const FEATURED_CATEGORY_ROWS: HomeCategory[][] = [
-  // Row 1 – core tech
-  [
-    { id: "laptops",       label: "Laptops",               query: "laptop" },
-    { id: "phones",        label: "Phones",                query: "telefon phone" },
-    { id: "monitors",      label: "Monitors",              query: "monitor" },
-    { id: "tv-display",    label: "TV & Display",          query: "televizor tv" },
-    { id: "audio",         label: "Headphones & Audio",    query: "casti audio" },
-  ],
-  // Row 2 – more tech
-  [
-    { id: "peripherals",   label: "Keyboards & Mouse",     query: "tastatura mouse" },
-    { id: "tablets",       label: "Tablets",               query: "tableta" },
-    { id: "smartwatches",  label: "Smartwatches",          query: "smartwatch" },
-    { id: "gaming",        label: "Gaming & Consoles",     query: "gaming consola" },
-    { id: "appliances",    label: "Small Appliances",      query: "electrocasnice mici aspirator cafetiera" },
-  ],
-  // Row 3 – home & lifestyle
-  [
-    { id: "home-garden",   label: "Home & Garden",         query: "casa gradina" },
-    { id: "personal-care", label: "Personal Care",         query: "ingrijire personala" },
-    { id: "wellness",      label: "Wellness & Supplements",query: "suplimente herbagetica" },
-    { id: "gifts",         label: "Gifts & Lifestyle",     query: "cadouri decor luxury" },
-    { id: "books-media",   label: "Books & Media",         query: "carti jocuri jucarii" },
-  ],
-];
-
 export default function Page() {
+  function CategoryPill({
+    category,
+    onClick,
+  }: {
+    category: Category;
+    onClick: (key: string) => void;
+  }) {
+    return (
+      <button
+        type="button"
+        onClick={() => onClick(category.key)}
+        className="px-6 py-3 rounded-3xl bg-[var(--pl-card)] border border-[var(--pl-card-border)] shadow-[0_0_15px_var(--pl-primary-glow)] text-[12px] font-medium text-[var(--pl-text)] hover:-translate-y-[1px] hover:shadow-[0_0_18px_var(--pl-primary-glow)] transition-all"
+      >
+        {category.label}
+      </button>
+    );
+  }
   // Mobile collapsible states
   const [savedSearchesOpen, setSavedSearchesOpen] = useState(false);
   const [adPreviewOpen, setAdPreviewOpen] = useState(false);
@@ -432,9 +455,30 @@ export default function Page() {
     );
   };
 
-  const handleCategoryClick = (cat: HomeCategory) => {
-    setQuery(cat.query);
-    runSearch(cat.query);
+  const handleCategoryClick = (key: string) => {
+    const defaultQueryByKey: Record<string, string> = {
+      laptops: "laptop",
+      phones: "telefon",
+      monitors: "monitor",
+      audio: "casti",
+      "keyboards-mice": "tastatura mouse",
+      "tv-display": "televizor",
+      tablets: "tableta",
+      smartwatch: "smartwatch",
+      "home-garden": "home garden",
+      "personal-care": "ingrijire personala",
+      "small-appliances": "electrocasnice mici",
+      wellness: "suplimente",
+      "gifts-lifestyle": "cadouri",
+      "books-media": "carte",
+      "toys-games": "jucarii",
+    };
+
+    const query = defaultQueryByKey[key] ?? "";
+    if (!query) return;
+
+    setQuery(query);
+    runSearch(query);
   };
 
   // Resilient search function backed by /api/products
@@ -575,25 +619,53 @@ export default function Page() {
         </div>
       </header>
 
-      {/* FEATURED CATEGORIES - 3 connected rows */}
-      <div className="mt-8 space-y-3 max-w-6xl mx-auto">
-        {FEATURED_CATEGORY_ROWS.map((row, rowIndex) => (
-          <div
-            key={rowIndex}
-            className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3"
-          >
-            {row.map((cat) => (
-              <button
-                key={cat.id}
-                type="button"
-                onClick={() => handleCategoryClick(cat)}
-                className="px-6 py-3 rounded-3xl bg-[var(--pl-card)] border border-[var(--pl-card-border)] shadow-[0_0_15px_var(--pl-primary-glow)] text-[12px] font-medium text-[var(--pl-text)] hover:-translate-y-[1px] hover:shadow-[0_0_18px_var(--pl-primary-glow)] transition-all"
-              >
-                {cat.label}
-              </button>
-            ))}
-          </div>
-        ))}
+      {/* Mobile: 2 rows × 3 highlight categories */}
+      <div className="flex md:hidden flex-col items-center gap-3 mb-6">
+        <div className="grid grid-cols-3 gap-3 w-full max-w-md">
+          {MOBILE_CATEGORIES.map((cat) => (
+            <CategoryPill
+              key={cat.key}
+              category={cat}
+              onClick={handleCategoryClick}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* Desktop & tablet: 3 rows of categories */}
+      <div className="hidden md:flex flex-col items-center gap-3 mb-6">
+        {/* Row 1 */}
+        <div className="flex flex-wrap justify-center gap-4">
+          {DESKTOP_CATEGORIES.slice(0, 5).map((cat) => (
+            <CategoryPill
+              key={cat.key}
+              category={cat}
+              onClick={handleCategoryClick}
+            />
+          ))}
+        </div>
+
+        {/* Row 2 */}
+        <div className="flex flex-wrap justify-center gap-4">
+          {DESKTOP_CATEGORIES.slice(5, 10).map((cat) => (
+            <CategoryPill
+              key={cat.key}
+              category={cat}
+              onClick={handleCategoryClick}
+            />
+          ))}
+        </div>
+
+        {/* Row 3 */}
+        <div className="flex flex-wrap justify-center gap-4">
+          {DESKTOP_CATEGORIES.slice(10, 15).map((cat) => (
+            <CategoryPill
+              key={cat.key}
+              category={cat}
+              onClick={handleCategoryClick}
+            />
+          ))}
+        </div>
       </div>
 
       {/* SEARCH BAR */}
