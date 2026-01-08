@@ -9,11 +9,7 @@ export default async function Page() {
   ]);
 
   const productsWithCounts = await prisma.product.findMany({
-    select: {
-      id: true,
-      name: true,
-      displayName: true,
-      brand: true,
+    include: {
       Listing: true,
     },
   });
