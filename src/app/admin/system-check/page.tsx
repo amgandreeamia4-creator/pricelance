@@ -323,7 +323,7 @@ async function fetchCategoryCoverage(): Promise<CategoryCoverageRow[]> {
         where: { category: slug },
         select: {
           id: true,
-          listings: {
+          Listing: {
             select: { id: true },
           },
         },
@@ -334,8 +334,8 @@ async function fetchCategoryCoverage(): Promise<CategoryCoverageRow[]> {
       let withMultipleListings = 0;
 
       for (const p of products) {
-        const listingCount = Array.isArray(p.listings)
-          ? p.listings.length
+        const listingCount = Array.isArray(p.Listing)
+          ? p.Listing.length
           : 0;
         if (listingCount >= 1) withListings++;
         if (listingCount >= 2) withMultipleListings++;

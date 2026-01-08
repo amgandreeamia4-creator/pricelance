@@ -542,6 +542,7 @@ async function seedProduct(p: any) {
       brand: p.brand ?? null,
       thumbnailUrl: p.thumbnailUrl ?? p.imageUrl ?? null,
       imageUrl: p.imageUrl ?? p.thumbnailUrl ?? null,
+      updatedAt: new Date(),
     },
   });
 
@@ -550,7 +551,7 @@ async function seedProduct(p: any) {
     for (const l of p.listings) {
       await prisma.listing.create({
         data: {
-          id: l.id ?? undefined,
+          id: l.id ?? randomUUID(),
           productId: product.id,
 
           // Prefer explicit storeName, but fall back to older "store" key if present
@@ -588,6 +589,7 @@ async function seedProduct(p: any) {
           rating: typeof l.rating === "number" ? l.rating : null,
           reviewCount:
             typeof l.reviewCount === "number" ? l.reviewCount : null,
+          updatedAt: new Date(),
         },
       });
     }
@@ -617,6 +619,7 @@ async function seedProduct(p: any) {
 
       await prisma.productPriceHistory.create({
         data: {
+          id: randomUUID(),
           productId: product.id,
           date,
           price:
