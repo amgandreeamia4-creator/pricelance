@@ -1,6 +1,7 @@
 // src/app/api/favorites/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
+import { randomUUID } from "crypto";
 import { getOrCreateUserId, attachUserIdCookie } from "@/lib/userIdentity";
 
 const prisma = new PrismaClient();
@@ -17,10 +18,10 @@ export async function GET(req: NextRequest) {
       where: { userId },
       orderBy: { createdAt: "desc" },
       include: {
-        product: {
+        Product: {
           include: {
-            listings: true,
-            priceHistory: true,
+            Listing: true,
+            ProductPriceHistory: true,
           },
         },
       },
@@ -34,7 +35,7 @@ export async function GET(req: NextRequest) {
         favorites: favorites.map((f: any) => ({
           productId: f.productId,
           createdAt: f.createdAt,
-          product: f.product,
+          product: f.Product,
         })),
       },
       { status: 200 }
@@ -94,6 +95,7 @@ export async function POST(req: NextRequest) {
       },
       update: {},
       create: {
+        id: randomUUID(),
         userId,
         productId,
       },

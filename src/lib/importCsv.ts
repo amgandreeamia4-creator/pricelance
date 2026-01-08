@@ -299,6 +299,7 @@ export async function importCsvString(csvContent: string): Promise<ImportSummary
               name: productName,
               brand,
               category,
+              updatedAt: new Date(),
             },
           });
           productId = newProduct.id;

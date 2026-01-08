@@ -470,6 +470,7 @@ export async function importNormalizedListings(
         if (priceChanged) {
           await prisma.productPriceHistory.create({
             data: {
+              id: randomUUID(),
               productId,
               date: new Date(),
               price,

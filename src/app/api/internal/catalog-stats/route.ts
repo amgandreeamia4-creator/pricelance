@@ -47,7 +47,7 @@ export async function GET(req: NextRequest) {
       select: {
         id: true,
         category: true,
-        listings: {
+        Listing: {
           select: {
             price: true,
           },
@@ -87,7 +87,7 @@ export async function GET(req: NextRequest) {
 
       entry.productCount += 1;
 
-      for (const l of p.listings) {
+      for (const l of p.Listing) {
         const price = l.price;
         if (typeof price === "number" && !Number.isNaN(price)) {
           entry.listingCount += 1;
@@ -107,7 +107,7 @@ export async function GET(req: NextRequest) {
         };
 
       providerStats.productCount += 1;
-      providerStats.listingCount += p.listings.length;
+      providerStats.listingCount += p.Listing.length;
 
       providerMap.set(provider, providerStats);
     }

@@ -536,12 +536,13 @@ async function seedProduct(p: any) {
       // Use provided id if present, otherwise generate a stable UUID
       id: p.id ?? randomUUID(),
       name: p.name,
-      displayName: p.displayName ?? p.name,
+      displayName: p.displayName ?? null,
       description: p.description ?? null,
       category: p.category ?? null,
       brand: p.brand ?? null,
-      thumbnailUrl: p.thumbnailUrl ?? p.imageUrl ?? null,
-      imageUrl: p.imageUrl ?? p.thumbnailUrl ?? null,
+      thumbnailUrl: p.thumbnailUrl ?? null,
+      imageUrl: p.imageUrl ?? null,
+      updatedAt: new Date(),
     },
   });
 
@@ -588,6 +589,7 @@ async function seedProduct(p: any) {
           rating: typeof l.rating === "number" ? l.rating : null,
           reviewCount:
             typeof l.reviewCount === "number" ? l.reviewCount : null,
+          updatedAt: new Date(),
         },
       });
     }
@@ -617,6 +619,7 @@ async function seedProduct(p: any) {
 
       await prisma.productPriceHistory.create({
         data: {
+          id: randomUUID(),
           productId: product.id,
           date,
           price:

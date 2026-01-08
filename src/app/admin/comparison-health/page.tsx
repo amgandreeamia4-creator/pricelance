@@ -16,7 +16,7 @@ export default async function Page() {
       brand: true,
       _count: {
         select: {
-          listings: true,
+          Listing: true,
         },
       },
     },
@@ -27,15 +27,15 @@ export default async function Page() {
   let with2plus = 0;
 
   for (const p of productsWithCounts) {
-    const c = p._count.listings;
+    const c = p._count.Listing;
     if (c === 0) with0++;
     else if (c === 1) with1++;
     else with2plus++;
   }
 
   const multiOfferProducts = productsWithCounts
-    .filter((p) => p._count.listings >= 2)
-    .sort((a, b) => b._count.listings - a._count.listings)
+    .filter((p) => p._count.Listing >= 2)
+    .sort((a, b) => b._count.Listing - a._count.Listing)
     .slice(0, 50);
 
   return (
@@ -80,7 +80,7 @@ export default async function Page() {
                       {p.displayName ?? p.name}
                     </td>
                     <td className="px-3 py-2">{p.brand ?? '-'}</td>
-                    <td className="px-3 py-2">{p._count.listings}</td>
+                    <td className="px-3 py-2">{p._count.Listing}</td>
                   </tr>
                 ))}
               </tbody>

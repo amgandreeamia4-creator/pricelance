@@ -81,15 +81,15 @@ export async function GET(req: NextRequest) {
     // Apply network filtering to exclude disabled networks
     const networkFilter = getNetworkFilter();
     const whereClause = Object.keys(networkFilter).length > 0 ? {
-      listings: {
+      Listing: {
         some: networkFilter,
       },
     } : undefined;
 
     const products = await prisma.product.findMany({
       include: {
-        listings: true,
-        priceHistory: true,
+        Listing: true,
+        ProductPriceHistory: true,
       },
       where: whereClause,
     });
@@ -100,10 +100,10 @@ export async function GET(req: NextRequest) {
 
     for (const p of products) {
       // Require at least one listing
-      if (!p.listings || p.listings.length === 0) continue;
+      if (!p.Listing || p.Listing.length === 0) continue;
 
       // Filter out disabled networks from listings
-      const filteredListings = (p.listings as any[]).filter((l: any) => {
+      const filteredListings = (p.Listing as any[]).filter((l: any) => {
         // Additional safety filter: exclude disabled networks using affiliate fields
         if (shouldHideListing(l)) {
           return false;
@@ -118,7 +118,7 @@ export async function GET(req: NextRequest) {
         continue;
       }
 
-      const validHistory = (p.priceHistory as any[]).filter((h: any) => h.price > 0);
+      const validHistory = (p.ProductPriceHistory as any[]).filter((h: any) => h.price > 0);
       if (validHistory.length < MIN_HISTORY_POINTS) continue;
 
       withHistoryCount++;

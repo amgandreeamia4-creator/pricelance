@@ -48,7 +48,7 @@ export interface ProductSearchOptions {
  */
 function mapToProductWithHistory(prismaProduct: any): ProductWithHistory {
   const listings =
-    (prismaProduct.listings ?? []).map((l: any) => ({
+    (prismaProduct.Listing ?? []).map((l: any) => ({
       id: l.id,
       storeName: l.storeName,
       storeLogoUrl: l.storeLogoUrl ?? null,
@@ -80,7 +80,7 @@ function mapToProductWithHistory(prismaProduct: any): ProductWithHistory {
     })) ?? [];
 
   const priceHistory =
-    (prismaProduct.priceHistory ?? []).map((h: any) => ({
+    (prismaProduct.ProductPriceHistory ?? []).map((h: any) => ({
       date:
         h.date instanceof Date
           ? h.date.toISOString().slice(0, 10)
@@ -161,8 +161,8 @@ export async function findProductsWithHistory(
 
   // ---- Listing-level filters ----
   if (options.location || options.store || options.fastOnly) {
-    where.listings = { some: {} };
-    const listingWhere: any = where.listings.some;
+    where.Listing = { some: {} };
+    const listingWhere: any = where.Listing.some;
 
     if (options.location) {
       listingWhere.location = {
@@ -186,8 +186,8 @@ export async function findProductsWithHistory(
   const prismaProducts = await prisma.product.findMany({
     where,
     include: {
-      listings: true,
-      priceHistory: {
+      Listing: true,
+      ProductPriceHistory: {
         orderBy: { date: "asc" },
       },
     },
@@ -234,7 +234,7 @@ export async function findProductsWithHistory(
   if (options.sortBy === "price") {
     products.sort((a: any, b: any) => {
       const minPrice = (p: any) => {
-        const prices = (p.listings ?? [])
+        const prices = (p.Listing ?? [])
           .map((l: any) => l.price)
           .filter((x: any) => typeof x === "number");
         if (!prices.length) return Number.POSITIVE_INFINITY;
@@ -245,7 +245,7 @@ export async function findProductsWithHistory(
   } else if (options.sortBy === "delivery") {
     products.sort((a: any, b: any) => {
       const minDays = (p: any) => {
-        const days = (p.listings ?? [])
+        const days = (p.Listing ?? [])
           .map(
             (l: any) =>
               l.deliveryTimeDays ??

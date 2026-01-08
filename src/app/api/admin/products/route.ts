@@ -41,7 +41,7 @@ export async function GET(req: NextRequest) {
         category: true,
         imageUrl: true,
         _count: {
-          select: { listings: true },
+          select: { Listing: true },
         },
       },
       orderBy: { updatedAt: "desc" },
@@ -57,7 +57,7 @@ export async function GET(req: NextRequest) {
       brand: p.brand,
       category: p.category,
       imageUrl: p.imageUrl,
-      listingsCount: p._count.listings,
+      listingsCount: p._count.Listing,
     }));
 
     return NextResponse.json({
@@ -119,6 +119,7 @@ export async function POST(req: NextRequest) {
         brand,
         category,
         imageUrl,
+        updatedAt: new Date(),
       },
     });
 

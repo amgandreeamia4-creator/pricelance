@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
         ],
       },
       include: {
-        product: {
+        Product: {
           select: {
             id: true,
             name: true,
@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
 
     // 3) Process each unique product
     for (const listing of manukaListings) {
-      const product = listing.product;
+      const product = listing.Product;
       
       try {
         // Build ingestion input for existing product

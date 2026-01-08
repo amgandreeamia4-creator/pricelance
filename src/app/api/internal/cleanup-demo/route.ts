@@ -30,7 +30,7 @@ export async function GET(req: NextRequest) {
   try {
     const allProducts = await prisma.product.findMany({
       include: {
-        listings: {
+        Listing: {
           select: { id: true, storeName: true, url: true },
         },
       },
@@ -40,7 +40,7 @@ export async function GET(req: NextRequest) {
       isDemoProduct({
         id: p.id,
         brand: p.brand,
-        listings: p.listings,
+        listings: p.Listing,
       })
     );
 
@@ -96,7 +96,7 @@ export async function POST(req: NextRequest) {
   try {
     const allProducts = await prisma.product.findMany({
       include: {
-        listings: {
+        Listing: {
           select: { id: true, storeName: true, url: true },
         },
       },
@@ -106,7 +106,7 @@ export async function POST(req: NextRequest) {
       isDemoProduct({
         id: p.id,
         brand: p.brand,
-        listings: p.listings,
+        listings: p.Listing,
       })
     );
 
@@ -116,7 +116,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           ok: true,
-          deleted: { products: 0, listings: 0, priceHistoryPoints: 0, favorites: 0 },
+          deleted: { products: 0, Listing: 0, priceHistoryPoints: 0, favorites: 0 },
           deletedProducts: 0,
           deletedListings: 0,
           deletedPriceHistory: 0,
@@ -159,7 +159,7 @@ export async function POST(req: NextRequest) {
         ok: true,
         deleted: {
           products: deletedProducts.count,
-          listings: deletedListings.count,
+          Listing: deletedListings.count,
           priceHistoryPoints: deletedPriceHistory.count,
           favorites: deletedFavorites.count,
         },
