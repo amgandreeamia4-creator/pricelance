@@ -25,7 +25,7 @@ export const metadata: Metadata = {
     follow: true,
   },
   verification: {
-    google: 'edNnT14enMS24XUO4qN',
+    google: 'edNnT14enMS24XUO4qNUxPEQQyL7faZ4OzTLrhp8oaI',
   },
   // This creates: <meta name="profitshareid" content="...">
   other: {
