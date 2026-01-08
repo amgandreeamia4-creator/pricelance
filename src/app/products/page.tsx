@@ -4,7 +4,7 @@ import React from "react";
 
 // Fetch product data from your API route
 async function getProducts() {
-  const res = await fetch("https://pricelance.vercel.app/api/products", {
+  const res = await fetch("/api/products", {
     cache: "no-store", // ensures fresh data is fetched
   });
 
@@ -15,6 +15,9 @@ async function getProducts() {
   const data = await res.json();
   return data.products;
 }
+
+// Force dynamic rendering for this page
+export const dynamic = "force-dynamic";
 
 // This is your actual page component
 export default async function ProductsPage() {
