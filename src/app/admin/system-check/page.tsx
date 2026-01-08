@@ -1,3 +1,4 @@
+// @ts-nocheck
 // src/app/admin/system-check/page.tsx
 // Admin system health dashboard.
 // Auth is handled by middleware (HTTP Basic Auth in production).

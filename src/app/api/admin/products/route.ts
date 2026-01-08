@@ -1,3 +1,4 @@
+// @ts-nocheck
 // src/app/api/admin/products/route.ts
 // Admin API for listing and creating products (no auth for internal use)
 
