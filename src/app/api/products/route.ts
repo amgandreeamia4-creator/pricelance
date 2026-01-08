@@ -40,6 +40,7 @@ export async function GET(req: NextRequest) {
 
     const query = (searchParams.get('q') ?? '').trim();
     const categoryKeyParam = searchParams.get('category') as CategoryKey | null;
+    const subcategory = searchParams.get('subcategory') ?? undefined;
     const store = searchParams.get('store') || undefined;
     const sort = searchParams.get('sort') || 'relevance'; // relevance | price-asc | price-desc
     const pageParam = searchParams.get('page') ?? '1';
@@ -87,6 +88,10 @@ export async function GET(req: NextRequest) {
           storeId: store,
         },
       };
+    }
+
+    if (subcategory) {
+      where.subcategory = subcategory;
     }
 
     // Total before visibility filter (good enough for v0, we override with visible length)

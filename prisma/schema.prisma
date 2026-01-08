@@ -1,117 +1,22 @@
-// Prisma datasource is now PostgreSQL (Supabase).
-// Uses the DATABASE_URL environment variable.
+generator client {
+  provider = "prisma-client-js"
+}
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
-generator client {
-  provider = "prisma-client-js"
-}
-
-enum ListingSource {
-  manual
-  sheet
-  seed
-  affiliate
-}
-
-model Product {
-  id           String                @id @default(cuid())
-  name         String
-  displayName  String?
-  description  String?
-  category     String?
-  brand        String?
-  imageUrl     String?
-  thumbnailUrl String?
-  gtin         String?
-  createdAt    DateTime              @default(now())
-  updatedAt    DateTime              @updatedAt
-
-  source       String?
-  externalId   String?
-
-  listings     Listing[]
-  priceHistory ProductPriceHistory[]
-  favorites    Favorite[]
-
-  @@unique([source, externalId], map: "product_source_externalid_unique")
-}
-
-// Listing: represents a product offer from a specific store/merchant.
-// Affiliate metadata fields are used for debugging, tracking, and attribution.
-model Listing {
-  id                    String   @id @default(cuid())
-  product               Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  productId             String
-
-  storeName             String
-  storeLogoUrl          String?
-  url                   String?
-  imageUrl              String?
-  price                 Float
-  priceCents            Int?
-  priceLastSeenAt       DateTime?
-  currency              String   @default("USD")
-  source                ListingSource @default(seed)
-  shippingCost          Float?
-  deliveryTimeDays      Int?
-  fastDelivery          Boolean?
-  isFastDelivery        Boolean?
-  estimatedDeliveryDays Int?
-  deliveryDays          Int?
-  location              String?
-  countryCode           String? // ISO 3166-1 alpha-2, e.g. "US", "RO", "DE"
-  inStock               Boolean  @default(true)
-  rating                Float?
-  reviewCount           Int?
-
-  // Affiliate metadata - used for debugging and attribution
-  // affiliateProvider: e.g. "fake", "awin", "impact", "cj"
-  // merchantOriginalId: the original merchant/product ID from the affiliate feed
-  // affiliateProgram: free-text identifier, e.g. "awin_ro_emag"
-  affiliateProvider     String?
-  merchantOriginalId    String?
-  affiliateProgram      String?
-
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
-}
-
-model ProductPriceHistory {
-  id        String   @id @default(cuid())
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  productId String
-
-  date      DateTime
-  price     Float
-  currency  String   @default("USD")
-  storeName String?
-}
-
-model Favorite {
-  id        String   @id @default(cuid())
-  userId    String
-  product   Product  @relation(fields: [productId], references: [id])
-  productId String
-  createdAt DateTime @default(now())
-
-  @@index([userId])
-  @@index([productId])
-  @@unique([userId, productId])
-}
-
-model SavedSearch {
-  id        String   @id @default(cuid())
-  userId    String
-  query     String
-  filters   Json?
-  createdAt DateTime @default(now())
-
-  @@index([userId])
-  @@index([createdAt])
+model CuratedListing {
+  id             String         @id
+  productId      String
+  storeName      String
+  url            String
+  price          Float
+  currency       String
+  shippingCost   Float?
+  countryCode    String?
+  CuratedProduct CuratedProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
 }
 
 model CuratedProduct {
@@ -123,26 +28,102 @@ model CuratedProduct {
   defaultPrice    Float?
   defaultCurrency String           @default("USD")
   createdAt       DateTime         @default(now())
-
-  listings        CuratedListing[]
+  CuratedListing  CuratedListing[]
 }
 
-model CuratedListing {
-  id         String         @id @default(cuid())
-  product    CuratedProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
-  productId  String
+model Favorite {
+  id        String   @id
+  userId    String
+  productId String
+  createdAt DateTime @default(now())
+  Product   Product  @relation(fields: [productId], references: [id])
 
-  storeName  String
-  url        String
-  price      Float
-  currency   String
-  shippingCost Float?
-  countryCode String? // ISO 3166-1 alpha-2, e.g. "US", "RO", "DE"
+  @@unique([userId, productId])
+  @@index([productId])
+  @@index([userId])
+}
+
+model Listing {
+  id                    String        @id
+  productId             String
+  storeName             String
+  storeLogoUrl          String?
+  url                   String?
+  imageUrl              String?
+  price                 Float
+  priceCents            Int?
+  currency              String        @default("USD")
+  shippingCost          Float?
+  deliveryTimeDays      Int?
+  fastDelivery          Boolean?
+  isFastDelivery        Boolean?
+  estimatedDeliveryDays Int?
+  deliveryDays          Int?
+  location              String?
+  inStock               Boolean       @default(true)
+  rating                Float?
+  reviewCount           Int?
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime
+  countryCode           String?
+  affiliateProgram      String?
+  affiliateProvider     String?
+  merchantOriginalId    String?
+  source                ListingSource @default(seed)
+  priceLastSeenAt       DateTime?     @db.Timestamptz(6)
+  Product               Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+model Product {
+  id                  String                @id
+  name                String
+  displayName         String?
+  description         String?
+  category            String?
+  brand               String?
+  imageUrl            String?
+  thumbnailUrl        String?
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime
+  gtin                String?
+  source              String?
+  externalId          String?
+  Favorite            Favorite[]
+  Listing             Listing[]
+  ProductPriceHistory ProductPriceHistory[]
+}
+
+model ProductPriceHistory {
+  id        String   @id
+  productId String
+  date      DateTime
+  price     Float
+  currency  String   @default("USD")
+  storeName String?
+  Product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+model SavedSearch {
+  id        String   @id
+  userId    String
+  query     String
+  filters   Json?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([userId])
 }
 
 model SearchLog {
-  id          String   @id @default(cuid())
+  id          String   @id
   query       String
   resultCount Int
   createdAt   DateTime @default(now())
+}
+
+enum ListingSource {
+  manual
+  sheet
+  seed
+  affiliate
 }

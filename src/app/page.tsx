@@ -461,10 +461,7 @@ export default function Page() {
       if (trimmed) params.set('q', trimmed);
       if (category) params.set('category', category);
 
-      // Add other filters
-      if (categoryFilter !== "all") {
-        params.set("category", categoryFilter);
-      }
+      // Add other filters (but not categoryFilter to avoid conflicts)
       if (storeFilter !== "all") {
         params.set("store", storeFilter);
       }

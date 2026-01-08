@@ -28,7 +28,7 @@ import {
   defaultCountryForStore,
   normalizeStoreName,
 } from "@/lib/stores/registry";
-import { inferCategorySlugFromIngestion } from "@/lib/categoryInference";
+import { inferCategorySlugFromIngestion, inferSubcategoryFromText } from "@/lib/categoryInference";
 
 export type ImportSummary = {
   productsCreated: number;
@@ -108,11 +108,13 @@ async function findOrCreateProduct(
   productTitle: string,
   brand: string | undefined,
   category: string | undefined,
+  subcategory: string | undefined,
   gtin: string | undefined,
 ): Promise<ProductMatchResult> {
   const normalizedGtin = gtin?.trim() || undefined;
   const normalizedBrand = brand?.trim() || undefined;
   const normalizedCategory = category?.trim() || undefined;
+  const normalizedSubcategory = subcategory?.trim() || undefined;
 
   // Strategy 1: Try GTIN-first matching if GTIN is provided
   if (normalizedGtin) {
@@ -155,6 +157,7 @@ async function findOrCreateProduct(
       name: productTitle,
       brand: normalizedBrand || null,
       category: normalizedCategory || null,
+      subcategory: normalizedSubcategory || null,
       gtin: normalizedGtin || null,
     },
   });
@@ -256,9 +259,16 @@ export async function importNormalizedListings(
         explicitCategorySlug: rawCategory,
       });
 
-      const category = inferredCategory || rawCategory; // Use inferred, fallback to raw
+      // Infer subcategory after category is determined
+      const subcategory = inferredCategory
+        ? inferSubcategoryFromText(
+            inferredCategory as any, // CategoryKey type
+            productTitle,
+            null // NormalizedListing doesn't have description field
+          )
+        : null;
 
-      // A row must have at least product_title to be valid
+      const category = inferredCategory || rawCategory; // Use inferred, fallback to raw
       if (!productTitle) {
         summary.errors.push({
           rowNumber,
@@ -293,6 +303,7 @@ export async function importNormalizedListings(
           productTitle,
           brand,
           category,
+          subcategory || undefined,
           gtin,
         );
         productInfo = { id: result.id };
