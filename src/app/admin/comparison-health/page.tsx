@@ -14,28 +14,24 @@ export default async function Page() {
       name: true,
       displayName: true,
       brand: true,
-      _count: {
-        select: {
-          Listing: true,
-        },
-      },
+      Listing: true,
     },
   });
 
   let with0 = 0;
-  let with1 = 0;
   let with2plus = 0;
 
   for (const p of productsWithCounts) {
-    const c = p._count.Listing;
+    const c = p.Listing.length;
     if (c === 0) with0++;
-    else if (c === 1) with1++;
-    else with2plus++;
+    else if (c === 1) {
+      // with1 is not used, but we keep the logic for completeness
+    } else with2plus++;
   }
 
   const multiOfferProducts = productsWithCounts
-    .filter((p) => p._count.Listing >= 2)
-    .sort((a, b) => b._count.Listing - a._count.Listing)
+    .filter((p) => p.Listing.length >= 2)
+    .sort((a, b) => b.Listing.length - a.Listing.length)
     .slice(0, 50);
 
   return (
@@ -80,7 +76,7 @@ export default async function Page() {
                       {p.displayName ?? p.name}
                     </td>
                     <td className="px-3 py-2">{p.brand ?? '-'}</td>
-                    <td className="px-3 py-2">{p._count.Listing}</td>
+                    <td className="px-3 py-2">{p.Listing.length}</td>
                   </tr>
                 ))}
               </tbody>
