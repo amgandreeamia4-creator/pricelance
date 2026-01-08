@@ -60,7 +60,7 @@ export default function ReinferCategoriesPage() {
           throw new Error(data.errors?.join(", ") || "Unknown API error");
         }
 
-        const { summary } = data;
+        const { summary, errors } = data;
         totalProcessedOverall += summary.totalProcessed;
         totalUpdatedOverall += summary.totalUpdated;
         totalErrorsOverall += summary.totalErrors;
@@ -69,9 +69,9 @@ export default function ReinferCategoriesPage() {
           `Batch offset ${summary.currentOffset}: processed ${summary.totalProcessed}, updated ${summary.totalUpdated}, hasMore = ${summary.hasMore}`
         );
 
-        if (summary.errors && summary.errors.length > 0) {
-          addLog(`  Errors in batch: ${summary.errors.length}`);
-          summary.errors.slice(0, 5).forEach(error => {
+        if (errors && errors.length > 0) {
+          addLog(`  Errors in batch: ${errors.length}`);
+          errors.slice(0, 5).forEach(error => {
             addLog(`    - ${error}`);
           });
         }
