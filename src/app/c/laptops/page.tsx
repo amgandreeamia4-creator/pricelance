@@ -11,9 +11,26 @@ const category = {
   ],
 };
 
+const canonicalPath = "/c/laptops";
+
 export const metadata: Metadata = {
-  title: `${category.h1} | PriceLance`,
+  title: `${category.h1} – ${category.nameRo} în România | PriceLance`,
   description: category.descriptionParagraphs[0],
+  // This will combine with metadataBase from layout.tsx => https://pricelance.com/c/laptops
+  alternates: {
+    canonical: canonicalPath,
+  },
+  openGraph: {
+    title: `${category.h1} | PriceLance`,
+    description: category.descriptionParagraphs[0],
+    url: canonicalPath,
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `${category.h1} | PriceLance`,
+    description: category.descriptionParagraphs[0],
+  },
 };
 
 export const dynamic = "force-dynamic";
