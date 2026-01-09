@@ -1,7 +1,7 @@
 // src/app/robots.ts
 import type { MetadataRoute } from "next";
 
-const BASE_URL = "https://pricelance.com";
+const SITE_URL = "https://pricelance.com";
 
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -9,9 +9,14 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: "*",
         allow: "/",
-        disallow: ["/admin", "/api"],
+        disallow: [
+          "/admin",
+          "/admin/*",
+          "/api",
+          "/api/*",
+        ],
       },
     ],
-    sitemap: `${BASE_URL}/sitemap.xml`,
+    sitemap: `${SITE_URL}/sitemap.xml`,
   };
 }
