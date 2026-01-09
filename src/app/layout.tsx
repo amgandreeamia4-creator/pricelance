@@ -11,6 +11,27 @@ const SITE_TITLE = "PriceLance – Comparare prețuri la electronice în Români
 const SITE_DESCRIPTION =
   "Caută și compară prețuri la telefoane, laptopuri, monitoare, căști și alte electronice din magazinele online din România. Găsește cele mai bune oferte rapid, într-un singur loc.";
 
+const jsonLd = [
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "PriceLance",
+    "url": "https://pricelance.com",
+    "description": "Instrument independent de comparare a prețurilor la electronice în România."
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "PriceLance",
+    "url": "https://pricelance.com",
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": "https://pricelance.com/search?q={search_term_string}",
+      "query-input": "required name=search_term_string"
+    }
+  }
+];
+
 export const metadata: Metadata = {
   title: SITE_TITLE,
   description: SITE_DESCRIPTION,
@@ -68,6 +89,12 @@ export default function RootLayout({
             gtag('config', '${GA_MEASUREMENT_ID}', { page_path: window.location.pathname });
           `}
         </Script>
+        <Script
+          id="pricelance-ld-json"
+          type="application/ld+json"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
         <ThemeProvider>
           <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-neutral-950">
             <header className="w-full border-b border-slate-200/80 dark:border-slate-800 bg-white/80 dark:bg-neutral-950/80 backdrop-blur">
