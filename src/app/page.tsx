@@ -1054,6 +1054,57 @@ export default function Page() {
         </div>
       </div>
 
+      {/* How PriceLance Works + FAQ Section */}
+      <section className="w-full px-6 py-6">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* How PriceLance Works Card */}
+          <div className="rounded-2xl bg-[var(--pl-card)] border border-[var(--pl-card-border)] px-5 py-4">
+            <h2 className="text-sm font-semibold text-[var(--pl-text)] mb-3">
+              Cum funcționează PriceLance
+            </h2>
+            <div className="space-y-2 text-[11px] text-[var(--pl-text)] leading-relaxed">
+              <div className="flex items-start gap-2">
+                <span className="text-[var(--pl-primary)] font-bold">1.</span>
+                <span>Cauți un produs (laptop, telefon, monitor, căști etc.) folosind căutarea sau alegi o categorie.</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <span className="text-[var(--pl-primary)] font-bold">2.</span>
+                <span>PriceLance afișează oferte de la mai multe magazine online din România, cu prețuri și informații de livrare.</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <span className="text-[var(--pl-primary)] font-bold">3.</span>
+                <span>Compari prețurile, filtrezi după magazine sau livrare rapidă, și alegi cea mai bună ofertă pentru tine.</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <span className="text-[var(--pl-primary)] font-bold">4.</span>
+                <span>Dai click pe ofertă și ești direcționat pe site-ul magazinului pentru a finaliza comanda.</span>
+              </div>
+            </div>
+          </div>
+
+          {/* FAQ Card */}
+          <div className="rounded-2xl bg-[var(--pl-card)] border border-[var(--pl-card-border)] px-5 py-4">
+            <h2 className="text-sm font-semibold text-[var(--pl-text)] mb-3">
+              Întrebări frecvente (FAQ)
+            </h2>
+            <div className="space-y-3 text-[11px] text-[var(--pl-text)] leading-relaxed">
+              <div>
+                <p className="font-medium mb-1">Sunt prețurile afișate mereu la zi?</p>
+                <p className="text-[var(--pl-text-muted)]">Ne străduim să actualizăm prețurile des, dar ofertele se pot schimba rapid. Verifică întotdeauna prețul final pe site-ul magazinului.</p>
+              </div>
+              <div>
+                <p className="font-medium mb-1">Folosiți linkuri de afiliere?</p>
+                <p className="text-[var(--pl-text-muted)]">Da. Unele linkuri pot fi de afiliere, ceea ce ne ajută să menținem serviciul gratuit fără costuri suplimentare pentru tine.</p>
+              </div>
+              <div>
+                <p className="font-medium mb-1">De ce sunt mai multe oferte pentru același produs?</p>
+                <p className="text-[var(--pl-text-muted)]">Afișăm oferte de la mai multe magazine ca să poți compara prețurile, condițiile de livrare și să alegi cea mai bună variantă.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Affiliate Disclosure Footer */}
       <footer className="w-full px-6 py-4 border-t border-[var(--pl-card-border)]">
   <div className="max-w-7xl mx-auto text-center">
