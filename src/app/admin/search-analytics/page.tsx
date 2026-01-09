@@ -39,6 +39,17 @@ function safeString(value: unknown, fallback: string = ""): string {
   return fallback;
 }
 
+function getBaseUrl() {
+  if (process.env.NEXT_PUBLIC_BASE_URL && process.env.NEXT_PUBLIC_BASE_URL.length > 0) {
+    return process.env.NEXT_PUBLIC_BASE_URL;
+  }
+  if (process.env.VERCEL_URL && process.env.VERCEL_URL.length > 0) {
+    return `https://${process.env.VERCEL_URL}`;
+  }
+  const port = process.env.PORT ?? "3000";
+  return `http://localhost:${port}`;
+}
+
 // --- page -------------------------------------------------------------------
 
 export default async function SearchAnalyticsPage() {
@@ -48,8 +59,9 @@ export default async function SearchAnalyticsPage() {
   let fetchError: string | null = null;
 
   try {
+    const baseUrl = getBaseUrl();
     const res = await fetch(
-      `${process.env.NEXT_PUBLIC_BASE_URL ?? ""}/api/internal/search-analytics?days=${days}`,
+      `${baseUrl}/api/internal/search-analytics?days=${days}`,
       {
         method: "GET",
         headers: INTERNAL_API_KEY
