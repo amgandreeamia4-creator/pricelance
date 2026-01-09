@@ -4,10 +4,10 @@ import CategoryProductGrid from "@/components/CategoryProductGrid";
 
 const category = {
   nameRo: "Telefoane",
-  h1: "Compară prețuri la Telefoane",
+  h1: "Compară prețuri la Telefoane mobile",
   descriptionParagraphs: [
-    "Descoperă cele mai noi smartphone-uri la prețuri competitive. Compară oferte la iPhone, Samsung, Xiaomi și alte branduri populare din România.",
-    "Alege telefonul perfect pentru tine cu ajutorul comparațiilor detaliate de prețuri și specificații. Oferte la telefoane noi și recondiționate.",
+    "Compară prețuri la telefoane mobile în România. Găsește oferte la smartphone-uri Android, iPhone și modele accesibile pentru orice buget.",
+    "Filtrează după brand, magazin și buget și vezi rapid unde găsești cel mai bun preț pentru următorul tău telefon.",
   ],
 };
 
