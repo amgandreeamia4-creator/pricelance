@@ -642,6 +642,55 @@ export default function Page() {
         </div>
       </section>
 
+      {/* Mini FAQ – clarifică cum funcționează serviciul */}
+      <section
+        aria-label="Întrebări frecvente despre PriceLance"
+        className="mt-3 md:mt-4 px-6"
+      >
+        <div className="mx-auto w-full max-w-5xl rounded-2xl bg-[var(--pl-card)] border border-[var(--pl-card-border)] px-4 py-3 md:px-6 md:py-4 text-[11px] sm:text-[13px] text-[var(--pl-text)] leading-relaxed">
+          <h2 className="text-xs sm:text-sm font-semibold mb-2">
+            Întrebări frecvente
+          </h2>
+
+          <div className="space-y-2">
+            <div>
+              <p className="font-medium">
+                PriceLance este gratuit?
+              </p>
+              <p>
+                Da. Folosirea PriceLance este 100% gratuită pentru utilizatori. Unele
+                linkuri pot fi de afiliere, iar dacă alegi să cumperi dintr-un magazin
+                partener, este posibil să primim un mic comision, fără costuri
+                suplimentare pentru tine.
+              </p>
+            </div>
+
+            <div>
+              <p className="font-medium">
+                Sunt prețurile afișate mereu la zi?
+              </p>
+              <p>
+                Ne străduim să afișăm prețuri cât mai actuale, însă ofertele se pot
+                schimba rapid. Verifică întotdeauna prețul final și condițiile de
+                livrare direct pe site-ul magazinului înainte de a comanda.
+              </p>
+            </div>
+
+            <div>
+              <p className="font-medium">
+                Cum sunt alese magazinele și produsele?
+              </p>
+              <p>
+                Ne concentrăm pe magazine online cunoscute din România și pe produse
+                tech populare, precum laptopuri, telefoane, monitoare și căști. În
+                timp, vom adăuga și alte categorii pe baza cererii și a calității
+                ofertelor.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Desktop category grid - fixed 3-row layout */}
       <div className="hidden md:block">
         <div className="mx-auto mt-8 max-w-5xl">
