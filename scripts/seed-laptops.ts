@@ -120,6 +120,7 @@ async function main() {
             displayName,
             brand,
             category,
+            updatedAt: new Date(),
           },
         });
 

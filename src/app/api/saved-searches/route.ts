@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient, type SavedSearch } from "@prisma/client";
 import { getOrCreateUserId, attachUserIdCookie } from "@/lib/userIdentity";
+import { randomUUID } from "crypto";
 
 const prisma = new PrismaClient();
 
@@ -70,6 +71,7 @@ export async function POST(req: NextRequest) {
 
     const saved = await prisma.savedSearch.create({
       data: {
+        id: randomUUID(),
         userId,
         query,
         filters,

@@ -299,6 +299,7 @@ export async function importCsvString(csvContent: string): Promise<ImportSummary
               name: productName,
               brand,
               category,
+              updatedAt: new Date(),
             },
           });
           productId = newProduct.id;
@@ -353,6 +354,7 @@ export async function importCsvString(csvContent: string): Promise<ImportSummary
             fastDelivery,
             inStock: inStock ?? true,
             priceLastSeenAt: now,
+            updatedAt: new Date(),
           },
         });
         summary.listingsCreated++;

@@ -30,7 +30,7 @@ export async function GET(req: NextRequest) {
   try {
     const allProducts = await prisma.product.findMany({
       include: {
-        listings: {
+        Listing: {
           select: { id: true, storeName: true, url: true },
         },
       },
@@ -40,7 +40,7 @@ export async function GET(req: NextRequest) {
       isDemoProduct({
         id: p.id,
         brand: p.brand,
-        listings: p.listings,
+        listings: p.Listing,
       })
     );
 
@@ -96,7 +96,7 @@ export async function POST(req: NextRequest) {
   try {
     const allProducts = await prisma.product.findMany({
       include: {
-        listings: {
+        Listing: {
           select: { id: true, storeName: true, url: true },
         },
       },
@@ -106,7 +106,7 @@ export async function POST(req: NextRequest) {
       isDemoProduct({
         id: p.id,
         brand: p.brand,
-        listings: p.listings,
+        listings: p.Listing,
       })
     );
 

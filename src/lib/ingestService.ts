@@ -18,6 +18,7 @@
 
 import { prisma } from "@/lib/db";
 import type { Prisma } from "@prisma/client";
+import { randomUUID } from "crypto";
 
 export type IngestListingInput = {
   id?: string;
@@ -107,11 +108,15 @@ export async function ingestProducts(payload: IngestPayload): Promise<IngestResu
           create: {
             id: p.id,
             ...baseData,
+            updatedAt: new Date(),
           },
         });
       } else {
         product = await prisma.product.create({
-          data: baseData as unknown as Prisma.ProductCreateInput,
+          data: {
+            ...baseData,
+            updatedAt: new Date(),
+          } as unknown as Prisma.ProductCreateInput,
         });
       }
 
@@ -162,6 +167,7 @@ export async function ingestProducts(payload: IngestPayload): Promise<IngestResu
               rating: typeof l.rating === "number" ? l.rating : null,
               reviewCount:
                 typeof l.reviewCount === "number" ? l.reviewCount : null,
+              updatedAt: new Date(),
             },
           });
         }
@@ -190,6 +196,7 @@ export async function ingestProducts(payload: IngestPayload): Promise<IngestResu
 
           await prisma.productPriceHistory.create({
             data: {
+              id: randomUUID(),
               productId: product.id,
               date,
               price: h.averagePrice ?? h.price ?? 0,

@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
     if (campaign) {
       // Filter by products that have listings from the specified campaign/store
       whereClause = {
-        listings: {
+        Listing: {
           some: {
             OR: [
               { storeName: { contains: campaign, mode: "insensitive" } },

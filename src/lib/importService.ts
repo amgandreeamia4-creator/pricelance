@@ -159,6 +159,7 @@ async function findOrCreateProduct(
       category: normalizedCategory || null,
       subcategory: normalizedSubcategory || null,
       gtin: normalizedGtin || null,
+      updatedAt: new Date(),
     },
   });
 
@@ -470,6 +471,7 @@ export async function importNormalizedListings(
         if (priceChanged) {
           await prisma.productPriceHistory.create({
             data: {
+              id: randomUUID(),
               productId,
               date: new Date(),
               price,
@@ -481,6 +483,7 @@ export async function importNormalizedListings(
       } else {
         await (prisma.listing.create as any)({
           data: {
+            id: randomUUID(),
             productId,
             storeName,
             url,
@@ -499,6 +502,7 @@ export async function importNormalizedListings(
             imageUrl, // Include imageUrl in new listings
             ...(affiliateProvider && { affiliateProvider }),
             ...(affiliateProgram && { affiliateProgram }),
+            updatedAt: new Date(),
           },
         });
         summary.listingsCreated++;

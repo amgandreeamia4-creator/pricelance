@@ -5,7 +5,11 @@ import { PrismaClient } from "@prisma/client";
 import { computeDiscountPercent } from "@/lib/dealsUtils";
 import { isDemoProduct } from "@/lib/demoFilter";
 import { checkRateLimit } from "@/lib/rateLimit";
-import { getNetworkFilter, AFFILIATE_FLAGS, shouldHideListing } from "@/config/affiliates";
+import {
+  getNetworkFilter,
+  AFFILIATE_FLAGS,
+  shouldHideListing,
+} from "@/config/affiliates";
 
 const prisma = new PrismaClient();
 
@@ -64,7 +68,7 @@ export async function GET(req: NextRequest) {
           headers: {
             "Retry-After": String(Math.ceil(rate.retryAfterMs / 1000)),
           },
-        },
+        }
       );
     }
 
@@ -80,30 +84,34 @@ export async function GET(req: NextRequest) {
 
     // Apply network filtering to exclude disabled networks
     const networkFilter = getNetworkFilter();
-    const whereClause = Object.keys(networkFilter).length > 0 ? {
-      listings: {
-        some: networkFilter,
-      },
-    } : undefined;
+    const whereClause =
+      Object.keys(networkFilter).length > 0
+        ? {
+            // ✅ use Prisma relation name `Listing`
+            Listing: {
+              some: networkFilter,
+            },
+          }
+        : undefined;
 
     const products = await prisma.product.findMany({
       include: {
-        listings: true,
-        priceHistory: true,
+        // ✅ correct relation names from Prisma schema
+        Listing: true,
+        ProductPriceHistory: true,
       },
       where: whereClause,
     });
 
     const deals: Deal[] = [];
-
     let withHistoryCount = 0;
 
     for (const p of products) {
       // Require at least one listing
-      if (!p.listings || p.listings.length === 0) continue;
+      if (!p.Listing || p.Listing.length === 0) continue;
 
       // Filter out disabled networks from listings
-      const filteredListings = (p.listings as any[]).filter((l: any) => {
+      const filteredListings = (p.Listing as any[]).filter((l: any) => {
         // Additional safety filter: exclude disabled networks using affiliate fields
         if (shouldHideListing(l)) {
           return false;
@@ -114,11 +122,20 @@ export async function GET(req: NextRequest) {
       if (filteredListings.length === 0) continue;
 
       // Skip demo/DummyJSON products - they should not appear in deals
-      if (isDemoProduct({ id: p.id, brand: p.brand, listings: filteredListings })) {
+      if (
+        isDemoProduct({
+          id: p.id,
+          brand: p.brand,
+          listings: filteredListings,
+        })
+      ) {
         continue;
       }
 
-      const validHistory = (p.priceHistory as any[]).filter((h: any) => h.price > 0);
+      // ✅ use ProductPriceHistory relation instead of priceHistory
+      const validHistory = (p.ProductPriceHistory as any[]).filter(
+        (h: any) => h.price > 0
+      );
       if (validHistory.length < MIN_HISTORY_POINTS) continue;
 
       withHistoryCount++;
@@ -138,7 +155,9 @@ export async function GET(req: NextRequest) {
       );
       if (validListings.length === 0) continue;
 
-      const sorted = [...validListings].sort((a, b) => a.price - b.price);
+      const sorted = [...validListings].sort(
+        (a: any, b: any) => a.price - b.price
+      );
       const bestListingRecord = sorted[0];
       const currentPrice = bestListingRecord.price;
 

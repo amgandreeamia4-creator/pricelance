@@ -213,7 +213,7 @@ export async function POST(req: NextRequest) {
     for (const p of products) {
       const productId = (p as any).id ?? "";
       const productName = (p as any).name ?? (p as any).displayName ?? "";
-      const listings = ((p as any).listings ?? []) as any[];
+      const listings = ((p as any).Listing ?? []) as any[];
       const prodBrand: string | null = (p as any).brand ?? null;
       const listingsCountForProduct = listings.length;
 

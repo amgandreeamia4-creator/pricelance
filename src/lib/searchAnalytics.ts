@@ -1,6 +1,7 @@
 // src/lib/searchAnalytics.ts
 import type { SavedSearch, SearchLog } from "@prisma/client";
 import { prisma } from "@/lib/db";
+import { randomUUID } from "crypto";
 
 export type TopQuery = {
   query: string;
@@ -79,6 +80,7 @@ export async function logSearchEvent(params: {
 
     await prisma.searchLog.create({
       data: {
+        id: randomUUID(),
         query: trimmedQuery,
         resultCount: safeResultCount,
       },
