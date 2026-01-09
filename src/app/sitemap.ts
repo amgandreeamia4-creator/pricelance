@@ -37,8 +37,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const categoryRoutes: MetadataRoute.Sitemap = CATEGORY_CONFIG.map((category) => ({
     url: `${BASE_URL}/c/${category.slug}`,
     lastModified: now,
-    changeFrequency: "daily",
-    priority: 0.9,
+    changeFrequency: "weekly",
+    priority: 0.8,
   }));
 
   return [...staticRoutes, ...categoryRoutes];

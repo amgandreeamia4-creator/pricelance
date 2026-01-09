@@ -4,6 +4,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import { SlidersHorizontal, MessageCircle, ChevronDown, ChevronUp } from "lucide-react";
 import { useSpring, animated, config } from '@react-spring/web';
+import Link from "next/link";
 
 import ThemeToggle from "@/components/ThemeToggle";
 import ProductList from "@/components/ProductList";
@@ -582,6 +583,40 @@ export default function Page() {
             <p className="text-[11px] sm:text-[12px] text-[var(--pl-text-muted)] leading-relaxed">
               PriceLance is an informational service that compares tech prices from multiple online retailers.
             </p>
+          </div>
+
+          {/* SEO-friendly internal links to key categories */}
+          <div className="mt-2 md:mt-3 flex flex-wrap justify-center gap-2 text-[11px] sm:text-[12px]">
+            <span className="text-[var(--pl-text-subtle)]">
+              Browse popular categories:
+            </span>
+            <Link
+              href="/c/laptops"
+              className="underline-offset-2 text-[var(--pl-text)] hover:underline hover:text-blue-600 dark:hover:text-blue-400"
+            >
+              Laptopuri
+            </Link>
+            <span className="text-[var(--pl-text-subtle)]">·</span>
+            <Link
+              href="/c/phones"
+              className="underline-offset-2 text-[var(--pl-text)] hover:underline hover:text-blue-600 dark:hover:text-blue-400"
+            >
+              Telefoane
+            </Link>
+            <span className="text-[var(--pl-text-subtle)]">·</span>
+            <Link
+              href="/c/monitors"
+              className="underline-offset-2 text-[var(--pl-text)] hover:underline hover:text-blue-600 dark:hover:text-blue-400"
+            >
+              Monitoare
+            </Link>
+            <span className="text-[var(--pl-text-subtle)]">·</span>
+            <Link
+              href="/c/headphones-audio"
+              className="underline-offset-2 text-[var(--pl-text)] hover:underline hover:text-blue-600 dark:hover:text-blue-400"
+            >
+              Căști & Audio
+            </Link>
           </div>
         </div>
       </header>
