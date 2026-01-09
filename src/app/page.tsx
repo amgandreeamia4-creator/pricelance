@@ -621,6 +621,27 @@ export default function Page() {
         </div>
       </header>
 
+      {/* How PriceLance works – small explanatory SEO block */}
+      <section
+        aria-label="Cum funcționează PriceLance"
+        className="mt-2 md:mt-3 px-6"
+      >
+        <div className="mx-auto w-full max-w-5xl rounded-2xl bg-[var(--pl-card)] border border-[var(--pl-card-border)] px-4 py-3 md:px-6 md:py-4 text-[11px] sm:text-[13px] text-[var(--pl-text)] leading-relaxed">
+          <h2 className="text-xs sm:text-sm font-semibold mb-1.5">
+            Cum funcționează PriceLance
+          </h2>
+          <p className="mb-1.5">
+            PriceLance este un instrument independent de comparare a prețurilor la produse tech în România. Adunăm oferte pentru laptopuri, telefoane, monitoare, căști și alte electronice din mai multe magazine online, într-un singur loc.
+          </p>
+          <p className="mb-1.5">
+            Cauți un produs, alegi categoria (de exemplu <strong>Laptopuri</strong>, <strong>Telefoane</strong> sau <strong>Căști &amp; Audio</strong>) și vezi rapid unde găsești cel mai bun preț, ce magazine au livrare rapidă și cum evoluează prețul în timp.
+          </p>
+          <p className="text-[10px] sm:text-[11px] text-[var(--pl-text-subtle)]">
+            PriceLance nu vinde direct produse. Te trimitem pe site-ul magazinului pentru comandă, iar unele linkuri pot fi linkuri de afiliere.
+          </p>
+        </div>
+      </section>
+
       {/* Desktop category grid - fixed 3-row layout */}
       <div className="hidden md:block">
         <div className="mx-auto mt-8 max-w-5xl">
