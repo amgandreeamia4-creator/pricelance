@@ -5,27 +5,40 @@ import Link from "next/link";
 import Script from "next/script";
 import ThemeProvider from "@/components/ThemeProvider";
 
-const GA_MEASUREMENT_ID = 'G-6NM0RTYT3T';
+const GA_MEASUREMENT_ID = "G-6NM0RTYT3T";
+
+const SITE_TITLE = "PriceLance – Comparare prețuri la electronice în România";
+const SITE_DESCRIPTION =
+  "Caută și compară prețuri la telefoane, laptopuri, monitoare, căști și alte electronice din magazinele online din România. Găsește cele mai bune oferte rapid, într-un singur loc.";
 
 export const metadata: Metadata = {
-  title: 'PriceLance – Comparare prețuri la electronice în România',
-  description:
-    'Caută și compară prețuri la telefoane, laptopuri, monitoare, căști și alte electronice din magazinele online din România. Găsește cele mai bune oferte rapid, într-un singur loc.',
-  metadataBase: new URL('https://pricelance.com'),
+  title: SITE_TITLE,
+  description: SITE_DESCRIPTION,
+  metadataBase: new URL("https://pricelance.com"),
   openGraph: {
-    title: 'PriceLance – Comparare prețuri la electronice în România',
+    title: SITE_TITLE,
     description:
-      'Caută și compară prețuri la telefoane, laptopuri, monitoare, căști și alte electronice din magazinele online din România.',
-    url: 'https://pricelance.com',
-    type: 'website',
-    siteName: 'PriceLance',
+      "Caută și compară prețuri la telefoane, laptopuri, monitoare, căști și alte electronice din magazinele online din România.",
+    url: "https://pricelance.com",
+    type: "website",
+    siteName: "PriceLance",
+  },
+  // ✅ Canonical URL for homepage
+  alternates: {
+    canonical: "/",
+  },
+  // ✅ Twitter card for nicer link previews
+  twitter: {
+    card: "summary_large_image",
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
   },
   robots: {
     index: true,
     follow: true,
   },
   verification: {
-    google: 'edNnT14enMS24XUO4qN',
+    google: "edNnT14enMS24XUO4qN",
   },
   // This creates: <meta name="profitshareid" content="...">
   other: {
@@ -103,9 +116,12 @@ export default function RootLayout({
             <footer className="w-full border-t border-slate-400/80 dark:border-slate-800 bg-white/80 dark:bg-neutral-950/80">
               <div className="max-w-5xl mx-auto px-4 py-4 text-[11px] leading-relaxed text-gray-600 dark:text-gray-400 space-y-1 text-center sm:text-left">
                 <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-                  <span>PriceLance · instrument independent de comparare prețuri</span>
+                  <span>
+                    PriceLance · instrument independent de comparare prețuri
+                  </span>
                   <span className="max-w-xl">
-                    Prețurile și ofertele afișate pot varia. Unele linkuri pot fi linkuri de afiliere, iar PriceLance poate primi
+                    Prețurile și ofertele afișate pot varia. Unele linkuri pot
+                    fi linkuri de afiliere, iar PriceLance poate primi
                     comisioane fără costuri suplimentare pentru tine.
                   </span>
                 </div>
