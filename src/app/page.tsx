@@ -11,6 +11,7 @@ import ChatAssistant from "@/components/ChatAssistant";
 import { STORES, StoreId } from "@/config/catalog";
 import PriceTrendChart from "@/components/PriceTrendChart";
 import ProductSummary from "@/components/ProductSummary";
+import { useLanguage } from "@/components/LanguageProvider";
 
 import type { CategoryKey } from '@/config/categoryFilters';
 
@@ -77,6 +78,63 @@ type ProductWithListings = {
 
 const FAST_SHIPPING_DAYS = 3;
 
+const HOW_FAQ_COPY = {
+  en: {
+    howTitle: "How PriceLance works",
+    steps: [
+      "Search for a product – type what you're looking for (for example \"gaming laptop\", \"27\" monitor, \"iPhone 15\") or pick a category.",
+      "We collect offers – PriceLance shows prices and offers from multiple online stores where we have feeds or affiliate partnerships.",
+      "Compare and filter – sort by price, filter by store or fast delivery, and see which offer makes the most sense for you.",
+      "Buy directly from the store – PriceLance doesn't sell products. When you click an offer, you go to the retailer's website to finish your order.",
+    ],
+    faqTitle: "Frequently asked questions (FAQ)",
+    faqs: [
+      {
+        question: "Are the prices always 100% up to date?",
+        answer:
+          "We try to keep prices as fresh as possible, but offers can change quickly. Always double-check the final price and delivery conditions on the store's website before you order.",
+      },
+      {
+        question: "Do you use affiliate links and do I pay extra?",
+        answer:
+          "Some links on PriceLance are affiliate links. If you buy through one of them, we may earn a small commission from the retailer, but you never pay anything extra because of this.",
+      },
+      {
+        question: "Why do I see multiple offers for the same product?",
+        answer:
+          "The same product can be sold by several stores, each with its own price, delivery time, and promotions. PriceLance puts these offers side by side so it's easier to compare them.",
+      },
+    ],
+  },
+  ro: {
+    howTitle: "Cum funcționează PriceLance",
+    steps: [
+      "Cauți un produs (laptop, telefon, monitor, căști etc.) folosind căutarea sau alegi o categorie.",
+      "PriceLance afișează oferte de la mai multe magazine online din România, cu prețuri și informații de livrare.",
+      "Compari prețurile, filtrezi după magazine sau livrare rapidă și alegi cea mai bună ofertă pentru tine.",
+      "Dai click pe o ofertă și ești direcționat pe site-ul magazinului pentru a finaliza comanda.",
+    ],
+    faqTitle: "Întrebări frecvente (FAQ)",
+    faqs: [
+      {
+        question: "Sunt prețurile afișate mereu la zi?",
+        answer:
+          "Ne străduim să actualizăm prețurile des, dar ofertele se pot schimba rapid. Verifică întotdeauna prețul final și condițiile de livrare direct pe site-ul magazinului înainte de a comanda.",
+      },
+      {
+        question: "Folosiți linkuri de afiliere?",
+        answer:
+          "Da. Unele linkuri pot fi de afiliere, ceea ce ne ajută să menținem serviciul gratuit fără costuri suplimentare pentru tine.",
+      },
+      {
+        question: "De ce sunt mai multe oferte pentru același produs?",
+        answer:
+          "Afișăm oferte de la mai multe magazine ca să poți compara prețurile, condițiile de livrare și să alegi cea mai bună variantă.",
+      },
+    ],
+  },
+} as const;
+
 export default function Page() {
   // Mobile collapsible states
   const [savedSearchesOpen, setSavedSearchesOpen] = useState(false);
@@ -87,6 +145,10 @@ export default function Page() {
   const [isSearching, setIsSearching] = useState(false);
   const [selectedProductId, setSelectedProductId] =
     useState<string | null>(null);
+
+  // Language
+  const { lang } = useLanguage();
+  const copy = HOW_FAQ_COPY[lang];
 
   // Filters
   const [sortBy, setSortBy] = useState<
@@ -950,55 +1012,42 @@ export default function Page() {
       </div>
 
       {/* How PriceLance Works + FAQ Section */}
-      <section className="w-full px-6 py-6">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* How PriceLance Works Card */}
-          <div className="rounded-2xl bg-[var(--pl-card)] border border-[var(--pl-card-border)] px-5 py-4">
-            <h2 className="text-sm font-semibold text-[var(--pl-text)] mb-3">
-              How PriceLance works
-            </h2>
-            <div className="space-y-2 text-[11px] text-[var(--pl-text)] leading-relaxed">
-              <div className="flex items-start gap-2">
-                <span className="text-[var(--pl-primary)] font-bold">1.</span>
-                <span>**Search for a product** – type what you're looking for (for example "gaming laptop", "27\" monitor", "iPhone 15") or pick a category.</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <span className="text-[var(--pl-primary)] font-bold">2.</span>
-                <span>**We collect offers** – PriceLance shows prices and offers from multiple online stores where we have feeds or affiliate partnerships.</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <span className="text-[var(--pl-primary)] font-bold">3.</span>
-                <span>**Compare and filter** – sort by price, filter by store or fast delivery, and see which offer makes the most sense for you.</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <span className="text-[var(--pl-primary)] font-bold">4.</span>
-                <span>**Buy directly from the store** – PriceLance doesn't sell products. When you click an offer, you go to the retailer's website to finish your order.</span>
-              </div>
-            </div>
-          </div>
+      <div className={`${cardStyle} p-4 sm:p-6 mt-4 sm:mt-6`}>
+        <div className="grid gap-6 md:grid-cols-2">
+          {/* How PriceLance works */}
+          <section aria-labelledby="how-it-works-title">
+            <h3
+              id="how-it-works-title"
+              className="text-[13px] font-semibold tracking-[0.16em] uppercase text-slate-700 dark:text-slate-200 mb-3"
+            >
+              {copy.howTitle}
+            </h3>
+            <ol className="space-y-2 text-xs leading-relaxed text-slate-700 dark:text-slate-300 list-decimal list-inside">
+              {copy.steps.map((step, idx) => (
+                <li key={idx}>{step}</li>
+              ))}
+            </ol>
+          </section>
 
-          {/* FAQ Card */}
-          <div className="rounded-2xl bg-[var(--pl-card)] border border-[var(--pl-card-border)] px-5 py-4">
-            <h2 className="text-sm font-semibold text-[var(--pl-text)] mb-3">
-              Frequently asked questions (FAQ)
-            </h2>
-            <div className="space-y-3 text-[11px] text-[var(--pl-text)] leading-relaxed">
-              <div>
-                <p className="font-medium mb-1">Are the prices always 100% up to date?</p>
-                <p className="text-[var(--pl-text-muted)]">We try to keep prices as fresh as possible, but offers can change quickly. Always double-check the final price and delivery conditions on the store's website before you order.</p>
-              </div>
-              <div>
-                <p className="font-medium mb-1">Do you use affiliate links and do I pay extra?</p>
-                <p className="text-[var(--pl-text-muted)]">Some links on PriceLance are affiliate links. If you buy through one of them, we may earn a small commission from the retailer, but you never pay anything extra because of this.</p>
-              </div>
-              <div>
-                <p className="font-medium mb-1">Why do I see multiple offers for the same product?</p>
-                <p className="text-[var(--pl-text-muted)]">The same product can be sold by several stores, each with its own price, delivery time, and promotions. PriceLance puts these offers side by side so it's easier to compare them.</p>
-              </div>
+          {/* FAQ */}
+          <section aria-labelledby="faq-title">
+            <h3
+              id="faq-title"
+              className="text-[13px] font-semibold tracking-[0.16em] uppercase text-slate-700 dark:text-slate-200 mb-3"
+            >
+              {copy.faqTitle}
+            </h3>
+            <div className="space-y-3 text-xs leading-relaxed text-slate-700 dark:text-slate-300">
+              {copy.faqs.map((item, idx) => (
+                <div key={idx}>
+                  <p className="font-semibold mb-0.5">{item.question}</p>
+                  <p>{item.answer}</p>
+                </div>
+              ))}
             </div>
-          </div>
+          </section>
         </div>
-      </section>
+      </div>
 
       {/* Affiliate Disclosure Footer */}
       <footer className="w-full px-6 py-4 border-t border-[var(--pl-card-border)]">
