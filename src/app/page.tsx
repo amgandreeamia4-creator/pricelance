@@ -955,24 +955,24 @@ export default function Page() {
           {/* How PriceLance Works Card */}
           <div className="rounded-2xl bg-[var(--pl-card)] border border-[var(--pl-card-border)] px-5 py-4">
             <h2 className="text-sm font-semibold text-[var(--pl-text)] mb-3">
-              Cum funcționează PriceLance
+              How PriceLance works
             </h2>
             <div className="space-y-2 text-[11px] text-[var(--pl-text)] leading-relaxed">
               <div className="flex items-start gap-2">
                 <span className="text-[var(--pl-primary)] font-bold">1.</span>
-                <span>Cauți un produs (laptop, telefon, monitor, căști etc.) folosind căutarea sau alegi o categorie.</span>
+                <span>**Search for a product** – type what you're looking for (for example "gaming laptop", "27\" monitor", "iPhone 15") or pick a category.</span>
               </div>
               <div className="flex items-start gap-2">
                 <span className="text-[var(--pl-primary)] font-bold">2.</span>
-                <span>PriceLance afișează oferte de la mai multe magazine online din România, cu prețuri și informații de livrare.</span>
+                <span>**We collect offers** – PriceLance shows prices and offers from multiple online stores where we have feeds or affiliate partnerships.</span>
               </div>
               <div className="flex items-start gap-2">
                 <span className="text-[var(--pl-primary)] font-bold">3.</span>
-                <span>Compari prețurile, filtrezi după magazine sau livrare rapidă, și alegi cea mai bună ofertă pentru tine.</span>
+                <span>**Compare and filter** – sort by price, filter by store or fast delivery, and see which offer makes the most sense for you.</span>
               </div>
               <div className="flex items-start gap-2">
                 <span className="text-[var(--pl-primary)] font-bold">4.</span>
-                <span>Dai click pe ofertă și ești direcționat pe site-ul magazinului pentru a finaliza comanda.</span>
+                <span>**Buy directly from the store** – PriceLance doesn't sell products. When you click an offer, you go to the retailer's website to finish your order.</span>
               </div>
             </div>
           </div>
@@ -980,71 +980,20 @@ export default function Page() {
           {/* FAQ Card */}
           <div className="rounded-2xl bg-[var(--pl-card)] border border-[var(--pl-card-border)] px-5 py-4">
             <h2 className="text-sm font-semibold text-[var(--pl-text)] mb-3">
-              Întrebări frecvente (FAQ)
+              Frequently asked questions (FAQ)
             </h2>
             <div className="space-y-3 text-[11px] text-[var(--pl-text)] leading-relaxed">
               <div>
-                <p className="font-medium mb-1">Sunt prețurile afișate mereu la zi?</p>
-                <p className="text-[var(--pl-text-muted)]">Ne străduim să actualizăm prețurile des, dar ofertele se pot schimba rapid. Verifică întotdeauna prețul final pe site-ul magazinului.</p>
+                <p className="font-medium mb-1">Are the prices always 100% up to date?</p>
+                <p className="text-[var(--pl-text-muted)]">We try to keep prices as fresh as possible, but offers can change quickly. Always double-check the final price and delivery conditions on the store's website before you order.</p>
               </div>
               <div>
-                <p className="font-medium mb-1">Folosiți linkuri de afiliere?</p>
-                <p className="text-[var(--pl-text-muted)]">Da. Unele linkuri pot fi de afiliere, ceea ce ne ajută să menținem serviciul gratuit fără costuri suplimentare pentru tine.</p>
+                <p className="font-medium mb-1">Do you use affiliate links and do I pay extra?</p>
+                <p className="text-[var(--pl-text-muted)]">Some links on PriceLance are affiliate links. If you buy through one of them, we may earn a small commission from the retailer, but you never pay anything extra because of this.</p>
               </div>
               <div>
-                <p className="font-medium mb-1">De ce sunt mai multe oferte pentru același produs?</p>
-                <p className="text-[var(--pl-text-muted)]">Afișăm oferte de la mai multe magazine ca să poți compara prețurile, condițiile de livrare și să alegi cea mai bună variantă.</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* How PriceLance Works + FAQ Section */}
-      <section className="w-full px-6 py-6">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* How PriceLance Works Card */}
-          <div className="rounded-2xl bg-[var(--pl-card)] border border-[var(--pl-card-border)] px-5 py-4">
-            <h2 className="text-sm font-semibold text-[var(--pl-text)] mb-3">
-              Cum funcționează PriceLance
-            </h2>
-            <div className="space-y-2 text-[11px] text-[var(--pl-text)] leading-relaxed">
-              <div className="flex items-start gap-2">
-                <span className="text-[var(--pl-primary)] font-bold">1.</span>
-                <span>Cauți un produs (laptop, telefon, monitor, căști etc.) folosind căutarea sau alegi o categorie.</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <span className="text-[var(--pl-primary)] font-bold">2.</span>
-                <span>PriceLance afișează oferte de la mai multe magazine online din România, cu prețuri și informații de livrare.</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <span className="text-[var(--pl-primary)] font-bold">3.</span>
-                <span>Compari prețurile, filtrezi după magazine sau livrare rapidă și alegi cea mai bună ofertă pentru tine.</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <span className="text-[var(--pl-primary)] font-bold">4.</span>
-                <span>Dai click pe ofertă și ești direcționat pe site-ul magazinului pentru a finaliza comanda.</span>
-              </div>
-            </div>
-          </div>
-
-          {/* FAQ Card */}
-          <div className="rounded-2xl bg-[var(--pl-card)] border border-[var(--pl-card-border)] px-5 py-4">
-            <h2 className="text-sm font-semibold text-[var(--pl-text)] mb-3">
-              Întrebări frecvente (FAQ)
-            </h2>
-            <div className="space-y-3 text-[11px] text-[var(--pl-text)] leading-relaxed">
-              <div>
-                <p className="font-medium mb-1">Sunt prețurile afișate mereu la zi?</p>
-                <p className="text-[var(--pl-text-muted)]">Ne străduim să actualizăm prețurile des, dar ofertele se pot schimba rapid. Verifică întotdeauna prețul final pe site-ul magazinului.</p>
-              </div>
-              <div>
-                <p className="font-medium mb-1">Folosiți linkuri de afiliere?</p>
-                <p className="text-[var(--pl-text-muted)]">Da. Unele linkuri pot fi de afiliere, ceea ce ne ajută să menținem serviciul gratuit fără costuri suplimentare pentru tine.</p>
-              </div>
-              <div>
-                <p className="font-medium mb-1">De ce sunt mai multe oferte pentru același produs?</p>
-                <p className="text-[var(--pl-text-muted)]">Afișăm oferte de la mai multe magazine ca să poți compara prețurile, condițiile de livrare și să alegi cea mai bună variantă.</p>
+                <p className="font-medium mb-1">Why do I see multiple offers for the same product?</p>
+                <p className="text-[var(--pl-text-muted)]">The same product can be sold by several stores, each with its own price, delivery time, and promotions. PriceLance puts these offers side by side so it's easier to compare them.</p>
               </div>
             </div>
           </div>
