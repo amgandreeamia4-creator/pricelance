@@ -7,7 +7,7 @@ import ThemeProvider from "@/components/ThemeProvider";
 import { LanguageProvider } from "@/components/LanguageProvider";
 import LanguageToggle from "@/components/LanguageToggle";
 
-const GA_MEASUREMENT_ID = 'G-6NM0RTYT3T';
+const GA_MEASUREMENT_ID = 'G-6NM0TRYT3T';
 
 export const metadata: Metadata = {
   title: 'PriceLance – Comparare prețuri la electronice în România',
@@ -46,15 +46,18 @@ export default function RootLayout({
     <html lang="ro" suppressHydrationWarning>
       <body className="min-h-screen antialiased selection:bg-blue-600/40 selection:text-white">
         <Script
-          src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
+          id="ga4-loader"
           strategy="afterInteractive"
+          src="https://www.googletagmanager.com/gtag/js?id=G-6NM0TRYT3T"
         />
-        <Script id="ga4-init" strategy="afterInteractive">
+        <Script id="ga4-config" strategy="afterInteractive">
           {`
             window.dataLayer = window.dataLayer || [];
             function gtag(){dataLayer.push(arguments);}
             gtag('js', new Date());
-            gtag('config', '${GA_MEASUREMENT_ID}', { page_path: window.location.pathname });
+            gtag('config', 'G-6NM0TRYT3T', {
+              page_path: window.location.pathname,
+            });
           `}
         </Script>
         <ThemeProvider>
