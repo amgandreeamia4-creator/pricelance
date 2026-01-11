@@ -2,6 +2,7 @@
 'use client';
 
 import React, { useEffect, useState } from "react";
+import Link from "next/link";
 
 interface CategoryProductGridProps {
   categoryKey: string;
@@ -145,46 +146,50 @@ export default function CategoryProductGrid({ categoryKey }: CategoryProductGrid
             key={product.id}
             className="group rounded-lg border border-gray-200 bg-white p-4 shadow-sm transition-all hover:border-blue-300 hover:shadow-md dark:border-gray-700 dark:bg-gray-800 dark:hover:border-blue-600"
           >
-            {/* Product Image */}
-            <div className="mb-3 aspect-square overflow-hidden rounded-md bg-gray-100 dark:bg-gray-700">
-              {product.imageUrl ? (
-                <img
-                  src={product.imageUrl}
-                  alt={displayName}
-                  className="h-full w-full object-cover transition-transform group-hover:scale-105"
-                />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center">
-                  <div className="text-center">
-                    <div className="mb-2 text-gray-400 dark:text-gray-500">
-                      <svg
-                        className="mx-auto h-12 w-12"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={1.5}
-                          d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
-                        />
-                      </svg>
+            {/* Product Image & Title - Clickable */}
+            <Link href={`/p/${product.id}`} className="block">
+              {/* Product Image */}
+              <div className="mb-3 aspect-square overflow-hidden rounded-md bg-gray-100 dark:bg-gray-700">
+                {product.imageUrl ? (
+                  <img
+                    src={product.imageUrl}
+                    alt={displayName}
+                    className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center">
+                    <div className="text-center">
+                      <div className="mb-2 text-gray-400 dark:text-gray-500">
+                        <svg
+                          className="mx-auto h-12 w-12"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={1.5}
+                            d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                          />
+                        </svg>
+                      </div>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        Fără imagine
+                      </p>
                     </div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      Fără imagine
-                    </p>
                   </div>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
 
-            {/* Product Info */}
-            <div className="space-y-2">
-              <h3 className="line-clamp-2 text-sm font-medium text-gray-900 group-hover:text-blue-600 dark:text-gray-100 dark:group-hover:text-blue-400">
+              {/* Product Title */}
+              <h3 className="line-clamp-2 text-sm font-medium text-gray-900 group-hover:text-blue-600 dark:text-gray-100 dark:group-hover:text-blue-400 mb-2">
                 {displayName}
               </h3>
+            </Link>
 
+            {/* Product Info - Non-clickable */}
+            <div className="space-y-2">
               {product.brand && (
                 <p className="text-xs text-gray-500 dark:text-gray-400">
                   {product.brand}
