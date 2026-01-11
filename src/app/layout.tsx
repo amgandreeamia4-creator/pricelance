@@ -7,7 +7,7 @@ import ThemeProvider from "@/components/ThemeProvider";
 import { LanguageProvider } from "@/components/LanguageProvider";
 import LanguageToggle from "@/components/LanguageToggle";
 
-const GA_MEASUREMENT_ID = 'G-6NM0RTYT3T';
+const GA_MEASUREMENT_ID = 'G-6NM0TRYT3T';
 
 export const metadata: Metadata = {
   title: 'PriceLance – Comparare prețuri la electronice în România',
@@ -54,7 +54,9 @@ export default function RootLayout({
             window.dataLayer = window.dataLayer || [];
             function gtag(){dataLayer.push(arguments);}
             gtag('js', new Date());
-            gtag('config', '${GA_MEASUREMENT_ID}', { page_path: window.location.pathname });
+            gtag('config', '${GA_MEASUREMENT_ID}', {
+              page_path: window.location.pathname,
+            });
           `}
         </Script>
         <ThemeProvider>
