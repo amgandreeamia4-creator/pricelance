@@ -12,6 +12,7 @@ import { STORES, StoreId } from "@/config/catalog";
 import PriceTrendChart from "@/components/PriceTrendChart";
 import ProductSummary from "@/components/ProductSummary";
 import { useLanguage } from "@/components/LanguageProvider";
+import { fetchEbayItems, type EbayItem } from "@/lib/ebayFeed";
 
 import type { CategoryKey } from '@/config/categoryFilters';
 
@@ -74,6 +75,18 @@ type ProductWithListings = {
   brand?: string | null;
   imageUrl?: string | null;
   listings: Listing[];
+};
+
+type EbayListing = {
+  source: "ebay";
+  marketplaceId: string;
+  externalId: string;
+  title: string;
+  price: number | null;
+  currency: string | null;
+  url: string | null;
+  imageUrl?: string | null;
+  sellerName?: string | null;
 };
 
 const FAST_SHIPPING_DAYS = 3;
@@ -145,6 +158,11 @@ export default function Page() {
   const [isSearching, setIsSearching] = useState(false);
   const [selectedProductId, setSelectedProductId] =
     useState<string | null>(null);
+
+  // eBay results state
+  const [ebayItems, setEbayItems] = useState<EbayItem[]>([]);
+  const [isLoadingEbay, setIsLoadingEbay] = useState(false);
+  const [ebayError, setEbayError] = useState<string | null>(null);
 
   // Language
   const { lang } = useLanguage();
@@ -514,6 +532,9 @@ export default function Page() {
     if (!trimmed && !category) {
       setProducts([]);
       setSelectedProductId(null);
+      // Clear eBay results when search is cleared
+      setEbayItems([]);
+      setEbayError(null);
       return;
     }
 
@@ -538,12 +559,37 @@ export default function Page() {
       if (!res.ok) {
         console.error("Search failed", res.status);
         setProducts([]);
+        // Clear eBay results on search error
+        setEbayItems([]);
+        setEbayError(null);
         return;
       }
 
       const data = await res.json();
       const nextProducts = Array.isArray(data.products) ? data.products : [];
       setProducts(nextProducts);
+      
+      // Fetch eBay items using the new feed
+      if (trimmed) {
+        setIsLoadingEbay(true);
+        setEbayError(null);
+        fetchEbayItems(trimmed, 20)
+          .then((items) => {
+            setEbayItems(items);
+          })
+          .catch((err) => {
+            console.error("Error loading eBay items", err);
+            setEbayError("Could not load eBay offers.");
+            setEbayItems([]);
+          })
+          .finally(() => {
+            setIsLoadingEbay(false);
+          });
+      } else {
+        // Clear eBay results if no query
+        setEbayItems([]);
+        setEbayError(null);
+      }
       
       // Auto-select first product if no product is currently selected
       if (nextProducts.length > 0 && !selectedProductId) {
@@ -552,6 +598,9 @@ export default function Page() {
     } catch (error) {
       console.error("Search error in page.tsx", error);
       setProducts([]);
+      // Clear eBay results on search error
+      setEbayItems([]);
+      setEbayError(null);
     } finally {
       setIsSearching(false);
     }
@@ -921,6 +970,60 @@ export default function Page() {
                 />
               </div>
             )}
+
+            {/* Offers from eBay section */}
+            <section className="mt-8">
+              <div className="flex items-baseline justify-between mb-3">
+                <h2 className="text-lg font-semibold">Offers from eBay</h2>
+                {isLoadingEbay && (
+                  <span className="text-xs text-gray-500">Loading…</span>
+                )}
+              </div>
+
+              {ebayError && (
+                <p className="text-sm text-red-500 mb-2">{ebayError}</p>
+              )}
+
+              {!isLoadingEbay && !ebayError && ebayItems.length === 0 && query && (
+                <p className="text-sm text-gray-500">
+                  No eBay offers found for "{query}".
+                </p>
+              )}
+
+              {!isLoadingEbay && ebayItems.length > 0 && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {ebayItems.map((item) => (
+                    <a
+                      key={item.id}
+                      href={item.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="border rounded-lg p-3 flex flex-col gap-2 hover:shadow-sm transition"
+                    >
+                      {item.imageUrl && (
+                        <img
+                          src={item.imageUrl}
+                          alt={item.title}
+                          className="w-full h-40 object-contain"
+                        />
+                      )}
+                      <div className="text-sm font-medium line-clamp-2">
+                        {item.title}
+                      </div>
+                      <div className="text-sm font-semibold mt-auto">
+                        {item.price > 0 ? (
+                          <>
+                            {item.price.toFixed(2)} {item.currency}
+                          </>
+                        ) : (
+                          "See price on eBay"
+                        )}
+                      </div>
+                    </a>
+                  ))}
+                </div>
+              )}
+            </section>
 
             {/* Saved searches - collapsible on mobile */}
             <div className={`${cardStyle} overflow-hidden`}>

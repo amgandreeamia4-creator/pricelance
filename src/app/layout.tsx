@@ -41,6 +41,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   const currentYear = new Date().getFullYear();
+  const skimlinksSrc = process.env.NEXT_PUBLIC_SKIMLINKS_SCRIPT_SRC;
 
   return (
     <html lang="ro" suppressHydrationWarning>
@@ -123,6 +124,12 @@ export default function RootLayout({
             </div>
           </LanguageProvider>
         </ThemeProvider>
+        {skimlinksSrc && (
+          <Script
+            src={skimlinksSrc}
+            strategy="afterInteractive"
+          />
+        )}
       </body>
     </html>
   );
