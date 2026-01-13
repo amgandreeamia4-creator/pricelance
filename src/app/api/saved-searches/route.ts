@@ -1,10 +1,9 @@
 // src/app/api/saved-searches/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient, type SavedSearch } from "@prisma/client";
+import { type SavedSearch } from "@prisma/client";
 import { randomUUID } from "crypto";
 import { getOrCreateUserId, attachUserIdCookie } from "@/lib/userIdentity";
-
-const prisma = new PrismaClient();
+import { prisma } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 

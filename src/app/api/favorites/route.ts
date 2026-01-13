@@ -1,11 +1,9 @@
 // @ts-nocheck
 // src/app/api/favorites/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
 import { randomUUID } from "crypto";
 import { getOrCreateUserId, attachUserIdCookie } from "@/lib/userIdentity";
-
-const prisma = new PrismaClient();
+import { prisma } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 

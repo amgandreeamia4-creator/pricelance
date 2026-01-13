@@ -2,13 +2,11 @@
 // src/app/api/deals/route.ts
 
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
 import { computeDiscountPercent } from "@/lib/dealsUtils";
 import { isDemoProduct } from "@/lib/demoFilter";
 import { checkRateLimit } from "@/lib/rateLimit";
 import { getNetworkFilter, AFFILIATE_FLAGS, shouldHideListing } from "@/config/affiliates";
-
-const prisma = new PrismaClient();
+import { prisma } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
