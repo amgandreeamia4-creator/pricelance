@@ -1,38 +1,26 @@
 // src/app/api/products/[productId]/offers/route.ts
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 
 export async function GET(
-  req: NextRequest,
-  { params }: { params: { productId: string } }
+  req: Request,
+  // use a loose type so Next 16 is happy
+  { params }: any
 ) {
+  const productId = params?.productId as string | undefined;
+  if (!productId) {
+    return NextResponse.json(
+      { error: "Missing productId" },
+      { status: 400 }
+    );
+  }
+
   try {
-    const { productId } = params;
-    const { searchParams } = new URL(req.url);
-    const country = searchParams.get("country") ?? "RO";
-
-    if (!productId) {
-      return NextResponse.json(
-        { error: "Product ID is required" },
-        { status: 400 }
-      );
-    }
-
-    // Fetch product with related listings
+    // IMPORTANT: use the actual field and relation names from schema.prisma
     const product = await prisma.product.findUnique({
       where: { id: productId },
       include: {
-        Listing: {
-          where: {
-            inStock: true,
-            url: {
-              not: null,
-            },
-          },
-          orderBy: {
-            price: "asc",
-          },
-        },
+        Listing: true, // the real relation name from schema
       },
     });
 
@@ -43,47 +31,41 @@ export async function GET(
       );
     }
 
-    // Map listings to offers
-    const offers = product.Listing.map((listing) => ({
-      id: listing.id,
-      storeName: listing.storeName,
-      price: listing.price,
-      currency: listing.currency,
-      productUrl: listing.url || "",
-      shippingInfo: listing.shippingCost
-        ? `Shipping: ${listing.shippingCost} ${listing.currency}`
-        : listing.deliveryTimeDays
-        ? `Delivery: ${listing.deliveryTimeDays} days`
+    const offers = product.Listing.map((l: any) => ({
+      id: l.id,
+      storeName: l.storeName,
+      price: l.price,
+      currency: l.currency,
+      productUrl: l.url,
+      shippingInfo: l.shippingCost
+        ? `Shipping: ${l.shippingCost} ${l.currency}`
+        : l.deliveryTimeDays
+        ? `Delivery: ${l.deliveryTimeDays} days`
         : null,
-      badge: listing.fastDelivery || listing.isFastDelivery
+      badge: l.fastDelivery || l.isFastDelivery
         ? "Fast Delivery"
-        : listing.rating && listing.rating >= 4.5
+        : l.rating && l.rating >= 4.5
         ? "Top Rated"
         : null,
     }));
 
-    // Calculate min price
     const minPrice =
-      offers.length > 0
-        ? Math.min(...offers.map((offer) => offer.price))
-        : null;
+      offers.length > 0 ? Math.min(...offers.map((o: any) => o.price)) : null;
 
-    const response = {
+    return NextResponse.json({
       product: {
         id: product.id,
         title: product.displayName || product.name,
         imageUrl: product.imageUrl || product.thumbnailUrl,
         minPrice,
-        currency: offers[0]?.currency || null,
+        currency: offers[0]?.currency ?? null,
       },
       offers,
-    };
-
-    return NextResponse.json(response);
-  } catch (error) {
-    console.error("Error fetching product offers:", error);
+    });
+  } catch (err) {
+    console.error("Error loading product offers", err);
     return NextResponse.json(
-      { error: "Failed to fetch product offers" },
+      { error: "Failed to load product offers" },
       { status: 500 }
     );
   }

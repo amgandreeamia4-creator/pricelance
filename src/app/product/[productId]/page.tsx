@@ -235,17 +235,52 @@ export default function ProductPage() {
 
         {/* Store Offers */}
         <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 mb-6 shadow-sm">
-          <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-4">
-            Store Offers
-          </h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
+              Store Offers
+            </h2>
+            {isLoadingOffers && (
+              <span className="text-sm text-slate-500">Loading…</span>
+            )}
+          </div>
           
-          {offers.length === 0 ? (
-            <p className="text-slate-600 dark:text-slate-400 text-center py-8">
-              No store offers available for this product yet.
-            </p>
-          ) : (
+          {isLoadingOffers && (
             <div className="space-y-3">
-              {offers.map((offer) => (
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="animate-pulse">
+                  <div className="border border-slate-200 dark:border-slate-700 rounded-xl p-4">
+                    <div className="flex gap-4">
+                      <div className="w-16 h-16 bg-slate-200 dark:bg-slate-700 rounded"></div>
+                      <div className="flex-1">
+                        <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-1/3 mb-2"></div>
+                        <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-1/4"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {offersError && (
+            <div className="text-center py-8">
+              <p className="text-red-600 dark:text-red-400 mb-4">
+                {offersError.includes("not found") 
+                  ? "We couldn't find this product in our database." 
+                  : "We had trouble loading store offers. Please try again."}
+              </p>
+            </div>
+          )}
+
+          {!isLoadingOffers && !offersError && offers.length === 0 && (
+            <p className="text-slate-600 dark:text-slate-400 text-center py-8">
+              We don't have store offers for this product yet.
+            </p>
+          )}
+
+          {!isLoadingOffers && !offersError && offers.length > 0 && (
+            <div className="space-y-3">
+              {[...offers].sort((a, b) => a.price - b.price).map((offer) => (
                 <div
                   key={offer.id}
                   className="border border-slate-200 dark:border-slate-700 rounded-xl p-4 hover:shadow-sm transition-shadow"
@@ -291,7 +326,7 @@ export default function ProductPage() {
           <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
-                Extra Offers from eBay
+                Additional Offers from eBay
               </h2>
               {isLoadingEbay && (
                 <span className="text-sm text-slate-500">Loading…</span>
@@ -299,7 +334,7 @@ export default function ProductPage() {
             </div>
 
             <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
-              These links use affiliate marketing through Skimlinks to support our service.
+              These links may use affiliate marketing to support our service.
             </p>
 
             {isLoadingEbay && (
@@ -334,7 +369,7 @@ export default function ProductPage() {
 
             {!isLoadingEbay && !ebayError && ebayItems.length === 0 && (
               <p className="text-slate-600 dark:text-slate-400 text-center py-8">
-                No eBay offers found for this product.
+                No additional offers found on eBay.
               </p>
             )}
 

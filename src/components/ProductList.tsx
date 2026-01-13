@@ -266,7 +266,7 @@ export default function ProductList({
                 
                 {/* Compare offers button */}
                 <Link
-                  href={`/product/${product.id}`}
+                  href={`/product/${product.id}?country=RO`}
                   onClick={(e) => e.stopPropagation()}
                   className="flex items-center justify-center gap-1 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-medium rounded-lg transition-colors"
                 >
