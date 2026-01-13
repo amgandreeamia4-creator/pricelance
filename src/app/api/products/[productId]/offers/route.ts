@@ -1,6 +1,20 @@
 // src/app/api/products/[productId]/offers/route.ts
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { isListingFromDisabledNetwork } from "@/config/affiliateNetworks";
+import type { ListingResponse } from "@/lib/searchProducts";
+
+type ProductOffersResponse = {
+  product: {
+    id: string;
+    name: string;
+    displayName: string | null;
+    brand: string | null;
+    imageUrl: string | null;
+    category: string | null;
+  } | null;
+  listings: ListingResponse[];
+};
 
 export async function GET(
   req: Request,
@@ -16,52 +30,65 @@ export async function GET(
   }
 
   try {
-    // IMPORTANT: use the actual field and relation names from schema.prisma
+    // Step 1: Fetch the single product without listings (same as searchProducts pattern)
     const product = await prisma.product.findUnique({
       where: { id: productId },
-      include: {
-        Listing: true, // the real relation name from schema
-      },
     });
 
     if (!product) {
       return NextResponse.json(
-        { product: null, offers: [] },
+        { product: null, listings: [] },
         { status: 404 }
       );
     }
 
-    const offers = product.Listing.map((l: any) => ({
-      id: l.id,
-      storeName: l.storeName,
-      price: l.price,
-      currency: l.currency,
-      productUrl: l.url,
-      shippingInfo: l.shippingCost
-        ? `Shipping: ${l.shippingCost} ${l.currency}`
-        : l.deliveryTimeDays
-        ? `Delivery: ${l.deliveryTimeDays} days`
-        : null,
-      badge: l.fastDelivery || l.isFastDelivery
-        ? "Fast Delivery"
-        : l.rating && l.rating >= 4.5
-        ? "Top Rated"
-        : null,
-    }));
+    // Step 2: Fetch listings separately (same as searchProducts pattern)
+    const rawListings = await prisma.listing.findMany({
+      where: { productId: product.id },
+    });
 
-    const minPrice =
-      offers.length > 0 ? Math.min(...offers.map((o: any) => o.price)) : null;
+    // Step 3: Filter listings based on disabled affiliate networks (same as searchProducts)
+    const filterListingsForVisibility = (listings: any[]) => {
+      return listings.filter((l) =>
+        !isListingFromDisabledNetwork({
+          affiliateProvider: l.affiliateProvider,
+          affiliateProgram: l.affiliateProgram,
+          url: l.url,
+        })
+      );
+    };
 
-    return NextResponse.json({
+    const visibleListings = filterListingsForVisibility(rawListings);
+
+    // Step 4: Map listings to ListingResponse type (same as searchProducts)
+    const listings: ListingResponse[] = visibleListings.map(
+      (l: any): ListingResponse => ({
+        id: l.id,
+        storeId: l.storeId ?? null,
+        storeName: l.storeName ?? null,
+        price: l.price,
+        currency: l.currency ?? null,
+        url: l.url ?? l.productUrl ?? l.affiliateUrl ?? null,
+        affiliateProvider: l.affiliateProvider ?? null,
+        source: l.source ?? null,
+        fastDelivery: l.fastDelivery ?? null,
+        imageUrl: l.imageUrl ?? null,
+      })
+    );
+
+    const response: ProductOffersResponse = {
       product: {
         id: product.id,
-        title: product.displayName || product.name,
-        imageUrl: product.imageUrl || product.thumbnailUrl,
-        minPrice,
-        currency: offers[0]?.currency ?? null,
+        name: product.name,
+        displayName: product.displayName,
+        brand: product.brand,
+        imageUrl: product.imageUrl,
+        category: product.category ?? null,
       },
-      offers,
-    });
+      listings,
+    };
+
+    return NextResponse.json(response);
   } catch (err) {
     console.error("Error loading product offers", err);
     return NextResponse.json(
