@@ -85,9 +85,9 @@ function ResultsContent() {
       setError(null);
 
       try {
-        // Call the existing combined search API endpoint
+        // Call the main search API endpoint (without eBay for now)
         const response = await fetch(
-          `/api/search/with-ebay?q=${encodeURIComponent(rawQuery)}&limit=${limit}`,
+          `/api/products?q=${encodeURIComponent(rawQuery)}&limit=${limit}`,
           {
             method: "GET",
             cache: "no-store", // Ensure fresh results
@@ -98,8 +98,23 @@ function ResultsContent() {
           throw new Error(`Search failed: ${response.status}`);
         }
 
-        const result = await response.json();
-        setSearchResult(result);
+        const data = await response.json();
+        
+        // Transform the response to match the expected CombinedSearchResult format
+        setSearchResult({
+          query: rawQuery,
+          limit: limit,
+          db: {
+            products: data.products || [],
+            total: data.total || 0,
+            page: data.page || 1,
+            perPage: data.perPage || limit,
+          },
+          ebay: {
+            total: 0,
+            items: [], // No eBay items for now
+          },
+        });
       } catch (err) {
         console.error("Results page search error:", err);
         setError(err instanceof Error ? err.message : "Unknown error occurred");
