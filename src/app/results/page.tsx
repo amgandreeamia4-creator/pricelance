@@ -87,9 +87,7 @@ function ResultsContent() {
       try {
         // Call the existing combined search API endpoint
         const response = await fetch(
-          `${
-            process.env.NEXT_PUBLIC_APP_BASE_URL || "http://localhost:3000"
-          }/api/search/with-ebay?q=${encodeURIComponent(rawQuery)}&limit=${limit}`,
+          `/api/search/with-ebay?q=${encodeURIComponent(rawQuery)}&limit=${limit}`,
           {
             method: "GET",
             cache: "no-store", // Ensure fresh results
