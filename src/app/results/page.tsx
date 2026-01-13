@@ -3,7 +3,7 @@
 // src/app/results/page.tsx
 export const dynamic = "force-dynamic";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import ProductList from "@/components/ProductList";
@@ -30,6 +30,18 @@ type ProductResponse = {
   }[];
 };
 
+type EbayListing = {
+  source: "ebay";
+  marketplaceId: string;
+  externalId: string;
+  title: string;
+  price: number | null;
+  currency: string | null;
+  url: string | null;
+  imageUrl?: string | null;
+  sellerName?: string | null;
+};
+
 type CombinedSearchResult = {
   query: string;
   limit: number;
@@ -45,19 +57,7 @@ type CombinedSearchResult = {
   };
 };
 
-type EbayListing = {
-  source: "ebay";
-  marketplaceId: string;
-  externalId: string;
-  title: string;
-  price: number | null;
-  currency: string | null;
-  url: string | null;
-  imageUrl?: string | null;
-  sellerName?: string | null;
-};
-
-export default function ResultsPage() {
+function ResultsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const rawQuery = (searchParams.get("q") || "").trim();
@@ -87,7 +87,9 @@ export default function ResultsPage() {
       try {
         // Call the existing combined search API endpoint
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_APP_BASE_URL || "http://localhost:3000"}/api/search/with-ebay?q=${encodeURIComponent(rawQuery)}&limit=${limit}`,
+          `${
+            process.env.NEXT_PUBLIC_APP_BASE_URL || "http://localhost:3000"
+          }/api/search/with-ebay?q=${encodeURIComponent(rawQuery)}&limit=${limit}`,
           {
             method: "GET",
             cache: "no-store", // Ensure fresh results
@@ -185,12 +187,13 @@ export default function ResultsPage() {
       <div className="container mx-auto px-4 py-8">
         <div className="text-center mb-8">
           <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-2">
-            Results for "{searchResult?.query ?? 'search'}"
+            Results for "{searchResult?.query ?? "search"}"
           </h1>
           <p className="text-sm text-slate-600 dark:text-slate-400">
             Found {searchResult?.db?.total ?? 0} products from stores
-            {searchResult?.ebay?.total != null && searchResult?.ebay?.total > 0 &&
-            ` and ${searchResult?.ebay?.total} from eBay`}
+            {searchResult?.ebay?.total != null &&
+              searchResult?.ebay?.total > 0 &&
+              ` and ${searchResult?.ebay?.total} from eBay`}
           </p>
         </div>
 
@@ -266,5 +269,28 @@ export default function ResultsPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ResultsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
+          <div className="container mx-auto px-4 py-8">
+            <div className="text-center mb-8">
+              <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-2">
+                Loading results…
+              </h1>
+              <p className="text-sm text-slate-600 dark:text-slate-400">
+                Fetching products for your search.
+              </p>
+            </div>
+          </div>
+        </div>
+      }
+    >
+      <ResultsContent />
+    </Suspense>
   );
 }
