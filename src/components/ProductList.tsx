@@ -9,9 +9,9 @@ import { useSpring, animated, config } from '@react-spring/web';
 import { isListingFromDisabledNetwork } from '@/config/affiliateNetworks';
 
 type Listing = {
-  price: number;
-  currency: string;
-  storeName: string;
+  price: number | null;
+  currency: string | null;
+  storeName: string | null;
   url?: string | null; // link to retailer
   affiliateProvider?: string | null;
   source?: string | null;
@@ -45,7 +45,9 @@ const MAX_VISIBLE_PRODUCTS = 6;
 const BUDGET_THRESHOLD = 1000;
 
 // Standardized store chips component with neutral styling
-function StoreChips({ storeName, isAffiliate }: { storeName: string; isAffiliate: boolean }) {
+function StoreChips({ storeName, isAffiliate }: { storeName: string | null; isAffiliate: boolean }) {
+  if (!storeName) return null;
+  
   return (
     <div className="flex flex-col items-center gap-1 mt-2">
       <span className="rounded-full bg-slate-100 text-slate-700 text-[11px] font-medium px-3 py-1">
@@ -62,7 +64,10 @@ function StoreChips({ storeName, isAffiliate }: { storeName: string; isAffiliate
 
 function getBestListing(listings: Listing[] | undefined | null): Listing | null {
   if (!listings || listings.length === 0) return null;
-  return listings.reduce((best, l) => (l.price < best.price ? l : best));
+  // Filter out listings with null prices, then find the one with lowest price
+  const listingsWithPrice = listings.filter(l => l.price != null);
+  if (listingsWithPrice.length === 0) return null;
+  return listingsWithPrice.reduce((best, l) => (l.price! < best.price! ? l : best));
 }
 
 export default function ProductList({
@@ -111,7 +116,7 @@ export default function ProductList({
     if (productsWithPrices.length === 0) return null;
 
     const bestDeal = productsWithPrices.reduce((best, current) =>
-      current.bestListing!.price < best.bestListing!.price ? current : best
+      (current.bestListing!.price ?? Infinity) < (best.bestListing!.price ?? Infinity) ? current : best
     );
 
     return bestDeal.id;
@@ -251,7 +256,7 @@ export default function ProductList({
                     <>
                       <div className="text-[10px] text-slate-500 text-center">Price</div>
                       <div className="text-sm font-semibold text-slate-900">
-                        {minPrice} {currency}
+                        {minPrice != null ? `${minPrice} ${currency}` : 'Price not available'}
                       </div>
                       {offerCount > 1 && (
                         <div className="mt-0.5 text-[10px] text-slate-500">

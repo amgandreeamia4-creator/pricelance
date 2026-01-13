@@ -16,8 +16,8 @@ type Product = {
 type Offer = {
   id: string;
   storeName: string;
-  price: number;
-  currency: string;
+  price: number | null;
+  currency: string | null;
   productUrl: string;
   shippingInfo?: string | null;
   badge?: string | null;
@@ -280,7 +280,7 @@ export default function ProductPage() {
 
           {!isLoadingOffers && !offersError && offers.length > 0 && (
             <div className="space-y-3">
-              {[...offers].sort((a, b) => a.price - b.price).map((offer) => (
+              {[...offers].sort((a, b) => (a.price ?? 0) - (b.price ?? 0)).map((offer) => (
                 <div
                   key={offer.id}
                   className="border border-slate-200 dark:border-slate-700 rounded-xl p-4 hover:shadow-sm transition-shadow"
@@ -298,7 +298,7 @@ export default function ProductPage() {
                         )}
                       </div>
                       <div className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-                        {offer.price.toFixed(2)} {offer.currency}
+                        {offer.price != null ? `${offer.price.toFixed(2)} ${offer.currency || 'RON'}` : 'Price not available'}
                       </div>
                       {offer.shippingInfo && (
                         <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
