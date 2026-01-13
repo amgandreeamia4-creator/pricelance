@@ -183,11 +183,12 @@ export default function ResultsPage() {
       <div className="container mx-auto px-4 py-8">
         <div className="text-center mb-8">
           <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-2">
-            Results for "{searchResult.query}"
+            Results for "{searchResult?.query ?? 'search'}"
           </h1>
           <p className="text-sm text-slate-600 dark:text-slate-400">
-            Found {searchResult.db.total} products from stores
-            {searchResult.ebay.total > 0 && ` and ${searchResult.ebay.total} from eBay`}
+            Found {searchResult?.db?.total ?? 0} products from stores
+            {searchResult?.ebay?.total != null && searchResult?.ebay?.total > 0 &&
+            ` and ${searchResult?.ebay?.total} from eBay`}
           </p>
         </div>
 
@@ -197,7 +198,7 @@ export default function ResultsPage() {
             Store Products
           </h2>
           <ProductList
-            products={searchResult.db.products}
+            products={searchResult?.db?.products ?? []}
             selectedProductId={null}
             onSelectProduct={() => {}}
             favoriteIds={[]}
@@ -207,13 +208,13 @@ export default function ResultsPage() {
         </div>
 
         {/* eBay Products */}
-        {searchResult.ebay.items.length > 0 && (
+        {searchResult?.ebay?.items?.length > 0 && (
           <div>
             <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-6">
               eBay Products
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {searchResult.ebay.items.map((item) => (
+              {(searchResult?.ebay?.items ?? []).map((item) => (
                 <div
                   key={item.externalId}
                   className="border border-slate-200 dark:border-slate-700 rounded-xl p-4 hover:shadow-sm transition-shadow"
