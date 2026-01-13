@@ -79,10 +79,17 @@ export default function ProductPage() {
         );
 
         if (!response.ok) {
+          const errorData = await response.json().catch(() => null);
+          console.error('API Error Response:', {
+            status: response.status,
+            statusText: response.statusText,
+            errorData
+          });
+
           if (response.status === 404) {
-            setOffersError("Product not found");
+            setOffersError("Product not found in our database");
           } else {
-            setOffersError("Failed to load product offers");
+            setOffersError(errorData?.error || `Server error: ${response.status}`);
           }
           return;
         }
@@ -92,7 +99,7 @@ export default function ProductPage() {
         setOffers(data.offers);
       } catch (error) {
         console.error("Error fetching offers:", error);
-        setOffersError("Failed to load product offers");
+        setOffersError("Failed to load product offers. Please try again.");
       } finally {
         setIsLoadingOffers(false);
       }

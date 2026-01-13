@@ -6,6 +6,7 @@ import { randomUUID } from "crypto";
 import { prisma } from "@/lib/db";
 import { validateAdminToken } from "@/lib/adminAuth";
 import { defaultCountryForStore, normalizeStoreName } from "@/lib/stores/registry";
+import { isBlockedStoreOrUrl } from "@/lib/listingGuards";
 
 export const dynamic = "force-dynamic";
 
@@ -205,6 +206,18 @@ export async function POST(req: NextRequest, context: RouteContext) {
     const rawCountryCode =
       typeof body.countryCode === "string" ? body.countryCode.trim().toUpperCase() : "";
     const countryCode = rawCountryCode || defaultCountryForStore(storeId, "RO") || "RO";
+
+    // Check if listing should be blocked
+    if (isBlockedStoreOrUrl(normalizedStoreName, url)) {
+      console.warn("Skipping blocked listing for eMAG-like store/url", { 
+        storeName: normalizedStoreName, 
+        url 
+      });
+      return NextResponse.json(
+        { error: "Listing blocked: store or URL matches eMAG patterns" },
+        { status: 400 }
+      );
+    }
 
     // Relax Prisma typing for new metadata fields
     const listing = await (prisma.listing.create as any)({

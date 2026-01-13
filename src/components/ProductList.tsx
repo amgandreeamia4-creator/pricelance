@@ -1,9 +1,10 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import { getStoreDisplayName } from '@/lib/stores/registry';
 import clsx from 'clsx';
-import { Star } from 'lucide-react';
+import { Star, ExternalLink } from 'lucide-react';
 import { useSpring, animated, config } from '@react-spring/web';
 import { isListingFromDisabledNetwork } from '@/config/affiliateNetworks';
 
@@ -243,8 +244,8 @@ export default function ProductList({
                 </div>
               )}
 
-              {/* Price + favorite */}
-              <div className="mt-auto pt-3 flex items-end justify-between w-full">
+              {/* Price + actions */}
+              <div className="mt-auto pt-3 flex flex-col gap-2 w-full">
                 <div>
                   {bestListing ? (
                     <>
@@ -262,24 +263,38 @@ export default function ProductList({
                     <div className="text-[10px] text-slate-500">No price</div>
                   )}
                 </div>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onToggleFavorite(product.id);
-                  }}
-                  className={`h-7 w-7 rounded-full border flex items-center justify-center text-xs transition-colors ${
-                    isFavorite
-                      ? 'bg-blue-500 text-white border-blue-500'
-                      : 'text-slate-400 border-slate-300'
-                  }`}
+                
+                {/* Compare offers button */}
+                <Link
+                  href={`/product/${product.id}`}
+                  onClick={(e) => e.stopPropagation()}
+                  className="flex items-center justify-center gap-1 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-medium rounded-lg transition-colors"
                 >
-                  <Star
-                    className="h-4 w-4"
-                    fill={isFavorite ? 'currentColor' : 'none'}
-                    strokeWidth={2}
-                  />
-                </button>
+                  <ExternalLink className="h-3 w-3" />
+                  Compare offers
+                </Link>
+                
+                {/* Favorite button */}
+                <div className="flex justify-center">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onToggleFavorite(product.id);
+                    }}
+                    className={`h-7 w-7 rounded-full border flex items-center justify-center text-xs transition-colors ${
+                      isFavorite
+                        ? 'bg-blue-500 text-white border-blue-500'
+                        : 'text-slate-400 border-slate-300'
+                    }`}
+                  >
+                    <Star
+                      className="h-4 w-4"
+                      fill={isFavorite ? 'currentColor' : 'none'}
+                      strokeWidth={2}
+                    />
+                  </button>
+                </div>
               </div>
             </div>
           );

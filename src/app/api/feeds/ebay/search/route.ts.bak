@@ -1,0 +1,38 @@
+// app/api/feeds/ebay/search/route.ts
+
+import { NextRequest, NextResponse } from "next/server";
+import { fetchEbayItems } from "@/lib/ebayFeed";
+
+export const runtime = "nodejs";
+
+export async function GET(req: NextRequest) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const q = searchParams.get("q") || "";
+    const limitParam = searchParams.get("limit");
+
+    if (!q.trim()) {
+      return NextResponse.json(
+        { error: "Missing q parameter" },
+        { status: 400 }
+      );
+    }
+
+    const limit = limitParam ? Number(limitParam) : 20;
+
+    const items = await fetchEbayItems(q, limit);
+
+    return NextResponse.json({
+      query: q,
+      limit,
+      items,
+      total: items.length,
+    });
+  } catch (err: any) {
+    console.error("eBay search error:", err);
+    return NextResponse.json(
+      { error: err?.message ?? "Unknown error" },
+      { status: 500 }
+    );
+  }
+}

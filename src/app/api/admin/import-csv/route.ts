@@ -16,6 +16,7 @@ import {
 import { isValidProvider } from "@/config/affiliateIngestion";
 import { importNormalizedListings } from "@/lib/importService";
 import { parse } from "csv-parse/sync";
+import { isBlockedStoreOrUrl } from "@/lib/listingGuards";
 
 export const dynamic = "force-dynamic";
 
@@ -137,6 +138,15 @@ async function upsertListing(
 
   // Skip listing creation if no URL is available
   if (!row.affiliateUrl) {
+    return { isNew: false, hasListing: false };
+  }
+
+  // Check if listing should be blocked
+  if (isBlockedStoreOrUrl(row.storeName, row.affiliateUrl)) {
+    console.warn("Skipping blocked listing for eMAG-like store/url", { 
+      storeName: row.storeName, 
+      url: row.affiliateUrl 
+    });
     return { isNew: false, hasListing: false };
   }
 

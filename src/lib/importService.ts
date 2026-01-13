@@ -29,6 +29,7 @@ import {
   normalizeStoreName,
 } from "@/lib/stores/registry";
 import { inferCategorySlugFromIngestion, inferSubcategoryFromText } from "@/lib/categoryInference";
+import { isBlockedStoreOrUrl } from "@/lib/listingGuards";
 
 export type ImportSummary = {
   productsCreated: number;
@@ -392,7 +393,17 @@ export async function importNormalizedListings(
         }
       }
 
-      // === STEP 5: Create or update Listing ===
+      // === STEP 5: Check if listing should be blocked ===
+      if (isBlockedStoreOrUrl(storeNameRaw, url)) {
+        console.warn("Skipping blocked listing for eMAG-like store/url", { 
+          storeName: storeNameRaw, 
+          url,
+          rowNumber 
+        });
+        continue;
+      }
+
+      // === STEP 6: Create or update Listing ===
       const countryFromRegistry = defaultCountryForStore(
         storeIdRaw,
         defaultCountryCode,
