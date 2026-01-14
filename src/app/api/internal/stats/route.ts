@@ -1,9 +1,7 @@
 // src/app/api/internal/stats/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/db";
 import { checkInternalAuth } from "@/lib/internalAuth";
-
-const prisma = new PrismaClient();
 
 export const dynamic = "force-dynamic";
 
