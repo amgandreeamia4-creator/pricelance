@@ -339,6 +339,15 @@ export default function Page() {
     return result;
   }, [products, storeFilter, fastOnly, sortBy, location]);
 
+  // Split products into primary (first 6) and secondary (remaining)
+  const primaryProducts = useMemo(() => {
+    return visibleProducts.slice(0, 6);
+  }, [visibleProducts]);
+
+  const secondaryProducts = useMemo(() => {
+    return visibleProducts.slice(6);
+  }, [visibleProducts]);
+
   useEffect(() => {
     if (!selectedProductId) return;
 
@@ -631,7 +640,7 @@ export default function Page() {
 
   const activeProduct =
     visibleProducts.find((p) => p.id === selectedProductId) ??
-    visibleProducts[0] ??
+    primaryProducts[0] ??
     null;
 
   const totalProducts = visibleProducts.length;
@@ -958,15 +967,30 @@ export default function Page() {
           {/* CENTER COLUMN - Mobile order 3 (results area) */}
           <div className="flex flex-col gap-4 order-3 lg:order-2">
             {/* Only show results card when there are products to display */}
-            {visibleProducts.length > 0 && (
+            {primaryProducts.length > 0 && (
               <div className={`${cardStyle} px-6 py-5`}>
                 <ProductList
-                  products={visibleProducts}
+                  products={primaryProducts}
                   selectedProductId={selectedProductId}
                   onSelectProduct={(id: string) => setSelectedProductId(id)}
                   favoriteIds={favoriteIds}
                   onToggleFavorite={toggleFavorite}
                   isLoading={isSearching}
+                />
+              </div>
+            )}
+
+            {/* More laptops from this search section */}
+            {secondaryProducts.length > 0 && (
+              <div className={`${cardStyle} px-6 py-5`}>
+                <h3 className="text-sm font-medium text-slate-600 mb-4">More laptops from this search</h3>
+                <ProductList
+                  products={secondaryProducts}
+                  selectedProductId={selectedProductId}
+                  onSelectProduct={(id: string) => setSelectedProductId(id)}
+                  favoriteIds={favoriteIds}
+                  onToggleFavorite={toggleFavorite}
+                  isLoading={false}
                 />
               </div>
             )}
