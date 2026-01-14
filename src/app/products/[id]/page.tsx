@@ -181,16 +181,9 @@ export default async function ProductPage({ params }: ProductPageProps) {
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1.2fr)]">
         {/* Left column - Product Hero */}
         <div>
-          <h1 className="text-3xl font-bold mb-2">
+          <h1 className="text-3xl font-bold mb-4">
             {product.displayName || product.name}
           </h1>
-          {product.brand && (
-            <p className="text-sm text-slate-500 mb-4">
-              Brand: <span className="font-medium text-slate-900">
-                {product.brand || "Unknown brand"}
-              </span>
-            </p>
-          )}
           
           {product.imageUrl && (
             <div className="mb-6">
