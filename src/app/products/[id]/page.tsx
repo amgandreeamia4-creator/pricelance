@@ -168,7 +168,11 @@ export default async function ProductPage({ params }: ProductPageProps) {
             {product.displayName || product.name}
           </h1>
           {product.brand && (
-            <p className="text-lg text-gray-600 mb-4">Brand: {product.brand}</p>
+            <p className="text-sm text-slate-500 mb-4">
+              Brand: <span className="font-medium text-slate-900">
+                {product.brand || "Unknown brand"}
+              </span>
+            </p>
           )}
           
           {product.imageUrl && (
@@ -187,14 +191,14 @@ export default async function ProductPage({ params }: ProductPageProps) {
           {shapedListings.length === 0 ? (
             <div className="rounded-2xl bg-white/90 p-6 shadow-sm">
               <h2 className="text-2xl font-semibold mb-4">No offers available</h2>
-              <p className="text-gray-600">We don't have store offers for this laptop yet.</p>
+              <p className="text-gray-600">We don't have store offers for this product yet.</p>
             </div>
           ) : (
             <div className="rounded-2xl bg-white/90 p-6 shadow-sm">
               {/* Header */}
               <div className="mb-6">
                 <h2 className="text-2xl font-semibold mb-2">
-                  Offers for this laptop
+                  Offers for this product
                 </h2>
                 <p className="text-gray-600 mb-1">
                   We found {shapedListings.length} offers from different stores.
