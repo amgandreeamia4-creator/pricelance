@@ -36,7 +36,12 @@ export default async function ProductsPage() {
           gap: "1.5rem",
         }}
       >
-        {products.map((product: any) => (
+        {products.map((product: any) => {
+          const firstListing = product.listings?.[0];
+          const bestPrice = product.listings?.reduce((min: number, listing: any) => 
+            listing.price < min ? listing.price : min, Infinity);
+          
+          return (
           <div
             key={product.id}
             style={{
@@ -60,10 +65,17 @@ export default async function ProductsPage() {
               {product.displayName || product.name}
             </h2>
             <p style={{ color: "#666" }}>
-              {product.price ? `${product.price} ${product.currency || ""}` : ""}
+              {bestPrice !== Infinity && firstListing ? 
+                `${bestPrice.toFixed(2)} ${firstListing.currency || ""}` : 
+                "Price not available"
+              }
+            </p>
+            <p style={{ fontSize: "0.8rem", color: "#999", marginTop: "0.5rem" }}>
+              {product.listings?.length || 0} offers available
             </p>
           </div>
-        ))}
+          );
+        })}
       </div>
     </main>
   );
