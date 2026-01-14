@@ -7,6 +7,7 @@ type ProductWithListings = {
   name: string;
   displayName?: string | null;
   brand?: string | null;
+  category?: string | null;
   imageUrl?: string | null;
   listings: {
     id: string;
@@ -32,7 +33,13 @@ async function getProduct(id: string): Promise<ProductWithListings | null> {
   try {
     const product = await prisma.product.findUnique({
       where: { id },
-      include: {
+      select: {
+        id: true,
+        name: true,
+        displayName: true,
+        brand: true,
+        category: true,
+        imageUrl: true,
         Listing: {
           select: {
             id: true,
@@ -70,6 +77,15 @@ async function getProduct(id: string): Promise<ProductWithListings | null> {
     return null;
   }
 }
+
+const getProductKindLabel = (product: ProductWithListings): string => {
+  const raw = (product.category || "").toLowerCase();
+
+  if (raw.includes("laptop")) return "laptop";
+  if (raw.includes("telefon") || raw.includes("phone")) return "phone";
+
+  return "product";
+};
 
 type ShapedListing = {
   id: string;
@@ -146,6 +162,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
     notFound();
   }
 
+  const kindLabel = getProductKindLabel(product);
   const shapedListings = shapeListings(product.listings);
 
   return (
@@ -191,14 +208,14 @@ export default async function ProductPage({ params }: ProductPageProps) {
           {shapedListings.length === 0 ? (
             <div className="rounded-2xl bg-white/90 p-6 shadow-sm">
               <h2 className="text-2xl font-semibold mb-4">No offers available</h2>
-              <p className="text-gray-600">We don't have store offers for this product yet.</p>
+              <p className="text-gray-600">We don't have store offers for this {kindLabel} yet.</p>
             </div>
           ) : (
             <div className="rounded-2xl bg-white/90 p-6 shadow-sm">
               {/* Header */}
               <div className="mb-6">
                 <h2 className="text-2xl font-semibold mb-2">
-                  Offers for this product
+                  Offers for this {kindLabel}
                 </h2>
                 <p className="text-gray-600 mb-1">
                   We found {shapedListings.length} offers from different stores.
