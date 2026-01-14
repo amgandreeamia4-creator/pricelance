@@ -1,7 +1,14 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  reactCompiler: false,
+  // Enable experimental server actions for App Router
+  experimental: {
+    serverActions: {
+      allowedOrigins: ["localhost:3000"],
+    },
+  },
+  
+  // Image optimization configuration
   images: {
     remotePatterns: [
       {
@@ -18,6 +25,9 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  
+  // React compiler disabled
+  reactCompiler: false,
 };
 
 export default nextConfig;
