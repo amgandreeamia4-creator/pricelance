@@ -16,6 +16,7 @@ import {
 import { isValidProvider } from "@/config/affiliateIngestion";
 import { importNormalizedListings } from "@/lib/importService";
 import { parse } from "csv-parse/sync";
+import { detectBrandFromName } from "@/lib/brandDetector";
 
 export const dynamic = "force-dynamic";
 
@@ -92,12 +93,13 @@ async function findOrCreateProduct(
   });
 
   if (!existing) {
+    const detectedBrand = detectBrandFromName(row.name);
     const created = await db.product.create({
       data: {
         name: row.name,
         displayName: row.name,
         category: row.categoryRaw || null,
-        brand: null,
+        brand: detectedBrand || "Unknown",
         imageUrl: row.imageUrl || null,
         thumbnailUrl: row.imageUrl || null,
         gtin: row.gtin || null,
@@ -439,7 +441,7 @@ export async function POST(req: NextRequest) {
       // Convert valid rows to NormalizedListing format
       const normalizedListings = limitedRows.map((row) => ({
         productTitle: row.title,
-        brand: row.title.split(" ")[0] || "Unknown", // Simple brand extraction
+        brand: detectBrandFromName(row.title) || "Unknown",
         category: row.categoryRaw || "General",
         gtin: undefined,
         storeId: row.storeName?.toLowerCase().replace(/[^a-z0-9\s]/g, "").replace(/\s+/g, "_") || "unknown",

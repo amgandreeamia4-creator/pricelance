@@ -29,6 +29,7 @@ import {
   normalizeStoreName,
 } from "@/lib/stores/registry";
 import { inferCategorySlugFromIngestion, inferSubcategoryFromText } from "@/lib/categoryInference";
+import { detectBrandFromName } from "@/lib/brandDetector";
 
 export type ImportSummary = {
   productsCreated: number;
@@ -116,6 +117,10 @@ async function findOrCreateProduct(
   const normalizedCategory = category?.trim() || undefined;
   const normalizedSubcategory = subcategory?.trim() || undefined;
 
+  // Detect brand from product name if not provided
+  const detectedBrand = detectBrandFromName(productTitle);
+  const finalBrand = normalizedBrand || detectedBrand || "Unknown";
+
   // Strategy 1: Try GTIN-first matching if GTIN is provided
   if (normalizedGtin) {
     const gtinMatch = await (prisma.product.findFirst as any)({
@@ -134,8 +139,8 @@ async function findOrCreateProduct(
   const nameMatch = await prisma.product.findFirst({
     where: {
       name: { equals: productTitle, mode: "insensitive" },
-      brand: normalizedBrand
-        ? { equals: normalizedBrand, mode: "insensitive" }
+      brand: finalBrand
+        ? { equals: finalBrand, mode: "insensitive" }
         : null,
     },
     select: { id: true },
@@ -155,7 +160,7 @@ async function findOrCreateProduct(
     data: {
       id: randomUUID(),
       name: productTitle,
-      brand: normalizedBrand || null,
+      brand: finalBrand,
       category: normalizedCategory || null,
       subcategory: normalizedSubcategory || null,
       gtin: normalizedGtin || null,
