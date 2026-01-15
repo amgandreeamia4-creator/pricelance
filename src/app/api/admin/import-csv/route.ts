@@ -412,6 +412,8 @@ export async function POST(req: NextRequest) {
       const isCapped = totalRows > MAX_IMPORT_ROWS;
 
       console.log(`[import-csv] Parsed ${totalRows} rows with delimiter "${delimiter}"`);
+      console.log(`[import-csv] Sample normalized row:`, normalizedRows[0]);
+      console.log(`[import-csv] Available fields in first row:`, Object.keys(normalizedRows[0] || {}));
 
       // Validate and extract 2Performant rows with detailed logging
       let invalidRows = 0;
@@ -425,6 +427,14 @@ export async function POST(req: NextRequest) {
         const title = (row['product_name'] ?? row['title'] ?? row['name'] ?? row['nume produs'] ?? "").trim();
         const affCode = (row['url'] ?? row['affiliate_link'] ?? row['product affiliate'] ?? "").trim();
         const price = extractPrice(row);
+        
+        console.log(`[import-csv] Row ${rowNum} extracted:`, {
+          title,
+          affCode,
+          price,
+          storeName: row['store_name'] ?? row['advertiser name'] ?? row['magazin'],
+          availableFields: Object.keys(row)
+        });
         
         // Optional fields with defaults
         const storeName = (row['store_name'] ?? row['advertiser name'] ?? row['magazin'] ?? "Unknown").trim();
