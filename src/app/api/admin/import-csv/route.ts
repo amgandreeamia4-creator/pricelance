@@ -37,71 +37,64 @@ function detectDelimiter(raw: string): string {
   return ",";
 }
 
-// Enhanced header normalization with comprehensive field mapping
+// Simplified header normalization for common Romanian headers
 function normalizeHeaders<T extends Record<string, any>>(row: T): Record<string, any> {
   const out: Record<string, any> = {};
   for (const [key, value] of Object.entries(row)) {
     // Remove BOM, trim whitespace, convert to lowercase
     const normalizedKey = key.replace(/^\uFEFF/, '').trim().toLowerCase();
     
-    // Map common header variations to standard field names
-    const mappedKey = mapHeaderToStandardField(normalizedKey);
+    // Map common Romanian headers to standard field names
+    const mappedKey = mapRomanianHeaderToStandardField(normalizedKey);
     out[mappedKey] = value;
   }
   return out;
 }
 
-// Map common header variations to standard field names
-function mapHeaderToStandardField(header: string): string {
-  const normalized = header.toLowerCase().trim();
-  
+// Map common Romanian headers to standard field names
+function mapRomanianHeaderToStandardField(header: string): string {
   // Product name variations
-  if (normalized.includes('nume produs') || normalized.includes('product name') || normalized.includes('product_name') || normalized.includes('name')) {
+  if (header.includes('nume produs') || header.includes('product name') || header.includes('product_name') || header.includes('name')) {
     return 'product_name';
   }
   
   // URL/affiliate variations
-  if (normalized.includes('affiliate link') || normalized.includes('affiliate_link') || normalized.includes('product affiliate') || normalized.includes('link afiliat') || normalized.includes('link afiliate') || normalized.includes('url') || normalized.includes('link') || normalized.includes('product url')) {
+  if (header.includes('affiliate link') || header.includes('affiliate_link') || header.includes('product affiliate') || header.includes('link afiliat') || header.includes('url') || header.includes('link') || header.includes('product url')) {
     return 'url';
   }
   
   // Price variations
-  if (normalized.includes('pret') || normalized.includes('price') || normalized.includes('price_final') || normalized.includes('pret reducere') || normalized.includes('price_value') || normalized.includes('sale_price') || normalized.includes('old_price')) {
+  if (header.includes('pret') || header.includes('price') || header.includes('price_final') || header.includes('pret reducere') || header.includes('price_value')) {
     return 'price';
   }
   
   // Image variations
-  if (normalized.includes('image') || normalized.includes('image_url') || normalized.includes('img') || normalized.includes('product picture')) {
+  if (header.includes('image') || header.includes('image_url') || header.includes('img') || header.includes('product picture')) {
     return 'image_url';
   }
   
   // Store/advertiser variations
-  if (normalized.includes('store_name') || normalized.includes('advertiser name') || normalized.includes('magazin') || normalized.includes('campaign_name') || normalized.includes('program_name')) {
+  if (header.includes('store_name') || header.includes('advertiser name') || header.includes('magazin') || header.includes('campaign_name')) {
     return 'store_name';
   }
   
   // Category variations
-  if (normalized.includes('category') || normalized.includes('categorie')) {
+  if (header.includes('category') || header.includes('categorie')) {
     return 'category';
   }
   
   // Currency variations
-  if (normalized.includes('currency') || normalized.includes('moneda')) {
+  if (header.includes('currency') || header.includes('moneda')) {
     return 'currency';
   }
   
-  // Availability variations
-  if (normalized.includes('availability') || normalized.includes('disponibilitate') || normalized.includes('stoc')) {
-    return 'availability';
-  }
-  
   // External ID variations
-  if (normalized.includes('id produs') || normalized.includes('external_id') || normalized.includes('id')) {
+  if (header.includes('id produs') || header.includes('external_id') || header.includes('id')) {
     return 'external_id';
   }
   
   // Default fallback
-  return normalized;
+  return header;
 }
 
 // Helper function to normalize a single header
@@ -120,17 +113,17 @@ function toNumber(value: unknown): number | null {
   return Number.isNaN(num) ? null : num;
 }
 
-// Enhanced price parsing with comprehensive format handling
+// Simplified Romanian price parsing
 function extractPrice(row: Record<string, any>): number | null {
-  // Accept price from ANY of these fields: price, pret, price_value, price_final, sale_price, old_price
-  const priceRaw = row['price'] || row['pret'] || row['price_value'] || row['price_final'] || row['sale_price'] || row['old_price'];
+  // Accept price from common Romanian fields
+  const priceRaw = row['price'] || row['pret'] || row['price_value'] || row['price_final'] || row['pret reducere'];
 
   if (priceRaw == null) return null;
 
   const s = String(priceRaw).trim();
   if (!s) return null;
 
-  // Remove currency symbols and text, handle various decimal formats
+  // Romanian format: replace "." with "", "," with ".", then parseFloat
   let cleaned = s.replace(/[^\d.,\-]/g, '');
   if (!cleaned) return null;
 
@@ -156,13 +149,11 @@ type TwoPerformantImportRow = {
   title: string;
   affCode: string;
   price: number;
-  campaignName?: string;
-  imageUrls?: string;
-  description?: string;
   storeName?: string;
-  currency?: string;
+  imageUrls?: string;
   categoryRaw?: string;
-  availability?: string;
+  currency?: string;
+  externalId?: string;
 };
 
 /**
@@ -425,77 +416,32 @@ export async function POST(req: NextRequest) {
       // Validate and extract 2Performant rows with detailed logging
       let invalidRows = 0;
       const validRows: TwoPerformantImportRow[] = [];
-      const skippedReasons: string[] = [];
-
+      const failReasons: string[] = [];
       for (let i = 0; i < normalizedRows.length; i++) {
         const row = normalizedRows[i];
         const rowNum = i + 2; // +2 for header + 1-index
 
-        // Enhanced validation with comprehensive field mapping and detailed error collection
+        // Basic field extraction with Romanian header support
         const title = (row['product_name'] ?? row['title'] ?? row['name'] ?? row['nume produs'] ?? "").trim();
-        
-        // URL/affiliate variations - comprehensive mapping
-        const affCode =
-          row['aff_code'] ?? 
-          row['aff link'] ?? 
-          row['affiliate_link'] ?? 
-          row['product affiliate'] ?? 
-          row['url'] ?? 
-          row['link'] ?? 
-          row['product url'] ?? 
-          "".trim();
-
-        // Enhanced price parsing with robust format handling
+        const affCode = (row['url'] ?? row['affiliate_link'] ?? row['product affiliate'] ?? row['link afiliat'] ?? "").trim();
         const price = extractPrice(row);
         
-        const campaignName = (row['campaign_name'] ?? row['program_name'] ?? row['advertiser name'] ?? "").trim();
-        
-        // Store/advertiser variations - comprehensive mapping
-        const storeName = (row['store_name'] ?? row['advertiser name'] ?? row['magazin'] ?? row['campaign_name'] ?? "").trim();
-        
-        // Image variations - comprehensive mapping
-        const imageUrlsRaw =
-          row['image_urls'] ?? 
-          row['image_url'] ?? 
-          row['image'] ?? 
-          row['img'] ?? 
-          row['product picture'] ?? 
-          "".trim();
-        
-        // Robust image URL extraction with multiple format support
-        let extractedImageUrl: string | null = null;
-        if (imageUrlsRaw) {
-          const parts = imageUrlsRaw.split(/[|,]/).map((p: string) => p.trim()).filter(Boolean);
-          if (parts.length > 0) {
-            const candidate = parts[0];
-            extractedImageUrl = candidate && (candidate.toLowerCase().startsWith('http') || candidate.toLowerCase().startsWith('https')) ? candidate : null;
-          }
-        }
-        const imageUrls = extractedImageUrl || undefined;
-
-        // Category and other fields
-        const description = (row['description'] ?? row['descriere'] ?? row['product description'] ?? "").trim();
-        const currency = (row['currency'] ?? row['moneda'] ?? "RON").trim().toUpperCase();
+        // Optional fields with defaults
+        const storeName = (row['store_name'] ?? row['advertiser name'] ?? row['magazin'] ?? "Unknown").trim();
+        const imageUrls = (row['image_url'] ?? row['image'] ?? row['img'] ?? undefined)?.trim();
         const categoryRaw = (row['category'] ?? row['categorie'] ?? "").trim();
-        const availability = (row['availability'] ?? row['disponibilitate'] ?? row['stoc'] ?? "").trim();
+        const currency = (row['currency'] ?? row['moneda'] ?? "RON").trim().toUpperCase();
+        const externalId = (row['external_id'] ?? row['id produs'] ?? "").trim();
 
-        // Essential fields validation with detailed error collection
+        // Forgiving validation - only essentials required
         let failReason = "";
-        const failReasons: string[] = [];
-
-        // Essential fields validation
+        
         if (!title) {
           failReason = "Missing product_name";
+        } else if (price == null || Number.isNaN(price) || price <= 0) {
+          failReason = "Invalid price (must be > 0)";
         } else if (!affCode) {
-          failReason = "Missing URL (aff_code/affiliate_link/product_url/link)";
-        } else if (price == null) {
-          failReason = "Price is empty or null";
-        } else if (Number.isNaN(price)) {
-          failReason = `Price is NaN (raw: ${price})`;
-        } else if (price === 0) {
-          failReason = "Price is 0";
-        } else if (!affCode.startsWith('http')) {
-          failReason = `Invalid URL format: ${affCode.substring(0, 50)}${affCode.length > 50 ? '...' : ''}`;
+          failReason = "Missing URL";
         }
 
         if (failReason) {
@@ -503,7 +449,7 @@ export async function POST(req: NextRequest) {
           const detailedReason = `Row ${rowNum}: ${failReason} (title="${title}", price=${price}, url="${affCode.substring(0, 30)}${affCode.length > 30 ? '...' : ''}")`;
           failReasons.push(detailedReason);
           
-          // Log first few bad rows with full data for debugging
+          // Log first few bad rows for debugging
           if (invalidRows <= 3) {
             console.error(`[import-csv] Row ${rowNum} FAILED:`, {
               rowNumber: rowNum,
@@ -512,7 +458,6 @@ export async function POST(req: NextRequest) {
                 title,
                 price,
                 affCode: affCode.substring(0, 50) + (affCode.length > 50 ? '...' : ''),
-                campaignName,
                 storeName,
                 availableFields: Object.keys(row).slice(0, 10)
               }
@@ -521,42 +466,29 @@ export async function POST(req: NextRequest) {
           continue;
         }
 
+        // Auto-fix URL if missing protocol
+        let fixedUrl = affCode;
+        if (fixedUrl && !fixedUrl.startsWith('http')) {
+          fixedUrl = 'https://' + fixedUrl;
+        }
+
         validRows.push({
           title,
-          affCode,
+          affCode: fixedUrl,
           price: price as number,
-          campaignName: campaignName || undefined,
+          storeName,
           imageUrls,
-          description: description || undefined,
-          storeName: storeName || undefined,
-          currency: currency || "RON",
-          categoryRaw: categoryRaw || undefined,
-          availability: availability || undefined,
+          categoryRaw,
+          currency,
+          externalId
         });
       }
 
       // Log detailed skip reasons (first 10)
-      if (skippedReasons.length > 0) {
-        console.log(`[import-csv] Skip reasons (first 10 of ${skippedReasons.length}):`);
-        skippedReasons.slice(0, 10).forEach(reason => {
+      if (failReasons.length > 0) {
+        console.log(`[import-csv] Skip reasons (first 10 of ${failReasons.length}):`);
+        failReasons.slice(0, 10).forEach((reason: string) => {
           console.log(`  - ${reason}`);
-        });
-      }
-
-      // Add hardcoded good test row to ensure success path works
-      if (validRows.length === 0) {
-        console.log("[import-csv] No valid rows found, adding hardcoded test row");
-        validRows.push({
-          title: "Test Product Enhanced",
-          affCode: "https://example.com/test-affiliate",
-          price: 199.99,
-          campaignName: "Test Campaign",
-          imageUrls: "https://example.com/test-image.jpg",
-          description: "Test Description Enhanced",
-          storeName: "Test Store Enhanced",
-          currency: "RON",
-          categoryRaw: "Test Category",
-          availability: "In Stock"
         });
       }
 
@@ -589,14 +521,14 @@ export async function POST(req: NextRequest) {
             maxRowsPerImport: MAX_IMPORT_ROWS,
             provider,
             sampleRow: normalizedRows[0] ?? null,
-            skipReasons: skippedReasons.slice(0, 10), // Include first 10 skip reasons
+            failReasons: failReasons.slice(0, 10), // Include first 10 skip reasons
           },
           { status: 400 },
         );
       }
 
       // Convert valid rows to NormalizedListing format
-      const normalizedListings = limitedRows.map((row) => ({
+      const normalizedListings = limitedRows.map((row: TwoPerformantImportRow) => ({
         productTitle: row.title,
         brand: row.title.split(" ")[0] || "Unknown", // Simple brand extraction
         category: row.categoryRaw || "General",
@@ -658,7 +590,7 @@ export async function POST(req: NextRequest) {
           capped: isCapped,
           maxRowsPerImport: MAX_IMPORT_ROWS,
           provider,
-          failReasons: skippedReasons.slice(0, 10), // Include first 10 skip reasons
+          failReasons: failReasons.slice(0, 10), // Include first 10 skip reasons
         },
         { status: 200 },
       );
