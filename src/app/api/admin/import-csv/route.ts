@@ -465,7 +465,7 @@ export async function POST(req: NextRequest) {
         // Robust image URL extraction with multiple format support
         let extractedImageUrl: string | null = null;
         if (imageUrlsRaw) {
-          const parts = imageUrlsRaw.split(/[|,]/).map(p => p.trim()).filter(Boolean);
+          const parts = imageUrlsRaw.split(/[|,]/).map((p: string) => p.trim()).filter(Boolean);
           if (parts.length > 0) {
             const candidate = parts[0];
             extractedImageUrl = candidate && (candidate.toLowerCase().startsWith('http') || candidate.toLowerCase().startsWith('https')) ? candidate : null;
