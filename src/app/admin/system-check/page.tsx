@@ -324,7 +324,7 @@ async function fetchCategoryCoverage(): Promise<CategoryCoverageRow[]> {
         where: { category: slug },
         select: {
           id: true,
-          Listing: {
+          listings: {
             select: { id: true },
           },
         },

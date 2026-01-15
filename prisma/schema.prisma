@@ -1,3 +1,6 @@
+// IMPORTANT: After changing relation names, run 'npx prisma generate' locally
+// (and 'npx prisma db push' if needed) before committing to regenerate the client.
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -28,7 +31,7 @@ model CuratedProduct {
   defaultPrice    Float?
   defaultCurrency String           @default("USD")
   createdAt       DateTime         @default(now())
-  CuratedListing  CuratedListing[]
+  curatedListings  CuratedListing[]
 }
 
 model Favorite {
@@ -89,7 +92,7 @@ model Product {
   source              String?
   externalId          String?
   Favorite            Favorite[]
-  Listing             Listing[]
+  listings             Listing[]
   ProductPriceHistory ProductPriceHistory[]
 }
 

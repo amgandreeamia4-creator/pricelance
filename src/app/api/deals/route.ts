@@ -82,14 +82,14 @@ export async function GET(req: NextRequest) {
     // Apply network filtering to exclude disabled networks
     const networkFilter = getNetworkFilter();
     const whereClause = Object.keys(networkFilter).length > 0 ? {
-      Listing: {
+      listings: {
         some: networkFilter,
       },
     } : undefined;
 
     const products = await prisma.product.findMany({
       include: {
-        Listing: true,
+        listings: true,
         ProductPriceHistory: true,
       },
       where: whereClause,

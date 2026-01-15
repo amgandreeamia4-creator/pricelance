@@ -42,7 +42,7 @@ export async function GET(req: NextRequest) {
         category: true,
         imageUrl: true,
         _count: {
-          select: { Listing: true },
+          select: { listings: true },
         },
       },
       orderBy: { updatedAt: "desc" },

@@ -48,7 +48,7 @@ export async function GET(req: NextRequest) {
       select: {
         id: true,
         category: true,
-        Listing: {
+        listings: {
           select: {
             price: true,
           },

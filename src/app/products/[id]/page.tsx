@@ -40,7 +40,7 @@ async function getProduct(id: string): Promise<ProductWithListings | null> {
         brand: true,
         category: true,
         imageUrl: true,
-        Listing: {
+        listings: {
           select: {
             id: true,
             storeName: true,
@@ -70,7 +70,7 @@ async function getProduct(id: string): Promise<ProductWithListings | null> {
 
     return {
       ...product,
-      listings: product.Listing,
+      listings: product.listings,
     } as ProductWithListings;
   } catch (error) {
     console.error("Error fetching product:", error);

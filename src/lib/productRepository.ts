@@ -188,7 +188,7 @@ export async function findProductsWithHistory(
   const prismaProducts = await prisma.product.findMany({
     where,
     include: {
-      Listing: true,
+      listings: true,
       ProductPriceHistory: {
         orderBy: { date: "asc" },
       },
