@@ -173,13 +173,14 @@ async function findOrCreateProduct(
   if (!existing) {
     const created = await db.product.create({
       data: {
-        name: row.name,
-        displayName: row.name,
+        name: row.title,
+        displayName: row.title,
         category: row.categoryRaw || null,
         brand: null,
-        imageUrl: row.imageUrl || null,
-        thumbnailUrl: row.imageUrl || null,
-        gtin: row.gtin || null,
+        imageUrl: row.imageUrls || null,
+        thumbnailUrl: row.imageUrls || null,
+        gtin: row.externalId || null,
+        updatedAt: new Date(), // Add missing updatedAt field
       },
       select: { id: true },
     });
