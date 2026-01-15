@@ -403,6 +403,7 @@ export async function POST(req: NextRequest) {
     if (provider === "2performant") {
       console.log("[import-csv] Using enhanced 2Performant CSV parsing");
 
+      const delimiter = detectDelimiter(content);
       console.log(`[import-csv] Detected delimiter: "${delimiter}"`);
       console.log(`[import-csv] Raw CSV content (first 200 chars):`, content.substring(0, 200));
 
