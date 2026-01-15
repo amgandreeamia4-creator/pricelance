@@ -228,7 +228,7 @@ async function upsertListing(
     return { isNew: false, hasListing: false };
   }
 
-  const existing = await db.listing.findFirst({
+  const existing = await db.listings.findFirst({
     where: {
       productId,
       storeName: { equals: row.storeName, mode: "insensitive" },
@@ -247,14 +247,14 @@ async function upsertListing(
   };
 
   if (existing) {
-    await db.listing.update({
+    await db.listings.update({
       where: { id: existing.id },
       data: listingData,
     });
     return { isNew: false, hasListing: true };
   }
 
-  await db.listing.create({
+  await db.listings.create({
     data: {
       productId,
       storeName: row.storeName,
