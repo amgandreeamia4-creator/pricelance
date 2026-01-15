@@ -403,13 +403,10 @@ export async function POST(req: NextRequest) {
     if (provider === "2performant") {
       console.log("[import-csv] Using enhanced 2Performant CSV parsing");
 
-      let raw = await file.text();
-      const delimiter = detectDelimiter(raw);
-      
       console.log(`[import-csv] Detected delimiter: "${delimiter}"`);
-      console.log(`[import-csv] Raw CSV content (first 200 chars):`, raw.substring(0, 200));
+      console.log(`[import-csv] Raw CSV content (first 200 chars):`, content.substring(0, 200));
 
-      const records = parse(raw, {
+      const records = parse(content, {
         columns: true,
         skip_empty_lines: true,
         bom: true,
