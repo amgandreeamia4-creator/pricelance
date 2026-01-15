@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { isListingFromDisabledNetwork } from "@/config/affiliateNetworks";
 import { CATEGORY_SYNONYMS, type CategoryKey } from "@/config/categoryFilters";
+import { cookies } from "next/headers";
 
 type ListingResponse = {
   id: string;
@@ -154,6 +155,7 @@ export async function GET(req: NextRequest) {
     const sort = searchParams.get("sort") || "relevance"; // relevance | price-asc | price-desc
     const pageParam = searchParams.get("page") ?? "1";
     const perPageParam = searchParams.get("perPage") ?? "24";
+    const locationParam = searchParams.get("location") || undefined;
 
     const page = Math.max(
       1,
@@ -218,16 +220,32 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    // 2) Fetch listings separately, linked by productId and optionally filtered by store
+    // 2) Fetch listings separately, linked by productId and optionally filtered by store/location
     const productIds = dbProducts.map((p) => p.id);
+
+    // Read user location from cookie (opt-in location preference)
+    const userLocation = (await cookies()).get('userLocation')?.value?.toLowerCase() || undefined;
+    const effectiveLocation = locationParam || userLocation;
 
     const listingsWhere: any = {
       productId: { in: productIds },
+      // Always filter for in-stock items
+      inStock: true,
     };
 
     if (store) {
       listingsWhere.storeId = store;
     }
+
+    // Location filtering: opt-in only (if location set, prioritize local but show international)
+    if (effectiveLocation && effectiveLocation.trim()) {
+      listingsWhere.OR = [
+        { countryCode: { equals: effectiveLocation, mode: 'insensitive' } },  // Local
+        { countryCode: null },                                            // Unknown location
+        { countryCode: { not: effectiveLocation } }                        // International
+      ];
+    }
+    // If no location set: no countryCode filter (show all worldwide)
 
     const dbListings = (await prisma.listing.findMany({
       where: listingsWhere,

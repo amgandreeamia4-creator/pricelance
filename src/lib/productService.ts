@@ -8,6 +8,12 @@ import {
 export type SortBy = "default" | "price" | "delivery";
 
 export interface SearchOptions {
+  /**
+   * Opt-in location filter (country code like 'us', 'gb', 'ro').
+   * If undefined/null/empty: shows ALL listings worldwide (global default).
+   * If set: prioritizes local listings (countryCode match) but still shows international.
+   * No auto-detection - user must explicitly set location via UI.
+   */
   location?: string;
   sortBy?: SortBy;
   store?: string;

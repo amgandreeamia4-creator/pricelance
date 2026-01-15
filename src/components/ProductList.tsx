@@ -18,6 +18,7 @@ type Listing = {
   fastDelivery?: boolean | null;
   network?: string | null; // Legacy field - kept for compatibility
   imageUrl?: string | null; // Listing-specific image URL
+  countryCode?: string | null; // Add country code for international badges
 };
 
 type Product = {
@@ -36,6 +37,7 @@ type ProductListProps = {
   favoriteIds: string[];
   onToggleFavorite: (id: string) => void;
   isLoading: boolean;
+  userLocation?: string | null;
 };
 
 // how many we show in the main table
@@ -72,6 +74,7 @@ export default function ProductList({
   favoriteIds,
   onToggleFavorite,
   isLoading,
+  userLocation,
 }: ProductListProps) {
   // Flip card animation state
   const [flippedCard, setFlippedCard] = React.useState<string | null>(null);
@@ -159,10 +162,15 @@ export default function ProductList({
           const isPopular = product.listings.length >= 4;
           const isBudget = typeof minPrice === 'number' && minPrice <= BUDGET_THRESHOLD;
 
+          // International badge: show if listing has countryCode and it doesn't match userLocation
+          const isInternational = userLocation && bestListing?.countryCode && 
+            bestListing.countryCode.toLowerCase() !== userLocation.toLowerCase();
+
           const badges: string[] = [];
           if (hasFastDelivery) badges.push('Fast delivery');
           if (isBudget) badges.push('Budget pick');
           if (isPopular) badges.push('Popular');
+          if (isInternational) badges.push('Intl.');
           const limitedBadges = badges.slice(0, 2);
 
           const cardClasses = clsx(

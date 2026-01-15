@@ -50,7 +50,7 @@ export interface ProductSearchOptions {
  */
 function mapToProductWithHistory(prismaProduct: any): ProductWithHistory {
   const listings =
-    (prismaProduct.Listing ?? []).map((l: any) => ({
+    (prismaProduct.listings ?? []).map((l: any) => ({
       id: l.id,
       storeName: l.storeName,
       storeLogoUrl: l.storeLogoUrl ?? null,
@@ -162,27 +162,36 @@ export async function findProductsWithHistory(
   }
 
   // ---- Listing-level filters ----
-  if (options.location || options.store || options.fastOnly) {
-    where.Listing = { some: {} };
-    const listingWhere: any = where.Listing.some;
+  // Always ensure inStock: true for listings
+  if (!where.listings) {
+    where.listings = { some: {} };
+  }
+  const listingWhere: any = where.listings.some;
 
-    if (options.location) {
-      listingWhere.location = {
-        contains: options.location,
-        mode: "insensitive",
-      };
-    }
+  // Always filter for in-stock items
+  listingWhere.inStock = true;
 
-    if (options.store) {
-      listingWhere.storeName = {
-        contains: options.store,
-        mode: "insensitive",
-      };
-    }
+  // Location filtering: opt-in only (if location set, prioritize local but show international)
+  if (options.location && options.location.trim()) {
+    // If location set, show local (countryCode match) + international + null countryCode
+    listingWhere.OR = [
+      { countryCode: { equals: options.location, mode: 'insensitive' } },  // Local
+      { countryCode: null },                                            // Unknown location
+      { countryCode: { not: options.location } }                        // International
+    ];
+  }
+  // If no location set: no countryCode filter (show all worldwide)
 
-    if (options.fastOnly) {
-      listingWhere.OR = [{ fastDelivery: true }, { isFastDelivery: true }];
-    }
+  if (options.store) {
+    listingWhere.storeName = {
+      contains: options.store,
+      mode: "insensitive",
+    };
+  }
+
+  if (options.fastOnly) {
+    const existingOr = listingWhere.OR || [];
+    listingWhere.OR = [...existingOr, { fastDelivery: true }, { isFastDelivery: true }];
   }
 
   const prismaProducts = await prisma.product.findMany({
@@ -233,10 +242,37 @@ export async function findProductsWithHistory(
   products = filterOutDemoProducts(products);
 
   // ---- Sorting ----
-  if (options.sortBy === "price") {
+  // Default sort: prioritize local if location set, then by price
+  if (options.sortBy === "default" && options.location && options.location.trim()) {
+    products.sort((a: any, b: any) => {
+      // Check if product has local listings
+      const hasLocal = (p: any) => {
+        return (p.listings ?? []).some((l: any) => 
+          l.countryCode && l.countryCode.toLowerCase() === options.location.toLowerCase()
+        );
+      };
+      
+      const aHasLocal = hasLocal(a);
+      const bHasLocal = hasLocal(b);
+      
+      // Prioritize products with local listings
+      if (aHasLocal && !bHasLocal) return -1;
+      if (!aHasLocal && bHasLocal) return 1;
+      
+      // Then sort by cheapest price
+      const minPrice = (p: any) => {
+        const prices = (p.listings ?? [])
+          .map((l: any) => l.price)
+          .filter((x: any) => typeof x === "number");
+        if (!prices.length) return Number.POSITIVE_INFINITY;
+        return Math.min(...prices);
+      };
+      return minPrice(a) - minPrice(b);
+    });
+  } else if (options.sortBy === "price") {
     products.sort((a: any, b: any) => {
       const minPrice = (p: any) => {
-        const prices = (p.Listing ?? [])
+        const prices = (p.listings ?? [])
           .map((l: any) => l.price)
           .filter((x: any) => typeof x === "number");
         if (!prices.length) return Number.POSITIVE_INFINITY;
@@ -247,7 +283,7 @@ export async function findProductsWithHistory(
   } else if (options.sortBy === "delivery") {
     products.sort((a: any, b: any) => {
       const minDays = (p: any) => {
-        const days = (p.Listing ?? [])
+        const days = (p.listings ?? [])
           .map(
             (l: any) =>
               l.deliveryTimeDays ??

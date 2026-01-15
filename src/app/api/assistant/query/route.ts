@@ -1,6 +1,7 @@
 // src/app/api/assistant/query/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { searchProducts } from "@/lib/productService";
+import { cookies } from "next/headers";
 import type { SearchStatus, ProviderStatus } from "@/lib/searchStatus";
 
 export const runtime = "nodejs";
@@ -181,7 +182,12 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    const searchResult = await searchProducts(query, {});
+    // Read user location from cookie (opt-in location preference)
+    const userLocation = (await cookies()).get('userLocation')?.value?.toLowerCase() || undefined;
+
+    const searchResult = await searchProducts(query, { 
+      location: userLocation 
+    });
     let products = (searchResult.products ?? []) as any[];
 
     // Brand-aware filtering if we detected a brand
