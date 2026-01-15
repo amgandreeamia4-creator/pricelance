@@ -28,29 +28,28 @@ const db: any = prisma;
 // Helper functions for 2Performant CSV processing
 function detectDelimiter(raw: string): string {
   const firstLine = raw.split(/\r?\n/)[0] ?? "";
-  const candidates = [",", ";", "\t", "|"];
-  let best = ",";
-  let bestCount = 0;
 
-  for (const d of candidates) {
-    const regex = new RegExp(`\\${d}`, "g");
-    const count = (firstLine.match(regex) || []).length;
-    if (count > bestCount) {
-      best = d;
-      bestCount = count;
-    }
+  // Use ; if present, otherwise , (as per requirements)
+  if (firstLine.includes(';')) {
+    return ";";
   }
 
-  return best;
+  return ",";
 }
 
 function normalizeHeaders<T extends Record<string, any>>(row: T): Record<string, any> {
   const out: Record<string, any> = {};
   for (const [key, value] of Object.entries(row)) {
-    const normalizedKey = key.trim().toLowerCase();
+    // Remove BOM, trim whitespace, convert to lowercase
+    const normalizedKey = key.replace(/^\uFEFF/, '').trim().toLowerCase();
     out[normalizedKey] = value;
   }
   return out;
+}
+
+// Helper function to normalize a single header
+function normalizeHeader(h: string): string {
+  return h.replace(/^\uFEFF/, '').trim().toLowerCase();
 }
 
 function toNumber(value: unknown): number | null {
@@ -62,6 +61,23 @@ function toNumber(value: unknown): number | null {
   const normalized = s.replace(",", ".").replace(/[^0-9.]/g, "");
   const num = Number(normalized);
   return Number.isNaN(num) ? null : num;
+}
+
+// Flexible price mapping function
+function extractPrice(row: Record<string, any>): number | null {
+  // Accept price from ANY of these fields: price, pret, price_value
+  const priceRaw = row['price'] || row['pret'] || row['price_value'];
+
+  if (priceRaw == null) return null;
+
+  const s = String(priceRaw).trim();
+  if (!s) return null;
+
+  // Coerce price safely: replace commas with dots, strip non-numeric characters
+  const normalized = s.replace(',', '.').replace(/[^0-9.]/g, '');
+  const price = Number(normalized);
+
+  return Number.isNaN(price) ? null : price;
 }
 
 type TwoPerformantImportRow = {
@@ -317,7 +333,7 @@ export async function POST(req: NextRequest) {
 
       const raw = await file.text();
       const delimiter = detectDelimiter(raw);
-      
+
       console.log(`[import-csv] Detected delimiter: "${delimiter}"`);
 
       const records = parse(raw, {
@@ -335,18 +351,25 @@ export async function POST(req: NextRequest) {
 
       console.log(`[import-csv] Parsed ${totalRows} rows with delimiter "${delimiter}"`);
 
-      // Validate and extract 2Performant rows
+      // Validate and extract 2Performant rows with detailed logging
       let invalidRows = 0;
       const validRows: TwoPerformantImportRow[] = [];
+      const skippedReasons: string[] = [];
 
-      for (const row of normalizedRows) {
+      for (let i = 0; i < normalizedRows.length; i++) {
+        const row = normalizedRows[i];
+        const rowNum = i + 2; // +2 for header + 1-index
+
+        // Extract fields with flexible mapping
         const title = (row["title"] ?? row["product name"] ?? row["name"] ?? "").trim();
         const affCode =
           (row["aff_code"] ?? row["aff link"] ?? row["affiliate_link"] ?? row["product affiliate"] ?? row["url"] ?? "").trim();
-        const price = toNumber(row["price"] ?? row["sale_price"] ?? row["old_price"] ?? row["price with discount"] ?? row["price with vat"] ?? row["price without vat"]);
+
+        // Use flexible price mapping
+        const price = extractPrice(row);
 
         const campaignName = (row["campaign_name"] ?? row["program_name"] ?? row["advertiser name"] ?? "").trim();
-        
+
         // Robust image URL extraction
         const imageUrlsRaw =
           (row["image_urls"] ??
@@ -355,15 +378,15 @@ export async function POST(req: NextRequest) {
             row["img"] ??
             row["product picture"] ??
             "").trim();
-        
+
         let extractedImageUrl: string | null = null;
-        
+
         if (imageUrlsRaw) {
           const parts = imageUrlsRaw
             .split(/[|,]/)
             .map((p: string) => p.trim())
             .filter(Boolean);
-          
+
           if (parts.length > 0) {
             const candidate = parts[0];
             extractedImageUrl = candidate && candidate.toLowerCase().startsWith("http")
@@ -371,7 +394,7 @@ export async function POST(req: NextRequest) {
               : null;
           }
         }
-        
+
         const imageUrls = extractedImageUrl || undefined;
         const description = (row["description"] ?? row["descriere"] ?? row["product description"] ?? "").trim();
         const storeName = (row["store_name"] ?? row["advertiser name"] ?? campaignName ?? "").trim();
@@ -379,12 +402,29 @@ export async function POST(req: NextRequest) {
         const categoryRaw = (row["category"] ?? "").trim();
         const availability = (row["availability"] ?? "").trim();
 
-        // Required fields validation
-        const hasRequiredFields = Boolean(title && affCode && price != null && price > 0);
+        // Validation rules: A row is INVALID only if:
+        // - price is empty
+        // - price is NaN
+        // - price is 0
+        // Strings like "8" or "8.00" are VALID and must NOT be skipped
 
-        if (!hasRequiredFields) {
+        let skipReason = "";
+        if (!title) {
+          skipReason = "Missing title";
+        } else if (!affCode) {
+          skipReason = "Missing affiliate code/URL";
+        } else if (price == null) {
+          skipReason = "Price is empty or null";
+        } else if (Number.isNaN(price)) {
+          skipReason = "Price is NaN";
+        } else if (price === 0) {
+          skipReason = "Price is 0";
+        }
+
+        if (skipReason) {
           invalidRows++;
-          console.log(`[import-csv] Invalid row - title: "${title}", affCode: "${affCode}", price: ${price}`);
+          skippedReasons.push(`Row ${rowNum}: ${skipReason} (title="${title}", price=${price}, affCode="${affCode.substring(0, 50)}${affCode.length > 50 ? '...' : ''}")`);
+          console.log(`[import-csv] Skipped row ${rowNum}: ${skipReason}`);
           continue;
         }
 
@@ -402,20 +442,29 @@ export async function POST(req: NextRequest) {
         });
       }
 
+      // Log detailed skip reasons (first 10)
+      if (skippedReasons.length > 0) {
+        console.log(`[import-csv] Skip reasons (first 10 of ${skippedReasons.length}):`);
+        skippedReasons.slice(0, 10).forEach(reason => {
+          console.log(`  - ${reason}`);
+        });
+      }
+
       const limitedRows = validRows.slice(0, MAX_IMPORT_ROWS);
+      const ingested = limitedRows.length;
+      const skipped = totalRows - ingested;
 
       if (limitedRows.length === 0) {
         return NextResponse.json(
           {
             ok: false,
-            message:
+            error:
               `Parsed ${normalizedRows.length} rows but 0 passed validation for 2Performant. ` +
               `Required fields: non-empty title, non-empty aff_code/affiliate link, numeric price > 0. ` +
               `Check that your CSV headers look like: title, aff_code, price, campaign_name, image_urls, description. ` +
               `Detected delimiter: "${delimiter}".`,
             totalRows: normalizedRows.length,
-            processedRows: 0,
-            skippedRows: normalizedRows.length,
+            ingested: 0,
             skipped: normalizedRows.length,
             createdProducts: 0,
             updatedProducts: 0,
@@ -424,13 +473,13 @@ export async function POST(req: NextRequest) {
             skippedMissingFields: invalidRows,
             skippedMissingExternalId: 0,
             failedRows: invalidRows,
-            failed: invalidRows,
             errors: [],
             truncated: isCapped,
             capped: isCapped,
             maxRowsPerImport: MAX_IMPORT_ROWS,
             provider,
             sampleRow: normalizedRows[0] ?? null,
+            skipReasons: skippedReasons.slice(0, 10), // Include first 10 skip reasons
           },
           { status: 400 },
         );
@@ -484,8 +533,7 @@ export async function POST(req: NextRequest) {
         {
           ok,
           totalRows,
-          processedRows,
-          skippedRows,
+          ingested: processedRows, // Use ingested instead of processedRows
           skipped: skippedRows,
           createdProducts: summary.productsCreated,
           updatedProducts: summary.productsMatched,
@@ -494,13 +542,13 @@ export async function POST(req: NextRequest) {
           skippedMissingFields: invalidRows,
           skippedMissingExternalId: 0,
           failedRows,
-          failed: failedRows,
           errors,
           truncated: isCapped,
           message,
           capped: isCapped,
           maxRowsPerImport: MAX_IMPORT_ROWS,
           provider,
+          skipReasons: skippedReasons.slice(0, 10), // Include first 10 skip reasons
         },
         { status: 200 },
       );

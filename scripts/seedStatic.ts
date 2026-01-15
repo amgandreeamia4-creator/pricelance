@@ -344,6 +344,7 @@ async function seedStaticProducts() {
           brand: p.brand,
           imageUrl: p.imageUrl,
           thumbnailUrl: p.thumbnailUrl,
+          updatedAt: new Date(),
         },
         create: {
           id: p.id,
@@ -354,6 +355,8 @@ async function seedStaticProducts() {
           brand: p.brand,
           imageUrl: p.imageUrl,
           thumbnailUrl: p.thumbnailUrl,
+          createdAt: new Date(),
+          updatedAt: new Date(),
         },
       });
 
@@ -376,6 +379,8 @@ async function seedStaticProducts() {
             inStock: l.inStock,
             rating: l.rating,
             reviewCount: l.reviewCount,
+            createdAt: new Date(),
+            updatedAt: new Date(),
           },
         });
         listingCount++;
