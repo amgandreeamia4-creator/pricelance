@@ -423,7 +423,7 @@ export async function POST(req: NextRequest) {
 
         // Basic field extraction with Romanian header support
         const title = (row['product_name'] ?? row['title'] ?? row['name'] ?? row['nume produs'] ?? "").trim();
-        const affCode = (row['url'] ?? row['affiliate_link'] ?? row['product affiliate'] ?? row['link afiliat'] ?? "").trim();
+        const affCode = (row['url'] ?? row['affiliate_link'] ?? row['product affiliate'] ?? "").trim();
         const price = extractPrice(row);
         
         // Optional fields with defaults
