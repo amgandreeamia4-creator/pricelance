@@ -414,6 +414,8 @@ export async function POST(req: NextRequest) {
       console.log(`[import-csv] Parsed ${totalRows} rows with delimiter "${delimiter}"`);
       console.log(`[import-csv] Sample normalized row:`, normalizedRows[0]);
       console.log(`[import-csv] Available fields in first row:`, Object.keys(normalizedRows[0] || {}));
+      console.log(`[import-csv] === DEBUGGING CSV IMPORT ===`);
+      console.log(`[import-csv] First 3 rows:`, normalizedRows.slice(0, 3));
 
       // Validate and extract 2Performant rows with detailed logging
       let invalidRows = 0;
