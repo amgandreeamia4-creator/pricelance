@@ -208,37 +208,17 @@ export function parseTwoPerformantCsv(content: string): TwoPerformantParseResult
   console.log("[2Performant] Header row:", headerRow);
   console.log("[2Performant] Lower headers:", lowerHeaders);
 
-  // Use includes() for robustness, not strict startsWith()
-  const idxAdvertiser = lowerHeaders.findIndex((h) =>
-    h.includes("advertiser name"),
-  );
-  const idxCategory = lowerHeaders.findIndex((h) =>
-    h.includes("category"),
-  );
-  const idxProductName = lowerHeaders.findIndex((h) =>
-    h.includes("product name"),
-  );
-  const idxAffiliate = lowerHeaders.findIndex((h) =>
-    h.includes("product affiliate"),
-  );
-  const idxProductLink = lowerHeaders.findIndex((h) =>
-    h.includes("product link"),
-  );
-  const idxPicture = lowerHeaders.findIndex((h) =>
-    h.includes("product picture"),
-  );
-  const idxPriceDisc = lowerHeaders.findIndex((h) =>
-    h.includes("price with discou"),
-  );
-  const idxPriceVat = lowerHeaders.findIndex((h) =>
-    h.includes("price with vat"),
-  );
-  const idxPriceWithout = lowerHeaders.findIndex((h) =>
-    h.includes("price without va"),
-  );
-  const idxCurrency = lowerHeaders.findIndex((h) =>
-    h.includes("currency"),
-  );
+  const idxAdvertiser = lowerHeaders.findIndex((h) => h.includes("advertiser name")) || -1;
+  const idxCategory = lowerHeaders.findIndex((h) => h.includes("category")) || -1;
+  const idxProductName = lowerHeaders.findIndex((h) => h.includes("product name") || h.includes("nume produs") || h.includes("product_name")) || -1;
+  const idxAffiliate = lowerHeaders.findIndex((h) => h.includes("product affiliate") || h.includes("affiliate_link") || h.includes("product_url") || h.includes("affiliate_url")) || -1;
+  const idxProductLink = lowerHeaders.findIndex((h) => h.includes("product link") || h.includes("product_url") || h.includes("affiliate_link") || h.includes("affiliate_url") || h.includes("product_url_2performant")) || -1;
+  const idxPicture = lowerHeaders.findIndex((h) => h.includes("product picture")) || -1;
+  const idxPriceDisc = lowerHeaders.findIndex((h) => h.includes("price with discou")) || -1;
+  const idxPriceVat = lowerHeaders.findIndex((h) => h.includes("price with vat")) || -1;
+  const idxPriceWithout = lowerHeaders.findIndex((h) => h.includes("price without va")) || -1;
+  const idxCurrency = lowerHeaders.findIndex((h) => h.includes("currency")) || -1;
+  const idxAvailability = lowerHeaders.findIndex((h) => h.includes("availability")) || -1;
 
   if (idxProductName === -1) {
     return {
