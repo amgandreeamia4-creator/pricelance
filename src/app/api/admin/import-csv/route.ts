@@ -502,14 +502,13 @@ Test Product 5;https://example.com/aff5;67.80;Campaign 5;https://example.com/ima
             skippedMissingFields: invalidRows,
             skippedMissingExternalId: 0,
             failedRows: invalidRows,
-            errors: [],
+            validationErrors: [], // Rename to avoid duplicate 'errors' property
             truncated: isCapped,
             capped: isCapped,
             maxRowsPerImport: MAX_IMPORT_ROWS,
             provider,
             sampleRow: normalizedRows[0] ?? null,
             skipReasons: skippedReasons.slice(0, 10), // Include first 10 skip reasons
-            errors: [], // Include errors array for better response
           },
           { status: 400 },
         );
