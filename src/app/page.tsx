@@ -8,6 +8,7 @@ import { useSpring, animated, config } from '@react-spring/web';
 import ThemeToggle from "@/components/ThemeToggle";
 import ProductList from "@/components/ProductList";
 import ChatAssistant from "@/components/ChatAssistant";
+import HowItWorksModal from "@/components/HowItWorksModal";
 import { STORES, StoreId } from "@/config/catalog";
 import PriceTrendChart from "@/components/PriceTrendChart";
 import ProductSummary from "@/components/ProductSummary";
@@ -91,63 +92,6 @@ type EbayListing = {
 
 const FAST_SHIPPING_DAYS = 3;
 
-const HOW_FAQ_COPY = {
-  en: {
-    howTitle: "How PriceLance works",
-    steps: [
-      "Search for a product – type what you're looking for (for example \"gaming laptop\", \"27\" monitor, \"iPhone 15\") or pick a category.",
-      "We collect offers – PriceLance shows prices and offers from multiple online stores where we have feeds or affiliate partnerships.",
-      "Compare and filter – sort by price, filter by store or fast delivery, and see which offer makes the most sense for you.",
-      "Buy directly from the store – PriceLance doesn't sell products. When you click an offer, you go to the retailer's website to finish your order.",
-    ],
-    faqTitle: "Frequently asked questions (FAQ)",
-    faqs: [
-      {
-        question: "Are the prices always 100% up to date?",
-        answer:
-          "We try to keep prices as fresh as possible, but offers can change quickly. Always double-check the final price and delivery conditions on the store's website before you order.",
-      },
-      {
-        question: "Do you use affiliate links and do I pay extra?",
-        answer:
-          "Some links on PriceLance are affiliate links. If you buy through one of them, we may earn a small commission from the retailer, but you never pay anything extra because of this.",
-      },
-      {
-        question: "Why do I see multiple offers for the same product?",
-        answer:
-          "The same product can be sold by several stores, each with its own price, delivery time, and promotions. PriceLance puts these offers side by side so it's easier to compare them.",
-      },
-    ],
-  },
-  ro: {
-    howTitle: "Cum funcționează PriceLance",
-    steps: [
-      "Cauți un produs (laptop, telefon, monitor, căști etc.) folosind căutarea sau alegi o categorie.",
-      "PriceLance afișează oferte de la mai multe magazine online din România, cu prețuri și informații de livrare.",
-      "Compari prețurile, filtrezi după magazine sau livrare rapidă și alegi cea mai bună ofertă pentru tine.",
-      "Dai click pe o ofertă și ești direcționat pe site-ul magazinului pentru a finaliza comanda.",
-    ],
-    faqTitle: "Întrebări frecvente (FAQ)",
-    faqs: [
-      {
-        question: "Sunt prețurile afișate mereu la zi?",
-        answer:
-          "Ne străduim să actualizăm prețurile des, dar ofertele se pot schimba rapid. Verifică întotdeauna prețul final și condițiile de livrare direct pe site-ul magazinului înainte de a comanda.",
-      },
-      {
-        question: "Folosiți linkuri de afiliere?",
-        answer:
-          "Da. Unele linkuri pot fi de afiliere, ceea ce ne ajută să menținem serviciul gratuit fără costuri suplimentare pentru tine.",
-      },
-      {
-        question: "De ce sunt mai multe oferte pentru același produs?",
-        answer:
-          "Afișăm oferte de la mai multe magazine ca să poți compara prețurile, condițiile de livrare și să alegi cea mai bună variantă.",
-      },
-    ],
-  },
-} as const;
-
 export default function Page() {
   // Mobile collapsible states
   const [savedSearchesOpen, setSavedSearchesOpen] = useState(false);
@@ -166,7 +110,6 @@ export default function Page() {
 
   // Language
   const { lang } = useLanguage();
-  const copy = HOW_FAQ_COPY[lang];
 
   // Filters
   const [sortBy, setSortBy] = useState<
@@ -679,6 +622,17 @@ export default function Page() {
             >
               AI Assistant (Beta)
             </motion.button>
+
+            {/* How it works button - hidden on mobile */}
+            <HowItWorksModal>
+              <button 
+                type="button" 
+                className="hidden md:inline-flex items-center justify-center w-10 h-10 rounded-full border border-[var(--pl-card-border)] bg-[var(--pl-card)] text-sm font-medium hover:brightness-110 transition-all ml-2"
+                aria-label="How it works"
+              >
+                ?
+              </button>
+            </HowItWorksModal>
           </div>
 
           {/* Desktop-only header ad slot preview */}
@@ -972,58 +926,60 @@ export default function Page() {
             )}
 
             {/* Offers from eBay section */}
-            <section className="mt-8">
-              <div className="flex items-baseline justify-between mb-3">
-                <h2 className="text-lg font-semibold">Offers from eBay</h2>
-                {isLoadingEbay && (
-                  <span className="text-xs text-gray-500">Loading…</span>
-                )}
-              </div>
-
-              {ebayError && (
-                <p className="text-sm text-red-500 mb-2">{ebayError}</p>
-              )}
-
-              {!isLoadingEbay && !ebayError && ebayItems.length === 0 && query && (
-                <p className="text-sm text-gray-500">
-                  No eBay offers found for "{query}".
-                </p>
-              )}
-
-              {!isLoadingEbay && ebayItems.length > 0 && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {ebayItems.map((item) => (
-                    <a
-                      key={item.id}
-                      href={item.url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="border rounded-lg p-3 flex flex-col gap-2 hover:shadow-sm transition"
-                    >
-                      {item.imageUrl && (
-                        <img
-                          src={item.imageUrl}
-                          alt={item.title}
-                          className="w-full h-40 object-contain"
-                        />
-                      )}
-                      <div className="text-sm font-medium line-clamp-2">
-                        {item.title}
-                      </div>
-                      <div className="text-sm font-semibold mt-auto">
-                        {item.price > 0 ? (
-                          <>
-                            {item.price.toFixed(2)} {item.currency}
-                          </>
-                        ) : (
-                          "See price on eBay"
-                        )}
-                      </div>
-                    </a>
-                  ))}
+            {query.trim() && (
+              <section className="mt-8">
+                <div className="flex items-baseline justify-between mb-3">
+                  <h2 className="text-lg font-semibold">Offers from eBay</h2>
+                  {isLoadingEbay && (
+                    <span className="text-xs text-gray-500">Loading…</span>
+                  )}
                 </div>
-              )}
-            </section>
+
+                {ebayError && (
+                  <p className="text-sm text-red-500 mb-2">{ebayError}</p>
+                )}
+
+                {!isLoadingEbay && !ebayError && ebayItems.length === 0 && query && (
+                  <p className="text-sm text-gray-500">
+                    No eBay offers found for "{query}".
+                  </p>
+                )}
+
+                {!isLoadingEbay && ebayItems.length > 0 && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {ebayItems.map((item) => (
+                      <a
+                        key={item.id}
+                        href={item.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="border rounded-lg p-3 flex flex-col gap-2 hover:shadow-sm transition"
+                      >
+                        {item.imageUrl && (
+                          <img
+                            src={item.imageUrl}
+                            alt={item.title}
+                            className="w-full h-40 object-contain"
+                          />
+                        )}
+                        <div className="text-sm font-medium line-clamp-2">
+                          {item.title}
+                        </div>
+                        <div className="text-sm font-semibold mt-auto">
+                          {item.price > 0 ? (
+                            <>
+                              {item.price.toFixed(2)} {item.currency}
+                            </>
+                          ) : (
+                            "See price on eBay"
+                          )}
+                        </div>
+                      </a>
+                    ))}
+                  </div>
+                )}
+              </section>
+            )}
 
             {/* Saved searches - collapsible on mobile */}
             <div className={`${cardStyle} overflow-hidden`}>
@@ -1116,40 +1072,9 @@ export default function Page() {
 
       {/* How PriceLance Works + FAQ Section */}
       <div className={`${cardStyle} p-4 sm:p-6 mt-4 sm:mt-6`}>
-        <div className="grid gap-6 md:grid-cols-2">
-          {/* How PriceLance works */}
-          <section aria-labelledby="how-it-works-title">
-            <h3
-              id="how-it-works-title"
-              className="text-[13px] font-semibold tracking-[0.16em] uppercase text-slate-700 dark:text-slate-200 mb-3"
-            >
-              {copy.howTitle}
-            </h3>
-            <ol className="space-y-2 text-xs leading-relaxed text-slate-700 dark:text-slate-300 list-decimal list-inside">
-              {copy.steps.map((step, idx) => (
-                <li key={idx}>{step}</li>
-              ))}
-            </ol>
-          </section>
-
-          {/* FAQ */}
-          <section aria-labelledby="faq-title">
-            <h3
-              id="faq-title"
-              className="text-[13px] font-semibold tracking-[0.16em] uppercase text-slate-700 dark:text-slate-200 mb-3"
-            >
-              {copy.faqTitle}
-            </h3>
-            <div className="space-y-3 text-xs leading-relaxed text-slate-700 dark:text-slate-300">
-              {copy.faqs.map((item, idx) => (
-                <div key={idx}>
-                  <p className="font-semibold mb-0.5">{item.question}</p>
-                  <p>{item.answer}</p>
-                </div>
-              ))}
-            </div>
-          </section>
-        </div>
+        <p className="text-center text-xs text-[var(--pl-text-subtle)] mt-8">
+          New here? Tap the ? in the header for info.
+        </p>
       </div>
 
       {/* Affiliate Disclosure Footer */}
