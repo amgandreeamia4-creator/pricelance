@@ -63,10 +63,10 @@ function toNumber(value: unknown): number | null {
   return Number.isNaN(num) ? null : num;
 }
 
-// Flexible price mapping function
+// Flexible price mapping function with enhanced variations
 function extractPrice(row: Record<string, any>): number | null {
-  // Accept price from ANY of these fields: price, pret, price_value
-  const priceRaw = row['price'] || row['pret'] || row['price_value'];
+  // Accept price from ANY of these fields: price, pret, price_value, price_final, sale_price, old_price
+  const priceRaw = row['price'] || row['pret'] || row['price_value'] || row['price_final'] || row['sale_price'] || row['old_price'];
 
   if (priceRaw == null) return null;
 
@@ -75,8 +75,8 @@ function extractPrice(row: Record<string, any>): number | null {
 
   // Coerce price safely: replace commas with dots, strip non-numeric characters
   const normalized = s.replace(',', '.').replace(/[^0-9.]/g, '');
-  const price = Number(normalized);
-
+  const price = parseFloat(normalized);
+  
   return Number.isNaN(price) ? null : price;
 }
 
@@ -371,10 +371,10 @@ Test Product 5;https://example.com/aff5;67.80;Campaign 5;https://example.com/ima
         const row = normalizedRows[i];
         const rowNum = i + 2; // +2 for header + 1-index
 
-        // Extract fields with flexible mapping
-        const title = (row["title"] ?? row["product name"] ?? row["name"] ?? "").trim();
+        // Extract fields with flexible mapping (more forgiving)
+        const title = (row["title"] ?? row["product name"] ?? row["product_name"] ?? row["name"] ?? row["nume produs"] ?? "").trim();
         const affCode =
-          (row["aff_code"] ?? row["aff link"] ?? row["affiliate_link"] ?? row["product affiliate"] ?? row["url"] ?? "").trim();
+          (row["aff_code"] ?? row["aff link"] ?? row["affiliate_link"] ?? row["affiliate_url"] ?? row["product affiliate"] ?? row["url"] ?? row["link"] ?? "").trim();
 
         // Use flexible price mapping
         const price = extractPrice(row);
@@ -409,7 +409,7 @@ Test Product 5;https://example.com/aff5;67.80;Campaign 5;https://example.com/ima
         const imageUrls = extractedImageUrl || undefined;
         const description = (row["description"] ?? row["descriere"] ?? row["product description"] ?? "").trim();
         const storeName = (row["store_name"] ?? row["advertiser name"] ?? campaignName ?? "").trim();
-        const currency = (row["currency"] ?? "RON").trim().toUpperCase();
+        const currency = (row["currency"] ?? "RON").trim().toUpperCase(); // Default to RON
         const categoryRaw = (row["category"] ?? "").trim();
         const availability = (row["availability"] ?? "").trim();
 
@@ -421,9 +421,9 @@ Test Product 5;https://example.com/aff5;67.80;Campaign 5;https://example.com/ima
 
         let skipReason = "";
         if (!title) {
-          skipReason = "Missing title";
+          skipReason = "Missing title/product_name";
         } else if (!affCode) {
-          skipReason = "Missing affiliate code/URL";
+          skipReason = "Missing affiliate code/URL/link";
         } else if (price == null) {
           skipReason = "Price is empty or null";
         } else if (Number.isNaN(price)) {
@@ -434,8 +434,16 @@ Test Product 5;https://example.com/aff5;67.80;Campaign 5;https://example.com/ima
 
         if (skipReason) {
           invalidRows++;
-          skippedReasons.push(`Row ${rowNum}: ${skipReason} (title="${title}", price=${price}, affCode="${affCode.substring(0, 50)}${affCode.length > 50 ? '...' : ''}")`);
+          const detailedReason = `Row ${rowNum}: ${skipReason} (title="${title}", price=${price}, affCode="${affCode.substring(0, 50)}${affCode.length > 50 ? '...' : ''}")`;
+          skippedReasons.push(detailedReason);
           console.log(`[import-csv] Skipped row ${rowNum}: ${skipReason}`);
+          console.log(`[import-csv] Row data:`, {
+            rowNumber: rowNum,
+            title,
+            price,
+            affCode: affCode.substring(0, 30) + (affCode.length > 30 ? '...' : ''),
+            availableFields: Object.keys(row).slice(0, 10)
+          });
           continue;
         }
 
@@ -458,6 +466,16 @@ Test Product 5;https://example.com/aff5;67.80;Campaign 5;https://example.com/ima
         console.log(`[import-csv] Skip reasons (first 10 of ${skippedReasons.length}):`);
         skippedReasons.slice(0, 10).forEach(reason => {
           console.log(`  - ${reason}`);
+        });
+      }
+
+      // Add sample row for debugging
+      const sampleRow = normalizedRows[0] ?? null;
+      if (sampleRow) {
+        console.log(`[import-csv] Sample row data for debugging:`, {
+          rowNumber: 2,
+          fields: Object.keys(sampleRow),
+          sampleData: sampleRow
         });
       }
 
@@ -491,6 +509,7 @@ Test Product 5;https://example.com/aff5;67.80;Campaign 5;https://example.com/ima
             provider,
             sampleRow: normalizedRows[0] ?? null,
             skipReasons: skippedReasons.slice(0, 10), // Include first 10 skip reasons
+            errors: [], // Include errors array for better response
           },
           { status: 400 },
         );
