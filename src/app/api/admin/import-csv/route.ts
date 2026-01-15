@@ -16,6 +16,7 @@ import {
 import { isValidProvider } from "@/config/affiliateIngestion";
 import { importNormalizedListings } from "@/lib/importService";
 import { parse } from "csv-parse/sync";
+import { detectBrandFromName } from "@/lib/brandDetector";
 
 export const dynamic = "force-dynamic";
 
@@ -28,78 +29,29 @@ const db: any = prisma;
 // Helper functions for 2Performant CSV processing
 function detectDelimiter(raw: string): string {
   const firstLine = raw.split(/\r?\n/)[0] ?? "";
+  const candidates = [",", ";", "\t", "|"];
+  let best = ",";
+  let bestCount = 0;
 
-  // Use ; if present, otherwise , (as per requirements)
-  if (firstLine.includes(';')) {
-    return ";";
+  for (const d of candidates) {
+    const regex = new RegExp(`\\${d}`, "g");
+    const count = (firstLine.match(regex) || []).length;
+    if (count > bestCount) {
+      best = d;
+      bestCount = count;
+    }
   }
 
-  return ",";
+  return best;
 }
 
-// Simplified header normalization for common Romanian headers
 function normalizeHeaders<T extends Record<string, any>>(row: T): Record<string, any> {
   const out: Record<string, any> = {};
   for (const [key, value] of Object.entries(row)) {
-    // Remove BOM, trim whitespace, convert to lowercase
-    const normalizedKey = key.replace(/^\uFEFF/, '').trim().toLowerCase();
-    
-    // Map common Romanian headers to standard field names
-    const mappedKey = mapRomanianHeaderToStandardField(normalizedKey);
-    out[mappedKey] = value;
+    const normalizedKey = key.trim().toLowerCase();
+    out[normalizedKey] = value;
   }
   return out;
-}
-
-// Map common Romanian headers to standard field names
-function mapRomanianHeaderToStandardField(header: string): string {
-  // Product name variations
-  if (header.includes('nume produs') || header.includes('product name') || header.includes('product_name') || header.includes('name')) {
-    return 'product_name';
-  }
-  
-  // URL/affiliate variations
-  if (header.includes('affiliate link') || header.includes('affiliate_link') || header.includes('product affiliate') || header.includes('link afiliat') || header.includes('url') || header.includes('link') || header.includes('product url')) {
-    return 'url';
-  }
-  
-  // Price variations
-  if (header.includes('pret') || header.includes('price') || header.includes('price_final') || header.includes('pret reducere') || header.includes('price_value')) {
-    return 'price';
-  }
-  
-  // Image variations
-  if (header.includes('image') || header.includes('image_url') || header.includes('img') || header.includes('product picture')) {
-    return 'image_url';
-  }
-  
-  // Store/advertiser variations
-  if (header.includes('store_name') || header.includes('advertiser name') || header.includes('magazin') || header.includes('campaign_name')) {
-    return 'store_name';
-  }
-  
-  // Category variations
-  if (header.includes('category') || header.includes('categorie')) {
-    return 'category';
-  }
-  
-  // Currency variations
-  if (header.includes('currency') || header.includes('moneda')) {
-    return 'currency';
-  }
-  
-  // External ID variations
-  if (header.includes('id produs') || header.includes('external_id') || header.includes('id')) {
-    return 'external_id';
-  }
-  
-  // Default fallback
-  return header;
-}
-
-// Helper function to normalize a single header
-function normalizeHeader(h: string): string {
-  return h.replace(/^\uFEFF/, '').trim().toLowerCase();
 }
 
 function toNumber(value: unknown): number | null {
@@ -113,47 +65,17 @@ function toNumber(value: unknown): number | null {
   return Number.isNaN(num) ? null : num;
 }
 
-// Simplified Romanian price parsing
-function extractPrice(row: Record<string, any>): number | null {
-  // Accept price from common Romanian fields
-  const priceRaw = row['price'] || row['pret'] || row['price_value'] || row['price_final'] || row['pret reducere'];
-
-  if (priceRaw == null) return null;
-
-  const s = String(priceRaw).trim();
-  if (!s) return null;
-
-  // Romanian format: replace "." with "", "," with ".", then parseFloat
-  let cleaned = s.replace(/[^\d.,\-]/g, '');
-  if (!cleaned) return null;
-
-  // Handle Romanian format: 1.234,56 → 1234.56
-  const lastComma = cleaned.lastIndexOf(',');
-  const lastDot = cleaned.lastIndexOf('.');
-  
-  if (lastComma > lastDot && cleaned.length - lastComma <= 4) {
-    cleaned = cleaned.replace(/\./g, '').replace(',', '.');
-  } else if (lastDot > lastComma && cleaned.length - lastDot <= 4) {
-    // International format: 1,234.56
-    cleaned = cleaned.replace(/,/g, '');
-  } else {
-    // Fallback: just strip commas
-    cleaned = cleaned.replace(/,/g, '');
-  }
-
-  const num = parseFloat(cleaned);
-  return Number.isFinite(num) && num > 0 ? num : null;
-}
-
 type TwoPerformantImportRow = {
   title: string;
   affCode: string;
   price: number;
-  storeName?: string;
+  campaignName?: string;
   imageUrls?: string;
-  categoryRaw?: string;
+  description?: string;
+  storeName?: string;
   currency?: string;
-  externalId?: string;
+  categoryRaw?: string;
+  availability?: string;
 };
 
 /**
@@ -171,16 +93,16 @@ async function findOrCreateProduct(
   });
 
   if (!existing) {
+    const detectedBrand = detectBrandFromName(row.name);
     const created = await db.product.create({
       data: {
-        name: row.title,
-        displayName: row.title,
+        name: row.name,
+        displayName: row.name,
         category: row.categoryRaw || null,
-        brand: null,
-        imageUrl: row.imageUrls || null,
-        thumbnailUrl: row.imageUrls || null,
-        gtin: row.externalId || null,
-        updatedAt: new Date(), // Add missing updatedAt field
+        brand: detectedBrand || "Unknown",
+        imageUrl: row.imageUrl || null,
+        thumbnailUrl: row.imageUrl || null,
+        gtin: row.gtin || null,
       },
       select: { id: true },
     });
@@ -220,7 +142,7 @@ async function upsertListing(
     return { isNew: false, hasListing: false };
   }
 
-  const existing = await db.listings.findFirst({
+  const existing = await db.listing.findFirst({
     where: {
       productId,
       storeName: { equals: row.storeName, mode: "insensitive" },
@@ -239,14 +161,14 @@ async function upsertListing(
   };
 
   if (existing) {
-    await db.listings.update({
+    await db.listing.update({
       where: { id: existing.id },
       data: listingData,
     });
     return { isNew: false, hasListing: true };
   }
 
-  await db.listings.create({
+  await db.listing.create({
     data: {
       productId,
       storeName: row.storeName,
@@ -395,11 +317,12 @@ export async function POST(req: NextRequest) {
     if (provider === "2performant") {
       console.log("[import-csv] Using enhanced 2Performant CSV parsing");
 
-      const delimiter = detectDelimiter(content);
+      const raw = await file.text();
+      const delimiter = detectDelimiter(raw);
+      
       console.log(`[import-csv] Detected delimiter: "${delimiter}"`);
-      console.log(`[import-csv] Raw CSV content (first 200 chars):`, content.substring(0, 200));
 
-      const records = parse(content, {
+      const records = parse(raw, {
         columns: true,
         skip_empty_lines: true,
         bom: true,
@@ -413,113 +336,88 @@ export async function POST(req: NextRequest) {
       const isCapped = totalRows > MAX_IMPORT_ROWS;
 
       console.log(`[import-csv] Parsed ${totalRows} rows with delimiter "${delimiter}"`);
-      console.log(`[import-csv] Sample normalized row:`, normalizedRows[0]);
-      console.log(`[import-csv] Available fields in first row:`, Object.keys(normalizedRows[0] || {}));
-      console.log(`[import-csv] === DEBUGGING CSV IMPORT ===`);
-      console.log(`[import-csv] First 3 rows:`, normalizedRows.slice(0, 3));
 
-      // Validate and extract 2Performant rows with detailed logging
+      // Validate and extract 2Performant rows
       let invalidRows = 0;
       const validRows: TwoPerformantImportRow[] = [];
-      const failReasons: string[] = [];
-      for (let i = 0; i < normalizedRows.length; i++) {
-        const row = normalizedRows[i];
-        const rowNum = i + 2; // +2 for header + 1-index
 
-        // Basic field extraction with Romanian header support
-        const title = (row['product_name'] ?? row['title'] ?? row['name'] ?? row['nume produs'] ?? "").trim();
-        const affCode = (row['url'] ?? row['affiliate_link'] ?? row['product affiliate'] ?? "").trim();
-        const price = extractPrice(row);
-        
-        console.log(`[import-csv] Row ${rowNum} extracted:`, {
-          title,
-          affCode,
-          price,
-          storeName: row['store_name'] ?? row['advertiser name'] ?? row['magazin'],
-          availableFields: Object.keys(row)
-        });
-        
-        // Optional fields with defaults
-        const storeName = (row['store_name'] ?? row['advertiser name'] ?? row['magazin'] ?? "Unknown").trim();
-        const imageUrls = (row['image_url'] ?? row['image'] ?? row['img'] ?? undefined)?.trim();
-        const categoryRaw = (row['category'] ?? row['categorie'] ?? "").trim();
-        const currency = (row['currency'] ?? row['moneda'] ?? "RON").trim().toUpperCase();
-        const externalId = (row['external_id'] ?? row['id produs'] ?? "").trim();
+      for (const row of normalizedRows) {
+        const title = (row["title"] ?? row["product name"] ?? row["name"] ?? "").trim();
+        const affCode =
+          (row["aff_code"] ?? row["aff link"] ?? row["affiliate_link"] ?? row["product affiliate"] ?? row["url"] ?? "").trim();
+        const price = toNumber(row["price"] ?? row["sale_price"] ?? row["old_price"] ?? row["price with discount"] ?? row["price with vat"] ?? row["price without vat"]);
 
-        // Forgiving validation - only essentials required
-        let failReason = "";
+        const campaignName = (row["campaign_name"] ?? row["program_name"] ?? row["advertiser name"] ?? "").trim();
         
-        if (!title) {
-          failReason = "Missing product_name";
-        } else if (price == null || Number.isNaN(price) || price <= 0) {
-          failReason = "Invalid price (must be > 0)";
-        } else if (!affCode) {
-          failReason = "Missing URL";
-        }
-
-        if (failReason) {
-          invalidRows++;
-          const detailedReason = `Row ${rowNum}: ${failReason} (title="${title}", price=${price}, url="${affCode.substring(0, 30)}${affCode.length > 30 ? '...' : ''}")`;
-          failReasons.push(detailedReason);
+        // Robust image URL extraction
+        const imageUrlsRaw =
+          (row["image_urls"] ??
+            row["image_url"] ??
+            row["image"] ??
+            row["img"] ??
+            row["product picture"] ??
+            "").trim();
+        
+        let extractedImageUrl: string | null = null;
+        
+        if (imageUrlsRaw) {
+          const parts = imageUrlsRaw
+            .split(/[|,]/)
+            .map((p: string) => p.trim())
+            .filter(Boolean);
           
-          // Log first few bad rows for debugging
-          if (invalidRows <= 3) {
-            console.error(`[import-csv] Row ${rowNum} FAILED:`, {
-              rowNumber: rowNum,
-              failReason,
-              rowData: {
-                title,
-                price,
-                affCode: affCode.substring(0, 50) + (affCode.length > 50 ? '...' : ''),
-                storeName,
-                availableFields: Object.keys(row).slice(0, 10)
-              }
-            });
+          if (parts.length > 0) {
+            const candidate = parts[0];
+            extractedImageUrl = candidate && candidate.toLowerCase().startsWith("http")
+              ? candidate
+              : null;
           }
-          continue;
         }
+        
+        const imageUrls = extractedImageUrl || undefined;
+        const description = (row["description"] ?? row["descriere"] ?? row["product description"] ?? "").trim();
+        const storeName = (row["store_name"] ?? row["advertiser name"] ?? campaignName ?? "").trim();
+        const currency = (row["currency"] ?? "RON").trim().toUpperCase();
+        const categoryRaw = (row["category"] ?? "").trim();
+        const availability = (row["availability"] ?? "").trim();
 
-        // Auto-fix URL if missing protocol
-        let fixedUrl = affCode;
-        if (fixedUrl && !fixedUrl.startsWith('http')) {
-          fixedUrl = 'https://' + fixedUrl;
+        // Required fields validation
+        const hasRequiredFields = Boolean(title && affCode && price != null && price > 0);
+
+        if (!hasRequiredFields) {
+          invalidRows++;
+          console.log(`[import-csv] Invalid row - title: "${title}", affCode: "${affCode}", price: ${price}`);
+          continue;
         }
 
         validRows.push({
           title,
-          affCode: fixedUrl,
+          affCode,
           price: price as number,
-          storeName,
+          campaignName: campaignName || undefined,
           imageUrls,
-          categoryRaw,
-          currency,
-          externalId
-        });
-      }
-
-      // Log detailed skip reasons (first 10)
-      if (failReasons.length > 0) {
-        console.log(`[import-csv] Skip reasons (first 10 of ${failReasons.length}):`);
-        failReasons.slice(0, 10).forEach((reason: string) => {
-          console.log(`  - ${reason}`);
+          description: description || undefined,
+          storeName: storeName || undefined,
+          currency: currency || "RON",
+          categoryRaw: categoryRaw || undefined,
+          availability: availability || undefined,
         });
       }
 
       const limitedRows = validRows.slice(0, MAX_IMPORT_ROWS);
-      const ingested = limitedRows.length;
-      const skipped = totalRows - ingested;
 
       if (limitedRows.length === 0) {
         return NextResponse.json(
           {
             ok: false,
-            error:
+            message:
               `Parsed ${normalizedRows.length} rows but 0 passed validation for 2Performant. ` +
               `Required fields: non-empty title, non-empty aff_code/affiliate link, numeric price > 0. ` +
               `Check that your CSV headers look like: title, aff_code, price, campaign_name, image_urls, description. ` +
               `Detected delimiter: "${delimiter}".`,
             totalRows: normalizedRows.length,
-            ingested: 0,
+            processedRows: 0,
+            skippedRows: normalizedRows.length,
             skipped: normalizedRows.length,
             createdProducts: 0,
             updatedProducts: 0,
@@ -528,22 +426,22 @@ export async function POST(req: NextRequest) {
             skippedMissingFields: invalidRows,
             skippedMissingExternalId: 0,
             failedRows: invalidRows,
-            validationErrors: [], // Rename to avoid duplicate 'errors' property
+            failed: invalidRows,
+            errors: [],
             truncated: isCapped,
             capped: isCapped,
             maxRowsPerImport: MAX_IMPORT_ROWS,
             provider,
             sampleRow: normalizedRows[0] ?? null,
-            failReasons: failReasons.slice(0, 10), // Include first 10 skip reasons
           },
           { status: 400 },
         );
       }
 
       // Convert valid rows to NormalizedListing format
-      const normalizedListings = limitedRows.map((row: TwoPerformantImportRow) => ({
+      const normalizedListings = limitedRows.map((row) => ({
         productTitle: row.title,
-        brand: row.title.split(" ")[0] || "Unknown", // Simple brand extraction
+        brand: detectBrandFromName(row.title) || "Unknown",
         category: row.categoryRaw || "General",
         gtin: undefined,
         storeId: row.storeName?.toLowerCase().replace(/[^a-z0-9\s]/g, "").replace(/\s+/g, "_") || "unknown",
@@ -588,7 +486,8 @@ export async function POST(req: NextRequest) {
         {
           ok,
           totalRows,
-          ingested: processedRows, // Use ingested instead of processedRows
+          processedRows,
+          skippedRows,
           skipped: skippedRows,
           createdProducts: summary.productsCreated,
           updatedProducts: summary.productsMatched,
@@ -597,13 +496,13 @@ export async function POST(req: NextRequest) {
           skippedMissingFields: invalidRows,
           skippedMissingExternalId: 0,
           failedRows,
+          failed: failedRows,
           errors,
           truncated: isCapped,
           message,
           capped: isCapped,
           maxRowsPerImport: MAX_IMPORT_ROWS,
           provider,
-          failReasons: failReasons.slice(0, 10), // Include first 10 skip reasons
         },
         { status: 200 },
       );
