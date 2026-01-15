@@ -37,14 +37,71 @@ function detectDelimiter(raw: string): string {
   return ",";
 }
 
+// Enhanced header normalization with comprehensive field mapping
 function normalizeHeaders<T extends Record<string, any>>(row: T): Record<string, any> {
   const out: Record<string, any> = {};
   for (const [key, value] of Object.entries(row)) {
     // Remove BOM, trim whitespace, convert to lowercase
     const normalizedKey = key.replace(/^\uFEFF/, '').trim().toLowerCase();
-    out[normalizedKey] = value;
+    
+    // Map common header variations to standard field names
+    const mappedKey = mapHeaderToStandardField(normalizedKey);
+    out[mappedKey] = value;
   }
   return out;
+}
+
+// Map common header variations to standard field names
+function mapHeaderToStandardField(header: string): string {
+  const normalized = header.toLowerCase().trim();
+  
+  // Product name variations
+  if (normalized.includes('nume produs') || normalized.includes('product name') || normalized.includes('product_name') || normalized.includes('name')) {
+    return 'product_name';
+  }
+  
+  // URL/affiliate variations
+  if (normalized.includes('affiliate link') || normalized.includes('affiliate_link') || normalized.includes('product affiliate') || normalized.includes('link afiliat') || normalized.includes('link afiliate') || normalized.includes('url') || normalized.includes('link') || normalized.includes('product url')) {
+    return 'url';
+  }
+  
+  // Price variations
+  if (normalized.includes('pret') || normalized.includes('price') || normalized.includes('price_final') || normalized.includes('pret reducere') || normalized.includes('price_value') || normalized.includes('sale_price') || normalized.includes('old_price')) {
+    return 'price';
+  }
+  
+  // Image variations
+  if (normalized.includes('image') || normalized.includes('image_url') || normalized.includes('img') || normalized.includes('product picture')) {
+    return 'image_url';
+  }
+  
+  // Store/advertiser variations
+  if (normalized.includes('store_name') || normalized.includes('advertiser name') || normalized.includes('magazin') || normalized.includes('campaign_name') || normalized.includes('program_name')) {
+    return 'store_name';
+  }
+  
+  // Category variations
+  if (normalized.includes('category') || normalized.includes('categorie')) {
+    return 'category';
+  }
+  
+  // Currency variations
+  if (normalized.includes('currency') || normalized.includes('moneda')) {
+    return 'currency';
+  }
+  
+  // Availability variations
+  if (normalized.includes('availability') || normalized.includes('disponibilitate') || normalized.includes('stoc')) {
+    return 'availability';
+  }
+  
+  // External ID variations
+  if (normalized.includes('id produs') || normalized.includes('external_id') || normalized.includes('id')) {
+    return 'external_id';
+  }
+  
+  // Default fallback
+  return normalized;
 }
 
 // Helper function to normalize a single header
@@ -63,7 +120,7 @@ function toNumber(value: unknown): number | null {
   return Number.isNaN(num) ? null : num;
 }
 
-// Flexible price mapping function with enhanced variations
+// Enhanced price parsing with comprehensive format handling
 function extractPrice(row: Record<string, any>): number | null {
   // Accept price from ANY of these fields: price, pret, price_value, price_final, sale_price, old_price
   const priceRaw = row['price'] || row['pret'] || row['price_value'] || row['price_final'] || row['sale_price'] || row['old_price'];
@@ -73,11 +130,26 @@ function extractPrice(row: Record<string, any>): number | null {
   const s = String(priceRaw).trim();
   if (!s) return null;
 
-  // Coerce price safely: replace commas with dots, strip non-numeric characters
-  const normalized = s.replace(',', '.').replace(/[^0-9.]/g, '');
-  const price = parseFloat(normalized);
+  // Remove currency symbols and text, handle various decimal formats
+  let cleaned = s.replace(/[^\d.,\-]/g, '');
+  if (!cleaned) return null;
+
+  // Handle Romanian format: 1.234,56 → 1234.56
+  const lastComma = cleaned.lastIndexOf(',');
+  const lastDot = cleaned.lastIndexOf('.');
   
-  return Number.isNaN(price) ? null : price;
+  if (lastComma > lastDot && cleaned.length - lastComma <= 4) {
+    cleaned = cleaned.replace(/\./g, '').replace(',', '.');
+  } else if (lastDot > lastComma && cleaned.length - lastDot <= 4) {
+    // International format: 1,234.56
+    cleaned = cleaned.replace(/,/g, '');
+  } else {
+    // Fallback: just strip commas
+    cleaned = cleaned.replace(/,/g, '');
+  }
+
+  const num = parseFloat(cleaned);
+  return Number.isFinite(num) && num > 0 ? num : null;
 }
 
 type TwoPerformantImportRow = {
@@ -361,49 +433,55 @@ export async function POST(req: NextRequest) {
         const row = normalizedRows[i];
         const rowNum = i + 2; // +2 for header + 1-index
 
-        // Extract fields with flexible mapping (more forgiving)
-        const title = (row["title"] ?? row["product name"] ?? row["product_name"] ?? row["name"] ?? row["nume produs"] ?? "").trim();
+        // Enhanced validation with comprehensive field mapping and detailed error collection
+        const title = (row['product_name'] ?? row['title'] ?? row['name'] ?? row['nume produs'] ?? "").trim();
+        
+        // URL/affiliate variations - comprehensive mapping
         const affCode =
-          (row["aff_code"] ?? row["aff link"] ?? row["affiliate_link"] ?? row["affiliate_url"] ?? row["product affiliate"] ?? row["url"] ?? row["link"] ?? "").trim();
+          row['aff_code'] ?? 
+          row['aff link'] ?? 
+          row['affiliate_link'] ?? 
+          row['product affiliate'] ?? 
+          row['url'] ?? 
+          row['link'] ?? 
+          row['product url'] ?? 
+          "".trim();
 
-        // Use flexible price mapping with enhanced parsing
+        // Enhanced price parsing with robust format handling
         const price = extractPrice(row);
-
-        const campaignName = (row["campaign_name"] ?? row["program_name"] ?? row["advertiser name"] ?? "").trim();
-
-        // Robust image URL extraction
+        
+        const campaignName = (row['campaign_name'] ?? row['program_name'] ?? row['advertiser name'] ?? "").trim();
+        
+        // Store/advertiser variations - comprehensive mapping
+        const storeName = (row['store_name'] ?? row['advertiser name'] ?? row['magazin'] ?? row['campaign_name'] ?? "").trim();
+        
+        // Image variations - comprehensive mapping
         const imageUrlsRaw =
-          (row["image_urls"] ??
-            row["image_url"] ??
-            row["image"] ??
-            row["img"] ??
-            row["product picture"] ??
-            "").trim();
-
+          row['image_urls'] ?? 
+          row['image_url'] ?? 
+          row['image'] ?? 
+          row['img'] ?? 
+          row['product picture'] ?? 
+          "".trim();
+        
+        // Robust image URL extraction with multiple format support
         let extractedImageUrl: string | null = null;
-
         if (imageUrlsRaw) {
-          const parts = imageUrlsRaw
-            .split(/[|,]/)
-            .map((p: string) => p.trim())
-            .filter(Boolean);
-
+          const parts = imageUrlsRaw.split(/[|,]/).map(p => p.trim()).filter(Boolean);
           if (parts.length > 0) {
             const candidate = parts[0];
-            extractedImageUrl = candidate && candidate.toLowerCase().startsWith("http")
-              ? candidate
-              : null;
+            extractedImageUrl = candidate && (candidate.toLowerCase().startsWith('http') || candidate.toLowerCase().startsWith('https')) ? candidate : null;
           }
         }
-
         const imageUrls = extractedImageUrl || undefined;
-        const description = (row["description"] ?? row["descriere"] ?? row["product description"] ?? "").trim();
-        const storeName = (row["store_name"] ?? row["advertiser name"] ?? campaignName ?? "").trim();
-        const currency = (row["currency"] ?? "RON").trim().toUpperCase(); // Default to RON
-        const categoryRaw = (row["category"] ?? "").trim();
-        const availability = (row["availability"] ?? "").trim();
 
-        // Enhanced validation with detailed error collection
+        // Category and other fields
+        const description = (row['description'] ?? row['descriere'] ?? row['product description'] ?? "").trim();
+        const currency = (row['currency'] ?? row['moneda'] ?? "RON").trim().toUpperCase();
+        const categoryRaw = (row['category'] ?? row['categorie'] ?? "").trim();
+        const availability = (row['availability'] ?? row['disponibilitate'] ?? row['stoc'] ?? "").trim();
+
+        // Essential fields validation with detailed error collection
         let failReason = "";
         const failReasons: string[] = [];
 
