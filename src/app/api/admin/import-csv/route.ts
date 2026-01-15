@@ -335,17 +335,7 @@ export async function POST(req: NextRequest) {
       const delimiter = detectDelimiter(raw);
       
       console.log(`[import-csv] Detected delimiter: "${delimiter}"`);
-
-      // DEBUG: If no file content, use hardcoded test CSV
-      if (!raw.trim()) {
-        console.log("[import-csv] Empty file detected, using hardcoded test CSV");
-        raw = `title;aff_code;price;campaign_name;image_urls;description;store_name;currency;category;availability
-Test Product 1;https://example.com/aff1;89.90;Test Campaign;https://example.com/image1.jpg;Test Description 1;Test Store;RON;Electronics;In Stock
-Test Product 2;https://example.com/aff2;156.50;Another Campaign;https://example.com/image2.jpg;Test Description 2;Another Store;RON;Accessories;In Stock
-Test Product 3;https://example.com/aff3;45.00;Campaign 3;https://example.com/image3.jpg;Test Description 3;Store 3;RON;Gadgets;In Stock
-Test Product 4;https://example.com/aff4;234.99;Campaign 4;https://example.com/image4.jpg;Test Description 4;Store 4;RON;Electronics;In Stock
-Test Product 5;https://example.com/aff5;67.80;Campaign 5;https://example.com/image5.jpg;Test Description 5;Store 5;RON;Accessories;In Stock`;
-      }
+      console.log(`[import-csv] Raw CSV content (first 200 chars):`, raw.substring(0, 200));
 
       const records = parse(raw, {
         columns: true,
