@@ -263,9 +263,13 @@ async function processBatch(
  * POST /api/admin/import-csv
  */
 export async function POST(req: NextRequest) {
+  // SIMPLE TEST: This should always appear in console
+  console.log("[import-csv] POST request received!");
+  
   // 1) Admin token
   const authError = validateAdminToken(req.headers.get("x-admin-token"));
   if (authError) {
+    console.log("[import-csv] Auth failed:", authError.error);
     return NextResponse.json(
       { ok: false, error: authError.error },
       { status: authError.status },
