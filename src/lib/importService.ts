@@ -159,7 +159,6 @@ async function findOrCreateProduct(
       category: normalizedCategory || null,
       subcategory: normalizedSubcategory || null,
       gtin: normalizedGtin || null,
-      updatedAt: new Date(),
     },
   });
 
@@ -461,7 +460,6 @@ export async function importNormalizedListings(
             source: options.source,
             priceLastSeenAt: now,
             imageUrl, // Update imageUrl if provided
-            updatedAt: new Date(),
             ...(affiliateProvider && { affiliateProvider }),
             ...(affiliateProgram && { affiliateProgram }),
           },
@@ -484,7 +482,6 @@ export async function importNormalizedListings(
       } else {
         await (prisma.listing.create as any)({
           data: {
-            id: randomUUID(),
             productId,
             storeName,
             url,
@@ -501,7 +498,6 @@ export async function importNormalizedListings(
             source: options.source,
             priceLastSeenAt: now,
             imageUrl, // Include imageUrl in new listings
-            updatedAt: new Date(),
             ...(affiliateProvider && { affiliateProvider }),
             ...(affiliateProgram && { affiliateProgram }),
           },
