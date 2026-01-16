@@ -13,7 +13,7 @@ import {
   parseAvailability,
   type ProfitshareRow,
 } from "@/lib/affiliates/profitshare";
-import { AFFILIATE_INGEST_PARSERS, type AffiliateIngestProviderId, isValidProvider } from '@/config/affiliateIngestion.server';
+import { isValidProvider } from "@/config/affiliateIngestion";
 import { importNormalizedListings } from "@/lib/importService";
 import { parse } from "csv-parse/sync";
 import { detectBrandFromName } from "@/lib/brandDetector";
@@ -263,32 +263,12 @@ async function processBatch(
  * POST /api/admin/import-csv
  */
 export async function POST(req: NextRequest) {
-  // SIMPLE TEST: This should always appear in console
-  console.log("[import-csv] POST request received!");
-  
   // 1) Admin token
   const authError = validateAdminToken(req.headers.get("x-admin-token"));
   if (authError) {
-    console.log("[import-csv] Auth failed:", authError.error);
     return NextResponse.json(
       { ok: false, error: authError.error },
       { status: authError.status },
-    );
-  }
-
-  // TEST: Check database connection
-  try {
-    await prisma.$connect();
-    console.log("[import-csv] Database connection: SUCCESS");
-    
-    // Test a simple query
-    const productCount = await prisma.product.count();
-    console.log("[import-csv] Database test: Product count =", productCount);
-  } catch (dbError) {
-    console.error("[import-csv] Database connection FAILED:", dbError);
-    return NextResponse.json(
-      { ok: false, error: `Database connection failed: ${dbError instanceof Error ? dbError.message : 'Unknown error'}` },
-      { status: 500 },
     );
   }
 
@@ -410,15 +390,9 @@ export async function POST(req: NextRequest) {
           continue;
         }
 
-        // Auto-fix URL if missing protocol
-        let fixedUrl = affCode;
-        if (fixedUrl && !fixedUrl.startsWith('http')) {
-          fixedUrl = 'https://' + fixedUrl;
-        }
-
         validRows.push({
           title,
-          affCode: fixedUrl,
+          affCode,
           price: price as number,
           campaignName: campaignName || undefined,
           imageUrls,
