@@ -390,9 +390,15 @@ export async function POST(req: NextRequest) {
           continue;
         }
 
+        // Auto-fix URL if missing protocol
+        let fixedUrl = affCode;
+        if (fixedUrl && !fixedUrl.startsWith('http')) {
+          fixedUrl = 'https://' + fixedUrl;
+        }
+
         validRows.push({
           title,
-          affCode,
+          affCode: fixedUrl,
           price: price as number,
           campaignName: campaignName || undefined,
           imageUrls,
