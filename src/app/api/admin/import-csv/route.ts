@@ -272,6 +272,22 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  // TEST: Check database connection
+  try {
+    await prisma.$connect();
+    console.log("[import-csv] Database connection: SUCCESS");
+    
+    // Test a simple query
+    const productCount = await prisma.product.count();
+    console.log("[import-csv] Database test: Product count =", productCount);
+  } catch (dbError) {
+    console.error("[import-csv] Database connection FAILED:", dbError);
+    return NextResponse.json(
+      { ok: false, error: `Database connection failed: ${dbError instanceof Error ? dbError.message : 'Unknown error'}` },
+      { status: 500 },
+    );
+  }
+
   try {
     const formData = await req.formData();
     const file = formData.get("file");
