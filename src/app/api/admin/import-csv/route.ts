@@ -13,7 +13,7 @@ import {
   parseAvailability,
   type ProfitshareRow,
 } from "@/lib/affiliates/profitshare";
-import { isValidProvider } from "@/config/affiliateIngestion.server";
+import { isValidProvider } from "@/config/affiliateIngestion";
 import { importNormalizedListings } from "@/lib/importService";
 import { parse } from "csv-parse/sync";
 import { detectBrandFromName } from "@/lib/brandDetector";
@@ -478,138 +478,22 @@ export async function POST(req: NextRequest) {
         code: null as string | null,
       }));
 
-      return NextResponse.json(
-        {
-            ? `Processed first ${limitedRows.length} rows out of ${totalRows}. Split your CSV and re-upload remaining rows.` 
-            : null,
-          capped: isCapped,
-          maxRowsPerImport: MAX_IMPORT_ROWS,
-          provider,
-        },
-        { status: 200 },
-      );
-    } else {
-      let parseResult;
-      try {
-        parseResult = parseProfitshareCsv(content);
-      } catch (err: any) {
-        const message = err instanceof Error ? err.message : String(err);
-        console.error("[admin/import-csv] CSV parse error (profitshare):", err);
-        return NextResponse.json(
-          { ok: false, error: `Failed to parse profitshare CSV: ${message}` },
-          { status: 500 },
-        );
-      }
-
-      const { rows, skippedMissingFields, headerError } = parseResult;
-
-      if (headerError) {
-        return NextResponse.json(
-          { ok: false, error: headerError },
-          { status: 400 },
-        );
-      }
-
-      const adaptedRows = rows as ProfitshareRow[];
-      const affiliateMetadata: { provider?: string; program?: string }[] =
-        adaptedRows.map(() => ({
-          provider: "profitshare",
-          program: undefined,
-        }));
-
-      const totalRows = adaptedRows.length;
-      const limitedRows = adaptedRows.slice(0, MAX_IMPORT_ROWS);
-      const limitedMetadata = affiliateMetadata.slice(0, MAX_IMPORT_ROWS);
-      const isCapped = totalRows > MAX_IMPORT_ROWS;
-
-      console.log(
-        `[import-csv] (profitshare) Starting import: totalRows=${totalRows}, processedRows=${limitedRows.length}, capped=${isCapped}`,
-      );
-
-      if (limitedRows.length === 0) {
-        const skippedRows = skippedMissingFields;
-        return NextResponse.json(
-          {
-            ok: true,
-            totalRows,
-            processedRows: 0,
-            skippedRows,
-            skipped: skippedRows,
-            createdProducts: 0,
-            updatedProducts: 0,
-            createdListings: 0,
-            updatedListings: 0,
-            skippedMissingFields,
-            skippedMissingExternalId: 0,
-            failedRows: 0,
-            failed: 0,
-            errors: [],
-            truncated: false,
-            message: null,
-            capped: isCapped,
-            maxRowsPerImport: MAX_IMPORT_ROWS,
-            provider,
-          },
-          { status: 200 },
-        );
-      }
-
-      let createdProducts = 0;
-      let updatedProducts = 0;
-      let createdListings = 0;
-      let updatedListings = 0;
-      let failedRows = 0;
-      let errors: { rowNumber: number; message: string; code: string | null }[] =
-        [];
-
-      const startTime = Date.now();
-
-      for (let i = 0; i < limitedRows.length; i += BATCH_SIZE) {
-        const batch = limitedRows.slice(i, i + BATCH_SIZE);
-        const batchMetadata = limitedMetadata.slice(i, i + BATCH_SIZE);
-        const batchResult = await processBatch(batch, batchMetadata, i);
-
-        createdProducts += batchResult.createdProducts;
-        updatedProducts += batchResult.updatedProducts;
-        createdListings += batchResult.createdListings;
-        updatedListings += batchResult.updatedListings;
-        failedRows += batchResult.failedRows;
-        errors.push(...batchResult.errors);
-      }
-
-      const durationMs = Date.now() - startTime;
-      console.log(
-        `[import-csv] (profitshare) Import complete: processedRows=${limitedRows.length}, created=${createdProducts}/${createdListings}, updated=${updatedProducts}/${updatedListings}, failed=${failedRows}, duration=${durationMs}ms`,
-      );
-
-      if (errors.length > 50) {
-        errors = errors.slice(0, 50);
-      }
-
       const message = isCapped
         ? `Processed first ${limitedRows.length} rows out of ${totalRows}. Split your CSV and re-upload remaining rows.` 
         : null;
-
-      const skippedRows = skippedMissingFields;
-      const successCount =
-        createdProducts +
-        updatedProducts +
-        createdListings +
-        updatedListings;
-      const ok = successCount > 0;
 
       return NextResponse.json(
         {
           ok,
           totalRows,
-          processedRows: limitedRows.length,
+          processedRows,
           skippedRows,
           skipped: skippedRows,
-          createdProducts,
-          updatedProducts,
-          createdListings,
-          updatedListings,
-          skippedMissingFields,
+          createdProducts: summary.productsCreated,
+          updatedProducts: summary.productsMatched,
+          createdListings: summary.listingsCreated,
+          updatedListings: summary.listingsUpdated,
+          skippedMissingFields: invalidRows,
           skippedMissingExternalId: 0,
           failedRows,
           failed: failedRows,
@@ -623,6 +507,144 @@ export async function POST(req: NextRequest) {
         { status: 200 },
       );
     }
+
+    // -----------------------------------------------------------------------
+    // Profitshare path — legacy CSV pipeline (parseProfitshareCsv + processBatch)
+    // -----------------------------------------------------------------------
+
+    let parseResult;
+    try {
+      parseResult = parseProfitshareCsv(content);
+    } catch (err: any) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error("[admin/import-csv] CSV parse error (profitshare):", err);
+      return NextResponse.json(
+        { ok: false, error: `Failed to parse profitshare CSV: ${message}` },
+        { status: 500 },
+      );
+    }
+
+    const { rows, skippedMissingFields, headerError } = parseResult;
+
+    if (headerError) {
+      return NextResponse.json(
+        { ok: false, error: headerError },
+        { status: 400 },
+      );
+    }
+
+    const adaptedRows = rows as ProfitshareRow[];
+    const affiliateMetadata: { provider?: string; program?: string }[] =
+      adaptedRows.map(() => ({
+        provider: "profitshare",
+        program: undefined,
+      }));
+
+    const totalRows = adaptedRows.length;
+    const limitedRows = adaptedRows.slice(0, MAX_IMPORT_ROWS);
+    const limitedMetadata = affiliateMetadata.slice(0, MAX_IMPORT_ROWS);
+    const isCapped = totalRows > MAX_IMPORT_ROWS;
+
+    console.log(
+      `[import-csv] (profitshare) Starting import: totalRows=${totalRows}, processedRows=${limitedRows.length}, capped=${isCapped}`,
+    );
+
+    if (limitedRows.length === 0) {
+      const skippedRows = skippedMissingFields;
+      return NextResponse.json(
+        {
+          ok: true,
+          totalRows,
+          processedRows: 0,
+          skippedRows,
+          skipped: skippedRows,
+          createdProducts: 0,
+          updatedProducts: 0,
+          createdListings: 0,
+          updatedListings: 0,
+          skippedMissingFields,
+          skippedMissingExternalId: 0,
+          failedRows: 0,
+          failed: 0,
+          errors: [],
+          truncated: false,
+          message: null,
+          capped: isCapped,
+          maxRowsPerImport: MAX_IMPORT_ROWS,
+          provider,
+        },
+        { status: 200 },
+      );
+    }
+
+    let createdProducts = 0;
+    let updatedProducts = 0;
+    let createdListings = 0;
+    let updatedListings = 0;
+    let failedRows = 0;
+    let errors: { rowNumber: number; message: string; code: string | null }[] =
+      [];
+
+    const startTime = Date.now();
+
+    for (let i = 0; i < limitedRows.length; i += BATCH_SIZE) {
+      const batch = limitedRows.slice(i, i + BATCH_SIZE);
+      const batchMetadata = limitedMetadata.slice(i, i + BATCH_SIZE);
+      const batchResult = await processBatch(batch, batchMetadata, i);
+
+      createdProducts += batchResult.createdProducts;
+      updatedProducts += batchResult.updatedProducts;
+      createdListings += batchResult.createdListings;
+      updatedListings += batchResult.updatedListings;
+      failedRows += batchResult.failedRows;
+      errors.push(...batchResult.errors);
+    }
+
+    const durationMs = Date.now() - startTime;
+    console.log(
+      `[import-csv] (profitshare) Import complete: processedRows=${limitedRows.length}, created=${createdProducts}/${createdListings}, updated=${updatedProducts}/${updatedListings}, failed=${failedRows}, duration=${durationMs}ms`,
+    );
+
+    if (errors.length > 50) {
+      errors = errors.slice(0, 50);
+    }
+
+    const message = isCapped
+      ? `Processed first ${limitedRows.length} rows out of ${totalRows}. Split your CSV and re-upload remaining rows.` 
+      : null;
+
+    const skippedRows = skippedMissingFields;
+    const successCount =
+      createdProducts +
+      updatedProducts +
+      createdListings +
+      updatedListings;
+    const ok = successCount > 0;
+
+    return NextResponse.json(
+      {
+        ok,
+        totalRows,
+        processedRows: limitedRows.length,
+        skippedRows,
+        skipped: skippedRows,
+        createdProducts,
+        updatedProducts,
+        createdListings,
+        updatedListings,
+        skippedMissingFields,
+        skippedMissingExternalId: 0,
+        failedRows,
+        failed: failedRows,
+        errors,
+        truncated: isCapped,
+        message,
+        capped: isCapped,
+        maxRowsPerImport: MAX_IMPORT_ROWS,
+        provider,
+      },
+      { status: 200 },
+    );
   } catch (error) {
     console.error("[admin/import-csv] POST error:", error);
     return NextResponse.json(
