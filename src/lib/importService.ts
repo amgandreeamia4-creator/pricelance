@@ -157,7 +157,6 @@ async function findOrCreateProduct(
       name: productTitle,
       brand: normalizedBrand || null,
       category: normalizedCategory || null,
-      subcategory: normalizedSubcategory || null,
       gtin: normalizedGtin || null,
       updatedAt: new Date(),
     },
@@ -484,6 +483,7 @@ export async function importNormalizedListings(
       } else {
         await (prisma.listing.create as any)({
           data: {
+            id: randomUUID(),
             productId,
             storeName,
             url,
