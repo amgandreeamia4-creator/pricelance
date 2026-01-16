@@ -57,7 +57,7 @@ export default function ImportCsvClient() {
         body: formData,
         headers: {
           // IMPORTANT: this must match validateAdminToken()
-          "x-admin-token": process.env.NEXT_PUBLIC_ADMIN_TOKEN ?? "",
+          "x-admin-token": process.env.NEXT_PUBLIC_ADMIN_TOKEN || "",
         },
       });
 
