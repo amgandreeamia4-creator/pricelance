@@ -480,22 +480,6 @@ export async function POST(req: NextRequest) {
 
       return NextResponse.json(
         {
-          ok,
-          totalRows,
-          processedRows,
-          skippedRows,
-          skipped: skippedRows,
-          createdProducts: summary.createdProducts,
-          updatedProducts: summary.updatedProducts,
-          createdListings: summary.createdListings,
-          updatedListings: summary.updatedListings,
-          skippedMissingFields: summary.skippedMissingFields,
-          skippedMissingExternalId: summary.skippedMissingExternalId,
-          failedRows,
-          failed: failedRows,
-          errors,
-          truncated: isCapped,
-          message: isCapped
             ? `Processed first ${limitedRows.length} rows out of ${totalRows}. Split your CSV and re-upload remaining rows.` 
             : null,
           capped: isCapped,
