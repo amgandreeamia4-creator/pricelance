@@ -102,6 +102,7 @@ export async function POST(req: NextRequest) {
             where: { id: product.id },
             data: {
               category: newCategory,
+              updatedAt: new Date(),
             },
           });
 
