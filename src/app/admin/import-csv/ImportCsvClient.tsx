@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { AFFILIATE_INGEST_PROVIDERS, type AffiliateIngestProviderId } from '@/config/affiliateIngestion';
+import { AFFILIATE_INGEST_PROVIDERS, type AffiliateIngestProviderId } from '@/config/affiliateIngestion.client';
 
 // SIMPLE TEST: This should appear when the component loads
 console.log("[ImportCsvClient] Component loaded!");
