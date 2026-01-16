@@ -205,9 +205,6 @@ export function parseTwoPerformantCsv(content: string): TwoPerformantParseResult
   const headerRow = csvRows[0];
   const lowerHeaders = headerRow.map((h) => h.toLowerCase().trim());
 
-  console.log("[2Performant] Header row:", headerRow);
-  console.log("[2Performant] Lower headers:", lowerHeaders);
-
   const idxAdvertiser = lowerHeaders.findIndex((h) => h.includes("advertiser name")) || -1;
   const idxCategory = lowerHeaders.findIndex((h) => h.includes("category")) || -1;
   const idxProductName = lowerHeaders.findIndex((h) => h.includes("product name") || h.includes("nume produs") || h.includes("product_name")) || -1;
@@ -245,8 +242,6 @@ export function parseTwoPerformantCsv(content: string): TwoPerformantParseResult
   const rows: TwoPerformantRow[] = [];
   let skippedMissingFields = 0;
 
-  console.log(`[2Performant] Processing ${totalDataRows} data rows`);
-
   for (let i = 1; i < csvRows.length; i++) {
     const rawRow = csvRows[i];
     const rowNumber = i + 1; // 1-based including header
@@ -270,18 +265,12 @@ export function parseTwoPerformantCsv(content: string): TwoPerformantParseResult
     const priceStr = priceDisc || priceVat || priceWithout;
 
     if (!priceStr) {
-      console.log(
-        `[2Performant] Row ${rowNumber} skipped - missing all price columns`,
-      );
       skippedMissingFields++;
       continue;
     }
 
     const price = parsePrice(priceStr);
     if (price === null) {
-      console.log(
-        `[2Performant] Row ${rowNumber} skipped - invalid price: "${priceStr}"`,
-      );
       skippedMissingFields++;
       continue;
     }
