@@ -1,5 +1,4 @@
 // src/lib/affiliates/twoPerformant.ts
-import 'server-only';
 // =============================================================================
 // 2PERFORMANT CSV FEED ADAPTER - CANONICAL FOR YOUR SHEET
 // =============================================================================

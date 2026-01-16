@@ -1,5 +1,4 @@
 // src/lib/affiliates/profitshare.ts
-import 'server-only';
 // Profitshare.ro CSV feed adapter
 
 /**
