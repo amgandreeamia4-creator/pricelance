@@ -1,5 +1,6 @@
 #!/usr/bin/env tsx
 import { config } from "dotenv";
+import { randomUUID } from "crypto";
 import { PrismaClient } from "@prisma/client";
 import { promises as fs } from "fs";
 import path from "path";
@@ -74,6 +75,7 @@ async function main() {
           category: p.category,
           imageUrl,
           thumbnailUrl: imageUrl,
+          updatedAt: new Date(),
         },
       });
 
@@ -83,6 +85,7 @@ async function main() {
         const countryCode = listing.countryCode ?? "US"; // Default to US when not specified
         const created = await prisma.listing.create({
           data: {
+            id: randomUUID(),
             productId: product.id,
             storeName: listing.storeName,
             url: listing.url,
@@ -93,6 +96,7 @@ async function main() {
             shippingCost: listing.shippingCost,
             countryCode,
             inStock: true,
+            updatedAt: new Date(),
           },
         });
         if (created) {
