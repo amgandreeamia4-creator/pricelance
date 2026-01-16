@@ -336,6 +336,7 @@ export async function importCsvString(csvContent: string): Promise<ImportSummary
             fastDelivery,
             inStock: inStock ?? true,
             priceLastSeenAt: now,
+            updatedAt: new Date(),
           },
         });
         summary.listingsUpdated++;
@@ -354,6 +355,7 @@ export async function importCsvString(csvContent: string): Promise<ImportSummary
             fastDelivery,
             inStock: inStock ?? true,
             priceLastSeenAt: now,
+            updatedAt: new Date(),
           },
         });
         summary.listingsCreated++;
