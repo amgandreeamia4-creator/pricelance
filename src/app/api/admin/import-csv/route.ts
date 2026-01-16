@@ -13,7 +13,7 @@ import {
   parseAvailability,
   type ProfitshareRow,
 } from "@/lib/affiliates/profitshare";
-import { isValidProvider } from "@/config/affiliateIngestion";
+import { isValidProvider } from "@/config/affiliateIngestion.server";
 import { importNormalizedListings } from "@/lib/importService";
 import { parse } from "csv-parse/sync";
 import { detectBrandFromName } from "@/lib/brandDetector";
