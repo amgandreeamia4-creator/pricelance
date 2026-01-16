@@ -1,7 +1,9 @@
 // src/app/api/admin/import-csv/route.ts
 // CSV bulk import for Products + Listings (file upload)
 //
-// RESTORED WORKING VERSION FROM COMMIT 15bf7ce
+// This route now has two paths:
+// - provider = "2performant" → uses twoPerformantAdapter + importNormalizedListings
+// - provider = "profitshare" → uses legacy ProfitshareRow pipeline (parseProfitshareCsv + processBatch)
 
 import { NextRequest, NextResponse } from "next/server";
 import { validateAdminToken } from "@/lib/adminAuth";
@@ -11,7 +13,7 @@ import {
   parseAvailability,
   type ProfitshareRow,
 } from "@/lib/affiliates/profitshare";
-import { isValidProvider } from "@/config/affiliateIngestion.server";
+import { isValidProvider } from "@/config/affiliateIngestion";
 import { importNormalizedListings } from "@/lib/importService";
 import { parse } from "csv-parse/sync";
 import { detectBrandFromName } from "@/lib/brandDetector";
@@ -32,7 +34,8 @@ function detectDelimiter(raw: string): string {
   let bestCount = 0;
 
   for (const d of candidates) {
-    const count = (firstLine.match(new RegExp("\\" + d + "\"", "g")) || []).length;
+    const regex = new RegExp(`\\${d}`, "g");
+    const count = (firstLine.match(regex) || []).length;
     if (count > bestCount) {
       best = d;
       bestCount = count;
@@ -45,7 +48,8 @@ function detectDelimiter(raw: string): string {
 function normalizeHeaders<T extends Record<string, any>>(row: T): Record<string, any> {
   const out: Record<string, any> = {};
   for (const [key, value] of Object.entries(row)) {
-    out[key.toLowerCase().trim()] = value;
+    const normalizedKey = key.trim().toLowerCase();
+    out[normalizedKey] = value;
   }
   return out;
 }
@@ -55,9 +59,9 @@ function toNumber(value: unknown): number | null {
   const s = String(value).trim();
   if (!s) return null;
 
-  // Handles "1.234,56"  → 1234.56 and "1,234.56"  → 1234.56
-  const cleaned = s.replace(",", ".").replace(/[^\d.]/g, "");
-  const num = Number(cleaned);
+  // Handles "392,4", "392.40", "392,40 lei", etc.
+  const normalized = s.replace(",", ".").replace(/[^0-9.]/g, "");
+  const num = Number(normalized);
   return Number.isNaN(num) ? null : num;
 }
 
@@ -73,6 +77,187 @@ type TwoPerformantImportRow = {
   categoryRaw?: string;
   availability?: string;
 };
+
+/**
+ * Find or create a Product based on name (and optional category).
+ * Legacy path for Profitshare rows.
+ */
+async function findOrCreateProduct(
+  row: ProfitshareRow,
+): Promise<{ productId: string; isNew: boolean }> {
+  const existing = await db.product.findFirst({
+    where: {
+      name: row.name,
+    },
+    select: { id: true },
+  });
+
+  if (!existing) {
+    const detectedBrand = detectBrandFromName(row.name);
+    const created = await db.product.create({
+      data: {
+        name: row.name,
+        displayName: row.name,
+        category: row.categoryRaw || null,
+        brand: detectedBrand || "Unknown",
+        imageUrl: row.imageUrl || null,
+        thumbnailUrl: row.imageUrl || null,
+        gtin: row.gtin || null,
+      },
+      select: { id: true },
+    });
+    return { productId: created.id, isNew: true };
+  }
+
+  const updated = await db.product.update({
+    where: { id: existing.id },
+    data: {
+      ...(row.imageUrl && {
+        imageUrl: row.imageUrl,
+        thumbnailUrl: row.imageUrl,
+      }),
+      ...(row.categoryRaw && { category: row.categoryRaw }),
+      ...(row.gtin && { gtin: row.gtin }),
+    },
+    select: { id: true },
+  });
+
+  return { productId: updated.id, isNew: false };
+}
+
+/**
+ * Find or create a Listing for a product.
+ * Legacy path for Profitshare rows.
+ */
+async function upsertListing(
+  productId: string,
+  row: ProfitshareRow,
+  affiliateProvider?: string,
+  affiliateProgram?: string,
+): Promise<{ isNew: boolean; hasListing: boolean }> {
+  const inStock = parseAvailability(row.availability);
+
+  // Skip listing creation if no URL is available
+  if (!row.affiliateUrl) {
+    return { isNew: false, hasListing: false };
+  }
+
+  const existing = await db.listing.findFirst({
+    where: {
+      productId,
+      storeName: { equals: row.storeName, mode: "insensitive" },
+      url: row.affiliateUrl,
+    },
+    select: { id: true },
+  });
+
+  const listingData = {
+    price: row.price,
+    priceCents: Math.min(Math.round(row.price * 100), 2147483647),
+    currency: row.currency,
+    inStock,
+    ...(affiliateProvider && { affiliateProvider }),
+    ...(affiliateProgram && { affiliateProgram }),
+  };
+
+  if (existing) {
+    await db.listing.update({
+      where: { id: existing.id },
+      data: listingData,
+    });
+    return { isNew: false, hasListing: true };
+  }
+
+  await db.listing.create({
+    data: {
+      productId,
+      storeName: row.storeName,
+      url: row.affiliateUrl,
+      ...listingData,
+    },
+  });
+
+  return { isNew: true, hasListing: true };
+}
+
+/**
+ * Process a batch of ProfitshareRow rows – legacy path.
+ */
+async function processBatch(
+  rows: ProfitshareRow[],
+  affiliateMetadata: { provider?: string; program?: string }[],
+  startIdx: number,
+): Promise<{
+  createdProducts: number;
+  updatedProducts: number;
+  createdListings: number;
+  updatedListings: number;
+  skippedMissingExternalId: number;
+  failedRows: number;
+  errors: { rowNumber: number; message: string; code: string | null }[];
+}> {
+  let createdProducts = 0;
+  let updatedProducts = 0;
+  let createdListings = 0;
+  let updatedListings = 0;
+  let failedRows = 0;
+  const errors: {
+    rowNumber: number;
+    message: string;
+    code: string | null;
+  }[] = [];
+
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    const metadata = affiliateMetadata[i];
+    const rowNum = startIdx + i + 2; // +2 for header + 1-index
+
+    try {
+      const { productId, isNew: isNewProduct } = await findOrCreateProduct(row);
+      if (isNewProduct) createdProducts++;
+      else updatedProducts++;
+
+      const { isNew: isNewListing, hasListing } = await upsertListing(
+        productId,
+        row,
+        metadata.provider,
+        metadata.program,
+      );
+      if (hasListing) {
+        if (isNewListing) createdListings++;
+        else updatedListings++;
+      }
+    } catch (err: any) {
+      failedRows++;
+      const message = err instanceof Error ? err.message : String(err);
+      errors.push({
+        rowNumber: rowNum,
+        message,
+        code: err?.code ?? null,
+      });
+      console.error("[import-csv] Row failed", {
+        rowNumber: rowNum,
+        message,
+        rowPreview: {
+          name: row.name,
+          storeName: row.storeName,
+          price: row.price,
+          affiliateProvider: metadata.provider,
+        },
+      });
+    }
+  }
+
+  return {
+    createdProducts,
+    updatedProducts,
+    createdListings,
+    updatedListings,
+    skippedMissingExternalId: 0,
+    failedRows,
+    errors,
+  };
+}
 
 /**
  * POST /api/admin/import-csv
@@ -161,6 +346,7 @@ export async function POST(req: NextRequest) {
         const affCode =
           (row["aff_code"] ?? row["aff link"] ?? row["affiliate_link"] ?? row["product affiliate"] ?? row["url"] ?? "").trim();
         const price = toNumber(row["price"] ?? row["sale_price"] ?? row["old_price"] ?? row["price with discount"] ?? row["price with vat"] ?? row["price without vat"]);
+
         const campaignName = (row["campaign_name"] ?? row["program_name"] ?? row["advertiser name"] ?? "").trim();
         
         // Robust image URL extraction
@@ -240,9 +426,9 @@ export async function POST(req: NextRequest) {
             skippedMissingFields: invalidRows,
             skippedMissingExternalId: 0,
             failedRows: invalidRows,
+            failed: invalidRows,
             errors: [],
             truncated: isCapped,
-            message: null,
             capped: isCapped,
             maxRowsPerImport: MAX_IMPORT_ROWS,
             provider,
@@ -292,24 +478,28 @@ export async function POST(req: NextRequest) {
         code: null as string | null,
       }));
 
+      const message = isCapped
+        ? `Processed first ${limitedRows.length} rows out of ${totalRows}. Split your CSV and re-upload remaining rows.` 
+        : null;
+
       return NextResponse.json(
         {
           ok,
           totalRows,
           processedRows,
           skippedRows,
+          skipped: skippedRows,
           createdProducts: summary.productsCreated,
           updatedProducts: summary.productsMatched,
           createdListings: summary.listingsCreated,
           updatedListings: summary.listingsUpdated,
-          skippedMissingFields: summary.skippedMissingFields,
-          skippedMissingExternalId: summary.skippedMissingExternalId,
+          skippedMissingFields: invalidRows,
+          skippedMissingExternalId: 0,
           failedRows,
+          failed: failedRows,
           errors,
           truncated: isCapped,
-          message: isCapped
-            ? `Processed first ${limitedRows.length} rows out of ${totalRows}. Split your CSV and re-upload remaining rows.`
-            : null,
+          message,
           capped: isCapped,
           maxRowsPerImport: MAX_IMPORT_ROWS,
           provider,
@@ -317,10 +507,148 @@ export async function POST(req: NextRequest) {
         { status: 200 },
       );
     }
-  } catch (error) {
-    console.error("[import-csv] Error:", error);
+
+    // -----------------------------------------------------------------------
+    // Profitshare path — legacy CSV pipeline (parseProfitshareCsv + processBatch)
+    // -----------------------------------------------------------------------
+
+    let parseResult;
+    try {
+      parseResult = parseProfitshareCsv(content);
+    } catch (err: any) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error("[admin/import-csv] CSV parse error (profitshare):", err);
+      return NextResponse.json(
+        { ok: false, error: `Failed to parse profitshare CSV: ${message}` },
+        { status: 500 },
+      );
+    }
+
+    const { rows, skippedMissingFields, headerError } = parseResult;
+
+    if (headerError) {
+      return NextResponse.json(
+        { ok: false, error: headerError },
+        { status: 400 },
+      );
+    }
+
+    const adaptedRows = rows as ProfitshareRow[];
+    const affiliateMetadata: { provider?: string; program?: string }[] =
+      adaptedRows.map(() => ({
+        provider: "profitshare",
+        program: undefined,
+      }));
+
+    const totalRows = adaptedRows.length;
+    const limitedRows = adaptedRows.slice(0, MAX_IMPORT_ROWS);
+    const limitedMetadata = affiliateMetadata.slice(0, MAX_IMPORT_ROWS);
+    const isCapped = totalRows > MAX_IMPORT_ROWS;
+
+    console.log(
+      `[import-csv] (profitshare) Starting import: totalRows=${totalRows}, processedRows=${limitedRows.length}, capped=${isCapped}`,
+    );
+
+    if (limitedRows.length === 0) {
+      const skippedRows = skippedMissingFields;
+      return NextResponse.json(
+        {
+          ok: true,
+          totalRows,
+          processedRows: 0,
+          skippedRows,
+          skipped: skippedRows,
+          createdProducts: 0,
+          updatedProducts: 0,
+          createdListings: 0,
+          updatedListings: 0,
+          skippedMissingFields,
+          skippedMissingExternalId: 0,
+          failedRows: 0,
+          failed: 0,
+          errors: [],
+          truncated: false,
+          message: null,
+          capped: isCapped,
+          maxRowsPerImport: MAX_IMPORT_ROWS,
+          provider,
+        },
+        { status: 200 },
+      );
+    }
+
+    let createdProducts = 0;
+    let updatedProducts = 0;
+    let createdListings = 0;
+    let updatedListings = 0;
+    let failedRows = 0;
+    let errors: { rowNumber: number; message: string; code: string | null }[] =
+      [];
+
+    const startTime = Date.now();
+
+    for (let i = 0; i < limitedRows.length; i += BATCH_SIZE) {
+      const batch = limitedRows.slice(i, i + BATCH_SIZE);
+      const batchMetadata = limitedMetadata.slice(i, i + BATCH_SIZE);
+      const batchResult = await processBatch(batch, batchMetadata, i);
+
+      createdProducts += batchResult.createdProducts;
+      updatedProducts += batchResult.updatedProducts;
+      createdListings += batchResult.createdListings;
+      updatedListings += batchResult.updatedListings;
+      failedRows += batchResult.failedRows;
+      errors.push(...batchResult.errors);
+    }
+
+    const durationMs = Date.now() - startTime;
+    console.log(
+      `[import-csv] (profitshare) Import complete: processedRows=${limitedRows.length}, created=${createdProducts}/${createdListings}, updated=${updatedProducts}/${updatedListings}, failed=${failedRows}, duration=${durationMs}ms`,
+    );
+
+    if (errors.length > 50) {
+      errors = errors.slice(0, 50);
+    }
+
+    const message = isCapped
+      ? `Processed first ${limitedRows.length} rows out of ${totalRows}. Split your CSV and re-upload remaining rows.` 
+      : null;
+
+    const skippedRows = skippedMissingFields;
+    const successCount =
+      createdProducts +
+      updatedProducts +
+      createdListings +
+      updatedListings;
+    const ok = successCount > 0;
+
     return NextResponse.json(
-      { ok: false, error: "Internal Server Error" },
+      {
+        ok,
+        totalRows,
+        processedRows: limitedRows.length,
+        skippedRows,
+        skipped: skippedRows,
+        createdProducts,
+        updatedProducts,
+        createdListings,
+        updatedListings,
+        skippedMissingFields,
+        skippedMissingExternalId: 0,
+        failedRows,
+        failed: failedRows,
+        errors,
+        truncated: isCapped,
+        message,
+        capped: isCapped,
+        maxRowsPerImport: MAX_IMPORT_ROWS,
+        provider,
+      },
+      { status: 200 },
+    );
+  } catch (error) {
+    console.error("[admin/import-csv] POST error:", error);
+    return NextResponse.json(
+      { ok: false, error: "Failed to process CSV import" },
       { status: 500 },
     );
   }
