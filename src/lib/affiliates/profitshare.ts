@@ -1,6 +1,8 @@
 // src/lib/affiliates/profitshare.ts
 // Profitshare.ro CSV feed adapter
 
+import type { NormalizedListing } from './types';
+
 /**
  * Normalized row from Profitshare CSV feed.
  * Maps Profitshare-specific columns to a canonical internal shape.
@@ -411,4 +413,26 @@ export function parseAvailability(availability: string | undefined): boolean {
   }
   
   return true;
+}
+
+/**
+ * Convert ProfitshareRow[] to NormalizedListing[] for unified import processing
+ */
+export function normalizeProfitshareRows(rows: ProfitshareRow[]): NormalizedListing[] {
+  return rows.map((row) => ({
+    productTitle: row.name,
+    brand: "", // ProfitshareRow has no brand field
+    category: row.categoryRaw ?? "",
+    gtin: row.gtin,
+    storeId: row.storeName?.toLowerCase().replace(/[^a-z0-9\s]/g, "").replace(/\s+/g, "_") || "unknown",
+    storeName: row.storeName || "Unknown",
+    url: row.productUrl,
+    price: row.price,
+    currency: row.currency,
+    imageUrl: row.imageUrl,
+    inStock: parseAvailability(row.availability),
+    source: "affiliate" as const,
+    affiliateProvider: "profitshare",
+    affiliateProgram: "profitshare",
+  }));
 }
