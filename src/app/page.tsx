@@ -1,5 +1,5 @@
 "use client";
-
+import { GoogleAdSlot } from "@/components/ads/GoogleAdSlot";
 import React, { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import { SlidersHorizontal, MessageCircle, ChevronDown, ChevronUp } from "lucide-react";
@@ -8,6 +8,8 @@ import { useSpring, animated, config } from '@react-spring/web';
 import ThemeToggle from "@/components/ThemeToggle";
 import ProductList from "@/components/ProductList";
 import ChatAssistant from "@/components/ChatAssistant";
+import GoogleAdUnit from "@/components/ads/GoogleAdUnit";
+import { AffiliateBannerSlot } from "@/components/ads/AffiliateBannerSlot";
 import { STORES, StoreId } from "@/config/catalog";
 import PriceTrendChart from "@/components/PriceTrendChart";
 import ProductSummary from "@/components/ProductSummary";
@@ -570,11 +572,13 @@ export default function Page() {
             </motion.button>
           </div>
 
-          {/* Desktop-only header ad slot preview */}
+          {/* Desktop-only header ad slot */}
           <div className="hidden md:flex justify-end mt-2 md:mt-4">
-            <div className="rounded-full border border-[var(--pl-card-border)] bg-[var(--pl-card)] px-3 py-1 text-[9px] text-[var(--pl-text-subtle)] whitespace-nowrap">
-              Ad slot preview · Header banner 776x90
-            </div>
+            <GoogleAdSlot
+              slot={process.env.NEXT_PUBLIC_ADSENSE_HEADER_SLOT_ID ?? "demo-header-slot"}
+              format="horizontal"
+              style={{ width: "100%", minHeight: 90 }}
+            />
           </div>
 
           {/* Compact hero description – single sentence */}
@@ -806,9 +810,7 @@ export default function Page() {
               
               {/* Collapsible content */}
               <div className={`${adPreviewOpen ? 'block' : 'hidden'} sm:block p-3 sm:p-4 pt-0 sm:pt-0`}>
-                <div className="flex items-center justify-center h-32 sm:h-40 w-full border-2 border-dashed border-[var(--pl-card-border)] rounded-lg bg-[var(--pl-bg)]/50">
-                  <span className="text-[10px] text-[var(--pl-text-subtle)]">300×250</span>
-                </div>
+                <AffiliateBannerSlot />
               </div>
             </div>
 

@@ -55,6 +55,15 @@ export default function RootLayout({
             gtag('config', '${GA_MEASUREMENT_ID}', { page_path: window.location.pathname });
           `}
         </Script>
+        {process.env.NODE_ENV === "production" && (
+          <Script
+            id="adsense-script"
+            async
+            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID}`}
+            crossOrigin="anonymous"
+            strategy="afterInteractive"
+          />
+        )}
         <ThemeProvider>
           <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-neutral-950">
             <header className="w-full border-b border-slate-200/80 dark:border-slate-800 bg-white/80 dark:bg-neutral-950/80 backdrop-blur">
