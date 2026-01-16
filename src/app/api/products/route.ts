@@ -29,9 +29,9 @@ type ProductResponse = {
 };
 
 // Helper for sorting by lowest price
-function getBestPrice(product: { Listing: { price: number | null }[] }) {
-  if (!product.Listing || product.Listing.length === 0) return Infinity;
-  const prices = product.Listing.map((l) =>
+function getBestPrice(product: { listings: { price: number | null }[] }) {
+  if (!product.listings || product.listings.length === 0) return Infinity;
+  const prices = product.listings.map((l) =>
     typeof l.price === "number" ? l.price : Infinity
   );
   return Math.min(...prices);
@@ -198,7 +198,7 @@ export async function GET(req: NextRequest) {
 
     if (store) {
       where.AND.push({
-        Listing: {
+        listings: {
           some: {
             storeId: store,
           },
@@ -217,7 +217,7 @@ export async function GET(req: NextRequest) {
     const dbProducts = await prisma.product.findMany({
       where: where.AND.length ? where : undefined,
       include: {
-        Listing: true,
+        listings: true,
       },
       skip: effectiveSkip,
       take,
@@ -252,7 +252,7 @@ export async function GET(req: NextRequest) {
       brand: p.brand,
       imageUrl: p.imageUrl,
       category: p.category ?? null,
-      listings: filterListingsForVisibility(p.Listing ?? []).map(
+      listings: filterListingsForVisibility(p.listings ?? []).map(
         (l: any): ListingResponse => ({
           id: l.id,
           storeId: l.storeId ?? null,
