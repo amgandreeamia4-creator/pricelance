@@ -3,6 +3,9 @@
 import React, { useState } from "react";
 import { AFFILIATE_INGEST_PROVIDERS, type AffiliateIngestProviderId } from '@/config/affiliateIngestion';
 
+// SIMPLE TEST: This should appear when the component loads
+console.log("[ImportCsvClient] Component loaded!");
+
 type ImportState = {
   status: "idle" | "running" | "done" | "error";
   message: string | null;
