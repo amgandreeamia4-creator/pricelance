@@ -4,39 +4,45 @@ import type { NextRequest } from "next/server";
 
 const BASIC_AUTH_USER = process.env.ADMIN_BASIC_USER;
 const BASIC_AUTH_PASS = process.env.ADMIN_BASIC_PASS;
+const ADMIN_TOKEN = process.env.ADMIN_TOKEN;
 
 export function middleware(req: NextRequest) {
-  const url = req.nextUrl;
-  const { pathname, hostname } = url;
+  const { pathname, hostname } = req.nextUrl;
+
+  // 🔴 ABSOLUTELY REQUIRED: skip Next.js internals
+  if (
+    pathname.startsWith("/_next") ||
+    pathname.startsWith("/favicon") ||
+    pathname.startsWith("/robots") ||
+    pathname.startsWith("/sitemap")
+  ) {
+    return NextResponse.next();
+  }
 
   const isAdminPage = pathname.startsWith("/admin");
-  const isAdminApi = pathname.startsWith("/api/admin");
 
-  // Only guard admin pages and admin API routes
-  if (!isAdminPage && !isAdminApi) {
+  // Only guard admin pages
+  if (!isAdminPage) {
     return NextResponse.next();
   }
 
   const requestHeaders = new Headers(req.headers);
-  const adminToken = process.env.ADMIN_TOKEN;
 
-  // In local dev, skip Basic Auth but still attach admin token if present
+  // Local dev: no Basic Auth
   if (hostname === "localhost" || hostname === "127.0.0.1") {
-    if (adminToken) {
-      requestHeaders.set("x-admin-token", adminToken);
+    if (ADMIN_TOKEN) {
+      requestHeaders.set("x-admin-token", ADMIN_TOKEN);
     }
 
     return NextResponse.next({
-      request: {
-        headers: requestHeaders,
-      },
+      request: { headers: requestHeaders },
     });
   }
 
-  // Production / non-localhost: enforce Basic Auth
+  // Production: HTTP Basic Auth
   const authHeader = req.headers.get("authorization");
 
-  if (!authHeader || !authHeader.startsWith("Basic ")) {
+  if (!authHeader?.startsWith("Basic ")) {
     return new Response("Authentication required", {
       status: 401,
       headers: {
@@ -45,12 +51,11 @@ export function middleware(req: NextRequest) {
     });
   }
 
-  const base64 = authHeader.split(" ")[1] ?? "";
-  const [user, pass] = Buffer.from(base64, "base64")
-    .toString("utf8")
-    .split(":");
+  const decoded = Buffer.from(authHeader.split(" ")[1], "base64").toString(
+    "utf8"
+  );
+  const [user, pass] = decoded.split(":");
 
-  // If envs are missing in prod, fail closed (401)
   if (!BASIC_AUTH_USER || !BASIC_AUTH_PASS) {
     return new Response("Admin credentials not configured", {
       status: 401,
@@ -69,18 +74,16 @@ export function middleware(req: NextRequest) {
     });
   }
 
-  if (adminToken) {
-    requestHeaders.set("x-admin-token", adminToken);
+  // Auth OK → inject admin token
+  if (ADMIN_TOKEN) {
+    requestHeaders.set("x-admin-token", ADMIN_TOKEN);
   }
 
   return NextResponse.next({
-    request: {
-      headers: requestHeaders,
-    },
+    request: { headers: requestHeaders },
   });
 }
 
-// Run middleware on admin pages and admin API routes
 export const config = {
-  matcher: ["/admin/:path*", "/api/admin/:path*"],
+  matcher: ["/admin/:path*"],
 };
