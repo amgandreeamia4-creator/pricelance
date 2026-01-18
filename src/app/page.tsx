@@ -613,28 +613,29 @@ export default function Page() {
               <ThemeToggle />
             </div>
 
-            {/* right side: AI Assistant button - hidden on mobile */}
-            <motion.button
-              type="button"
-              onClick={scrollToAssistant}
-              className="hidden md:flex w-full sm:w-auto px-4 py-2 rounded-full bg-[var(--pl-primary)] hover:brightness-110 text-[12px] font-medium text-white shadow-[0_0_20px_var(--pl-primary-glow)] transition-all"
-              whileHover={{ scale: 1.04, y: -1 }}
-              whileTap={{ scale: 0.97, y: 0 }}
-              transition={{ type: "spring", stiffness: 260, damping: 18 }}
-            >
-              AI Assistant (Beta)
-            </motion.button>
-
-            {/* How it works button - hidden on mobile */}
-            <HowItWorksModal>
-              <button 
-                type="button" 
-                className="hidden md:inline-flex items-center justify-center w-10 h-10 rounded-full border border-[var(--pl-card-border)] bg-[var(--pl-card)] text-sm font-medium hover:brightness-110 transition-all ml-2"
-                aria-label="How it works"
+            {/* right side: AI Assistant + Help buttons - hidden on mobile */}
+            <div className="hidden md:flex items-center gap-3">
+              <motion.button
+                type="button"
+                onClick={scrollToAssistant}
+                className="px-4 py-2 rounded-full bg-[var(--pl-primary)] hover:brightness-110 text-[12px] font-medium text-white shadow-[0_0_20px_var(--pl-primary-glow)] transition-all"
+                whileHover={{ scale: 1.04, y: -1 }}
+                whileTap={{ scale: 0.97, y: 0 }}
+                transition={{ type: "spring", stiffness: 260, damping: 18 }}
               >
-                ?
-              </button>
-            </HowItWorksModal>
+                AI Assistant (Beta)
+              </motion.button>
+
+              <HowItWorksModal>
+                <button 
+                  type="button" 
+                  className="inline-flex items-center justify-center w-10 h-10 rounded-full border border-[var(--pl-card-border)] bg-[var(--pl-card)] text-sm font-medium hover:brightness-110 transition-all"
+                  aria-label="How it works"
+                >
+                  ?
+                </button>
+              </HowItWorksModal>
+            </div>
           </div>
 
           {/* Desktop-only header ad slot */}
