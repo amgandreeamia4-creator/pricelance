@@ -15,8 +15,9 @@ export const AdSenseScriptLoader: React.FC = () => {
     if (!enabled) return;
 
     try {
-      // @ts-expect-error adsbygoogle is injected by the AdSense script
-      (window.adsbygoogle = window.adsbygoogle || []).push({});
+      // adsbygoogle is injected by the AdSense script
+      (window.adsbygoogle as any) = (window.adsbygoogle as any) || [];
+      (window.adsbygoogle as any).push({});
     } catch {
       // silently ignore
     }

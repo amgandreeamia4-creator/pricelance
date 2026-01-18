@@ -79,7 +79,10 @@ export async function POST(req: NextRequest) {
         if (inferredCategory && inferredCategory !== product.category) {
           await prisma.product.update({
             where: { id: product.id },
-            data: { category: inferredCategory },
+            data: { 
+              category: inferredCategory,
+              updatedAt: new Date(),
+            },
           });
 
           console.log(`[recategorize-manuka] Updated product ${product.id}: "${product.name}" -> ${inferredCategory}`);

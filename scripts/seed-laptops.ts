@@ -1,5 +1,6 @@
 #!/usr/bin/env tsx
 
+import { randomUUID } from "crypto";
 import { prisma } from "../src/lib/db";
 
 type SeedLaptop = {
@@ -106,6 +107,7 @@ async function main() {
             displayName,
             brand,
             category,
+            updatedAt: new Date(),
           },
         });
 
@@ -116,10 +118,12 @@ async function main() {
       } else {
         await prisma.product.create({
           data: {
+            id: randomUUID(),
             name: modelName,
             displayName,
             brand,
             category,
+            updatedAt: new Date(),
           },
         });
 

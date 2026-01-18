@@ -60,6 +60,15 @@ export default function RootLayout({
             });
           `}
         </Script>
+        {process.env.NODE_ENV === "production" && (
+          <Script
+            id="adsense-script"
+            async
+            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID}`}
+            crossOrigin="anonymous"
+            strategy="afterInteractive"
+          />
+        )}
         <ThemeProvider>
           <LanguageProvider>
             <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-neutral-950">

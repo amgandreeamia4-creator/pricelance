@@ -30,7 +30,7 @@ export const AdSlot: React.FC<AdSlotProps> = ({
     if (!canRenderAdsense) return;
 
     try {
-      // @ts-expect-error adsbygoogle is injected by the AdSense script
+      // adsbygoogle is injected by the AdSense script
       (window.adsbygoogle = window.adsbygoogle || []).push({});
     } catch (err) {
       // Fail silently; the placeholder is not shown in this mode.

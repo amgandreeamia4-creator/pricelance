@@ -1,7 +1,10 @@
 "use client";
 
 import React, { useState } from "react";
-import { AFFILIATE_INGEST_PROVIDERS, type AffiliateIngestProviderId } from '@/config/affiliateIngestion';
+import { AFFILIATE_INGEST_PROVIDERS, type AffiliateIngestProviderId } from '@/config/affiliateIngestion.client';
+
+// SIMPLE TEST: This should appear when the component loads
+console.log("[ImportCsvClient] Component loaded!");
 
 type ImportState = {
   status: "idle" | "running" | "done" | "error";
@@ -21,6 +24,10 @@ export default function ImportCsvClient() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
+    console.log("[ImportCsvClient] handleSubmit called!");
+    console.log("[ImportCsvClient] File:", file);
+    console.log("[ImportCsvClient] Provider:", provider);
+
     if (!file) {
       setState({
         status: "error",
@@ -34,6 +41,8 @@ export default function ImportCsvClient() {
     formData.append("file", file);
     formData.append("provider", provider);
 
+    console.log("[ImportCsvClient] FormData created:", Object.fromEntries(formData.entries()));
+
     setState({
       status: "running",
       message: "Import in progress...",
@@ -41,18 +50,27 @@ export default function ImportCsvClient() {
     });
 
     try {
+      console.log("[ImportCsvClient] Starting fetch to /api/admin/import-csv");
+      
       const res = await fetch("/api/admin/import-csv", {
         method: "POST",
         body: formData,
         headers: {
           // IMPORTANT: this must match validateAdminToken()
-          "x-admin-token": process.env.NEXT_PUBLIC_ADMIN_TOKEN ?? "",
+          "x-admin-token": process.env.NEXT_PUBLIC_ADMIN_TOKEN || "",
         },
       });
 
+      console.log("[ImportCsvClient] Fetch response received:", res);
+      console.log("[ImportCsvClient] Response status:", res.status);
+      console.log("[ImportCsvClient] Response ok:", res.ok);
+
       const json = await res.json().catch(() => null);
+      
+      console.log("[ImportCsvClient] Parsed JSON:", json);
 
       if (!res.ok || !json?.ok) {
+        console.log("[ImportCsvClient] Import failed - res.ok:", res.ok, "json.ok:", json?.ok);
         setState({
           status: "error",
           message:
@@ -62,6 +80,7 @@ export default function ImportCsvClient() {
         return;
       }
 
+      console.log("[ImportCsvClient] Import succeeded!");
       setState({
         status: "done",
         message: json.message || "Import completed successfully.",

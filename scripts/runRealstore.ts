@@ -231,6 +231,7 @@ async function ingestProducts(items: RTPProduct[], query: string) {
           category: query,
           imageUrl,
           thumbnailUrl: imageUrl,
+          updatedAt: new Date(),
         },
         create: {
           id: productId,
@@ -240,6 +241,8 @@ async function ingestProducts(items: RTPProduct[], query: string) {
           category: query,
           imageUrl,
           thumbnailUrl: imageUrl,
+          createdAt: new Date(),
+          updatedAt: new Date(),
         },
       });
 
@@ -249,6 +252,7 @@ async function ingestProducts(items: RTPProduct[], query: string) {
       for (const l of listings) {
         await db.listing.create({
           data: {
+            id: `${product.id}-${l.storeName.toLowerCase().replace(/\s+/g, '-')}`,
             productId: product.id,
             storeName: l.storeName,
             url: l.url,
@@ -259,6 +263,8 @@ async function ingestProducts(items: RTPProduct[], query: string) {
             shippingCost: l.shippingCost,
             countryCode: "US", // Realstore queries are currently US-focused
             inStock: true,
+            createdAt: new Date(),
+            updatedAt: new Date(),
           },
         });
         listingsCount++;

@@ -205,40 +205,17 @@ export function parseTwoPerformantCsv(content: string): TwoPerformantParseResult
   const headerRow = csvRows[0];
   const lowerHeaders = headerRow.map((h) => h.toLowerCase().trim());
 
-  console.log("[2Performant] Header row:", headerRow);
-  console.log("[2Performant] Lower headers:", lowerHeaders);
-
-  // Use includes() for robustness, not strict startsWith()
-  const idxAdvertiser = lowerHeaders.findIndex((h) =>
-    h.includes("advertiser name"),
-  );
-  const idxCategory = lowerHeaders.findIndex((h) =>
-    h.includes("category"),
-  );
-  const idxProductName = lowerHeaders.findIndex((h) =>
-    h.includes("product name"),
-  );
-  const idxAffiliate = lowerHeaders.findIndex((h) =>
-    h.includes("product affiliate"),
-  );
-  const idxProductLink = lowerHeaders.findIndex((h) =>
-    h.includes("product link"),
-  );
-  const idxPicture = lowerHeaders.findIndex((h) =>
-    h.includes("product picture"),
-  );
-  const idxPriceDisc = lowerHeaders.findIndex((h) =>
-    h.includes("price with discou"),
-  );
-  const idxPriceVat = lowerHeaders.findIndex((h) =>
-    h.includes("price with vat"),
-  );
-  const idxPriceWithout = lowerHeaders.findIndex((h) =>
-    h.includes("price without va"),
-  );
-  const idxCurrency = lowerHeaders.findIndex((h) =>
-    h.includes("currency"),
-  );
+  const idxAdvertiser = lowerHeaders.findIndex((h) => h.includes("advertiser name")) || -1;
+  const idxCategory = lowerHeaders.findIndex((h) => h.includes("category")) || -1;
+  const idxProductName = lowerHeaders.findIndex((h) => h.includes("product name") || h.includes("nume produs") || h.includes("product_name")) || -1;
+  const idxAffiliate = lowerHeaders.findIndex((h) => h.includes("product affiliate") || h.includes("affiliate_link") || h.includes("product_url") || h.includes("affiliate_url")) || -1;
+  const idxProductLink = lowerHeaders.findIndex((h) => h.includes("product link") || h.includes("product_url") || h.includes("affiliate_link") || h.includes("affiliate_url") || h.includes("product_url_2performant")) || -1;
+  const idxPicture = lowerHeaders.findIndex((h) => h.includes("product picture")) || -1;
+  const idxPriceDisc = lowerHeaders.findIndex((h) => h.includes("price with discou")) || -1;
+  const idxPriceVat = lowerHeaders.findIndex((h) => h.includes("price with vat")) || -1;
+  const idxPriceWithout = lowerHeaders.findIndex((h) => h.includes("price without va")) || -1;
+  const idxCurrency = lowerHeaders.findIndex((h) => h.includes("currency")) || -1;
+  const idxAvailability = lowerHeaders.findIndex((h) => h.includes("availability")) || -1;
 
   if (idxProductName === -1) {
     return {
@@ -265,8 +242,6 @@ export function parseTwoPerformantCsv(content: string): TwoPerformantParseResult
   const rows: TwoPerformantRow[] = [];
   let skippedMissingFields = 0;
 
-  console.log(`[2Performant] Processing ${totalDataRows} data rows`);
-
   for (let i = 1; i < csvRows.length; i++) {
     const rawRow = csvRows[i];
     const rowNumber = i + 1; // 1-based including header
@@ -290,18 +265,12 @@ export function parseTwoPerformantCsv(content: string): TwoPerformantParseResult
     const priceStr = priceDisc || priceVat || priceWithout;
 
     if (!priceStr) {
-      console.log(
-        `[2Performant] Row ${rowNumber} skipped - missing all price columns`,
-      );
       skippedMissingFields++;
       continue;
     }
 
     const price = parsePrice(priceStr);
     if (price === null) {
-      console.log(
-        `[2Performant] Row ${rowNumber} skipped - invalid price: "${priceStr}"`,
-      );
       skippedMissingFields++;
       continue;
     }

@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import Link from 'next/link';
 import { getStoreDisplayName } from '@/lib/stores/registry';
 import clsx from 'clsx';
@@ -40,7 +40,6 @@ type ProductListProps = {
   userLocation?: string | null;
 };
 
-// how many we show in the main table
 const MAX_VISIBLE_PRODUCTS = 6;
 
 // soft threshold for "Budget pick" badge
@@ -78,15 +77,39 @@ export default function ProductList({
 }: ProductListProps) {
   // Flip card animation state
   const [flippedCard, setFlippedCard] = React.useState<string | null>(null);
+  const [sortKey, setSortKey] = React.useState<"relevance" | "price-asc" | "price-desc">("relevance");
 
-  // Spring animation
-  const { transform, opacity } = useSpring({
-    opacity: flippedCard ? 1 : 0,
-    transform: flippedCard ? 'rotateY(180deg)' : 'rotateY(0deg)',
-    config: config.wobbly,
-  });
+  const sortedProducts = useMemo(() => {
+    if (!products) return [];
 
-  // helper to open URLs safely
+    if (sortKey === "price-asc") {
+      return [...products].sort((a, b) => {
+        const aPrice = a.listings?.[0]?.price ?? Number.MAX_SAFE_INTEGER;
+        const bPrice = b.listings?.[0]?.price ?? Number.MAX_SAFE_INTEGER;
+        return aPrice - bPrice;
+      });
+    }
+
+    if (sortKey === "price-desc") {
+      return [...products].sort((a, b) => {
+        const aPrice = a.listings?.[0]?.price ?? 0;
+        const bPrice = b.listings?.[0]?.price ?? 0;
+        return bPrice - aPrice;
+      });
+    }
+
+    // default: relevance (keep API order)
+    return products;
+  }, [products, sortKey]);
+
+  // Calculate visible products with 6-item limit
+  const visibleProducts = useMemo(() => {
+    if (!sortedProducts || sortedProducts.length === 0) return [];
+    return sortedProducts.slice(0, MAX_VISIBLE_PRODUCTS);
+  }, [sortedProducts]);
+
+  const totalCount = products?.length ?? 0;
+
   const openListing = (url?: string | null) => {
     if (!url) return;
     try {
@@ -96,14 +119,8 @@ export default function ProductList({
     }
   };
 
-  // Calculate visible products and best deal
-  const visibleProducts = React.useMemo(() => {
-    if (!products || products.length === 0) return [];
-    return products.slice(0, MAX_VISIBLE_PRODUCTS);
-  }, [products]);
-
   // Best deal = lowest price among visible products
-  const bestDealProductId = React.useMemo(() => {
+  const bestDealProductId = useMemo(() => {
     const productsWithPrices = visibleProducts
       .map((product) => ({
         id: product.id,
@@ -263,7 +280,7 @@ export default function ProductList({
                       </div>
                       {offerCount > 1 && (
                         <div className="mt-0.5 text-[10px] text-slate-500">
-                          {offerCount} oferte disponibile
+                          {offerCount === 1 ? "1 offer available" : `${offerCount} offers available`}
                         </div>
                       )}
                     </>
@@ -307,12 +324,19 @@ export default function ProductList({
         })}
       </div>
 
-      {products.length > MAX_VISIBLE_PRODUCTS && (
-        <p className="mt-4 text-center text-[11px] text-slate-500">
-          Showing first {visibleProducts.length} of {products.length} results. More result views
-          coming soon.
-        </p>
-      )}
+      {/* Footer text with conditional logic */}
+      <div className="mt-4 text-center text-[11px] text-slate-500">
+        {!products || products.length === 0 ? (
+          <>No results found.</>
+        ) : products.length <= MAX_VISIBLE_PRODUCTS ? (
+          <>Showing {products.length} results.</>
+        ) : (
+          <>
+            Showing first {MAX_VISIBLE_PRODUCTS} of {products.length} results. More result
+            views coming soon.
+          </>
+        )}
+      </div>
     </div>
   );
 }

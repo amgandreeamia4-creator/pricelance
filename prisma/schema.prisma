@@ -74,7 +74,7 @@ model Listing {
   merchantOriginalId    String?
   source                ListingSource @default(seed)
   priceLastSeenAt       DateTime?     @db.Timestamptz(6)
-  Product               Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
+  Product               Product       @relation(fields: [productId], references: [id], onDelete: Cascade, name: "listings")
 }
 
 model Product {
