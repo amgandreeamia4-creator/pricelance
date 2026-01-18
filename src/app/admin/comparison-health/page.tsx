@@ -41,7 +41,7 @@ export default async function ComparisonHealthPage() {
     }
   );
 
-  const productsWithCounts: ProductWithOfferCount[] = products.map((p) => {
+  const productsWithCounts: ProductWithOfferCount[] = products.map((p: any) => {
     const offersCount = countByProductId.get(p.id) ?? 0;
     return {
       id: p.id,
