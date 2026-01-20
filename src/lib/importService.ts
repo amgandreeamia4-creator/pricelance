@@ -31,6 +31,218 @@ import {
 import { inferCategorySlugFromIngestion, inferSubcategoryFromText } from "@/lib/categoryInference";
 import { detectBrandFromName } from "@/lib/brandDetector";
 
+interface LegacyProfitshareRow {
+  productName: string;
+  externalId?: string;
+  affiliateUrl?: string;
+  productUrl?: string;
+  price: number;
+  storeName?: string;
+  brand?: string;
+  category?: string;
+  currency?: string;
+  description?: string;
+}
+
+function parseLegacyProfitshareRow(row: string[]): LegacyProfitshareRow | null {
+  // Defensive: ignore empty / very short rows
+  if (!row || row.length < 8) return null;
+
+  const storeName = row[0]?.trim() || undefined;          // Advertiser name
+  const category = row[1]?.trim() || undefined;           // Category
+  const brand = row[2]?.trim() || undefined;              // Manufacturer
+  const externalId = row[3]?.trim() || undefined;         // Product code
+  const productName = row[4]?.trim();                     // Product name
+  const description = row[5]?.trim() || undefined;        // Product description
+  const affiliateUrl = row[6]?.trim() || undefined;       // Product affiliate link
+  const productUrl = row[7]?.trim() || undefined;         // Product link
+
+  // Price with VAT is usually at index 10, but guard against missing
+  const priceWithVat = row[10]?.trim();
+  const priceWithoutVat = row[9]?.trim();
+
+  let price = NaN;
+  if (priceWithVat) {
+    price = Number(priceWithVat.replace(",", "."));
+  } else if (priceWithoutVat) {
+    price = Number(priceWithoutVat.replace(",", "."));
+  }
+
+  const currency = row[12]?.trim() || "RON";              // Currency (fallback RON)
+
+  // Minimal validation: name, price, and at least one URL
+  if (!productName) return null;
+  if (!isFinite(price) || price <= 0) return null;
+  if (!affiliateUrl && !productUrl) return null;
+
+  return {
+    productName,
+    externalId,
+    affiliateUrl,
+    productUrl,
+    price,
+    storeName,
+    brand,
+    category,
+    currency,
+    description,
+  };
+}
+
+type ProfitshareCanonicalField =
+  | "productName"
+  | "externalId"
+  | "affiliateUrl"
+  | "productUrl"
+  | "price"
+  | "store"
+  | "brand"
+  | "category"
+  | "currency";
+
+const PROFITSHARE_HEADER_ALIASES: Record<ProfitshareCanonicalField, string[]> = {
+  productName: ["product_name", "Product name"],
+  externalId: ["external_id", "Product code"],
+  affiliateUrl: ["affiliate_link", "Product affiliate link"],
+  productUrl: ["product_url", "Product link"],
+  price: ["price", "Price with VAT", "Price without VAT"],
+  store: ["store", "Advertiser name"],
+  brand: ["brand", "Manufacturer"],
+  category: ["category", "Category"],
+  currency: ["currency", "Currency"],
+};
+
+function buildProfitshareHeaderIndex(
+  headerRow: string[]
+): Partial<Record<ProfitshareCanonicalField, number>> {
+  const indexMap: Partial<Record<ProfitshareCanonicalField, number>> = {};
+  const normalized = headerRow.map((h) => h.trim().toLowerCase());
+
+  (Object.keys(PROFITSHARE_HEADER_ALIASES) as ProfitshareCanonicalField[]).forEach(
+    (field) => {
+      const aliases = PROFITSHARE_HEADER_ALIASES[field].map((a) =>
+        a.trim().toLowerCase()
+      );
+      const idx = normalized.findIndex((h) => aliases.includes(h));
+      if (idx !== -1) {
+        indexMap[field] = idx;
+      }
+    }
+  );
+
+  return indexMap;
+}
+
+interface ProfitshareParsedRow {
+  productName: string;
+  externalId?: string;
+  affiliateUrl?: string;
+  productUrl?: string;
+  price: number;
+  store?: string;
+  brand?: string;
+  category?: string;
+  currency?: string;
+}
+
+function parseProfitshareRow(
+  row: string[],
+  headerIndex: Partial<Record<ProfitshareCanonicalField, number>>
+): ProfitshareParsedRow | null {
+  const get = (field: ProfitshareCanonicalField): string | undefined => {
+    const idx = headerIndex[field];
+    if (idx === undefined) return undefined;
+    const value = row[idx];
+    return value != null && String(value).trim() !== "" ? String(value).trim() : undefined;
+  };
+
+  const name = get("productName");
+  const priceRaw = get("price");
+  const affiliateUrl = get("affiliateUrl");
+  const productUrl = get("productUrl");
+
+  // Relaxed required fields:
+  if (!name) return null;
+
+  const price = priceRaw ? Number(String(priceRaw).replace(",", ".")) : NaN;
+  if (!isFinite(price) || price <= 0) return null;
+
+  if (!affiliateUrl && !productUrl) {
+    // We need at least one URL
+    return null;
+  }
+
+  return {
+    productName: name,
+    externalId: get("externalId"),
+    affiliateUrl,
+    productUrl,
+    price,
+    store: get("store"),
+    brand: get("brand"),
+    category: get("category"),
+    currency: get("currency") || "RON",
+  };
+}
+
+async function upsertProductAndListingFromAffiliateRow(
+  parsed: ProfitshareParsedRow,
+  state: { totalRows: number; skippedRows: number; skippedMissingFields: number; createdProducts: number; updatedProducts: number; createdListings: number; updatedListings: number; errors: any[] }
+) {
+  try {
+    // Convert to NormalizedListing format for reuse of existing logic
+    const normalizedListing: NormalizedListing = {
+      productTitle: parsed.productName,
+      brand: parsed.brand || detectBrandFromName(parsed.productName) || "Unknown",
+      category: parsed.category || "General",
+      gtin: undefined,
+      storeId: parsed.store?.toLowerCase().replace(/[^a-z0-9\s]/g, "").replace(/\s+/g, "_") || "unknown",
+      storeName: parsed.store || "Unknown",
+      url: parsed.productUrl || parsed.affiliateUrl!,
+      price: parsed.price,
+      currency: parsed.currency || "RON",
+      imageUrl: undefined,
+      deliveryDays: undefined,
+      fastDelivery: undefined,
+      inStock: true,
+      countryCode: "RO",
+      source: "affiliate" as const,
+    };
+
+    // Use the existing import logic but for a single row
+    const summary = await importNormalizedListings([normalizedListing], {
+      source: "affiliate",
+      defaultCountryCode: "RO",
+      affiliateProvider: "profitshare",
+      affiliateProgram: "profitshare_ro",
+      startRowNumber: 2,
+    });
+
+    // Update state based on summary
+    if (summary.productsCreated > 0) {
+      state.createdProducts++;
+    } else if (summary.productsMatched > 0) {
+      state.updatedProducts++;
+    }
+    
+    if (summary.listingsCreated > 0) {
+      state.createdListings++;
+    } else if (summary.listingsUpdated > 0) {
+      state.updatedListings++;
+    }
+
+    if (summary.errors.length > 0) {
+      state.errors.push(...summary.errors);
+    }
+
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown error during import";
+    state.errors.push({ rowNumber: state.totalRows, message });
+  }
+}
+
+export { buildProfitshareHeaderIndex, parseProfitshareRow, upsertProductAndListingFromAffiliateRow };
+
 export type ImportSummary = {
   productsCreated: number;
   productsMatched: number;
