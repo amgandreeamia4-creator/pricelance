@@ -1075,9 +1075,32 @@ export default function Page() {
 
       {/* How PriceLance Works + FAQ Section */}
       <div className={`${cardStyle} p-4 sm:p-6 mt-4 sm:mt-6`}>
-        <p className="text-center text-xs text-[var(--pl-text-subtle)] mt-8">
-          New here? Tap the ? in the header for info.
-        </p>
+        <div className="flex flex-col items-center space-y-4">
+          <p className="text-center text-xs text-[var(--pl-text-subtle)]">
+            Questions? Learn how it works or see our FAQ.
+          </p>
+          
+          {/* Buttons - side by side on desktop, stacked on mobile */}
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <HowItWorksModal>
+              <button 
+                type="button"
+                className="px-6 py-2.5 rounded-full border border-[var(--pl-card-border)] bg-[var(--pl-card)] text-sm font-medium text-[var(--pl-text)] hover:border-[var(--pl-primary)] hover:bg-[var(--pl-primary)]/10 hover:text-[var(--pl-primary)] hover:shadow-[0_0_15px_var(--pl-primary-glow)] transition-all duration-200"
+              >
+                How PriceLance Works
+              </button>
+            </HowItWorksModal>
+            
+            <HowItWorksModal>
+              <button 
+                type="button"
+                className="px-6 py-2.5 rounded-full border border-[var(--pl-card-border)] bg-[var(--pl-card)] text-sm font-medium text-[var(--pl-text)] hover:border-[var(--pl-primary)] hover:bg-[var(--pl-primary)]/10 hover:text-[var(--pl-primary)] hover:shadow-[0_0_15px_var(--pl-primary-glow)] transition-all duration-200"
+              >
+                FAQ
+              </button>
+            </HowItWorksModal>
+          </div>
+        </div>
       </div>
 
       {/* Affiliate Disclosure Footer */}
