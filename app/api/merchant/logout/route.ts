@@ -1,14 +1,12 @@
-// app/api/merchant/logout/route.ts
+import { NextRequest, NextResponse } from "next/server";
 
-import { NextRequest, NextResponse } from 'next/server';
-import { clearMerchantSession } from '@/lib/merchantAuth';
-
-export async function POST(request: NextRequest) {
-  const response = NextResponse.json({
-    message: 'Logged out successfully'
-  });
-
-  clearMerchantSession(response);
-
-  return response;
+export async function POST(req: NextRequest) {
+  return NextResponse.json(
+    {
+      ok: false,
+      message:
+        "Merchant logout API is currently disabled in this preview build. This endpoint is a placeholder for future implementation.",
+    },
+    { status: 501 }
+  );
 }
