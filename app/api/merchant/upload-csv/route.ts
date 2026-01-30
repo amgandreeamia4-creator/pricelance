@@ -1,6 +1,10 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from "next/server";
 
-export async function POST(request: NextRequest) {
+/**
+ * Merchant CSV upload API is disabled in this preview build.
+ * Placeholder implementation.
+ */
+export async function POST(req: NextRequest) {
   return NextResponse.json(
     {
       ok: false,
