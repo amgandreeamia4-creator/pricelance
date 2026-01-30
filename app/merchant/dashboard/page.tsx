@@ -1,30 +1,16 @@
-// app/merchant/dashboard/page.tsx
+"use client";
 
-import { redirect } from 'next/navigation';
-import { getMerchantSession } from '@/lib/merchantAuth';
-import MerchantDashboardClient from './MerchantDashboardClient';
-
-async function getMerchantData(merchantId: string) {
-  // This would normally use Prisma, but we'll handle the client-side for now
-  // due to the Prisma client generation issue
-  return {
-    id: merchantId,
-    name: 'Merchant Store',
-    website: 'https://example.com',
-    country: 'Romania',
-    listingCount: 0,
-    feedRuns: [],
-  };
-}
-
-export default async function MerchantDashboard() {
-  const session = await getMerchantSession({} as any);
-
-  if (!session) {
-    redirect('/merchant/login');
-  }
-
-  const merchantData = await getMerchantData(session.merchantId);
-
-  return <MerchantDashboardClient merchant={merchantData} />;
+export default function MerchantDashboardPage() {
+  return (
+    <main className="max-w-3xl mx-auto px-4 py-12">
+      <h1 className="text-2xl font-semibold mb-4">Merchant dashboard</h1>
+      <p className="text-slate-600">
+        The merchant dashboard is not enabled in this preview build.
+      </p>
+      <p className="text-slate-500 text-sm mt-4">
+        This page is a placeholder so the site can build successfully. Merchant
+        tools will be wired up in a future iteration.
+      </p>
+    </main>
+  );
 }
