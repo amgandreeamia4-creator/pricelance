@@ -14,7 +14,6 @@ import { AffiliateBannerSlot } from "@/components/ads/AffiliateBannerSlot";
 import { STORES, StoreId } from "@/config/catalog";
 import PriceTrendChart from "@/components/PriceTrendChart";
 import ProductSummary from "@/components/ProductSummary";
-import { useLanguage } from "@/components/LanguageProvider";
 import { fetchEbayItems, type EbayItem } from "@/lib/ebayFeed";
 
 import type { CategoryKey } from '@/config/categoryFilters';
@@ -111,7 +110,7 @@ export default function Page() {
   const [ebayError, setEbayError] = useState<string | null>(null);
 
   // Language
-  const { lang } = useLanguage();
+  const lang = "en";
 
   // Filters
   const [sortBy, setSortBy] = useState<

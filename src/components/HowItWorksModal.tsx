@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState } from "react";
-import { useLanguage } from "@/components/LanguageProvider";
 
 const HOW_FAQ_COPY = {
   en: {
@@ -66,8 +65,7 @@ interface HowItWorksModalProps {
 
 export default function HowItWorksModal({ children }: HowItWorksModalProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const { lang } = useLanguage();
-  const content = HOW_FAQ_COPY[lang];
+  const content = HOW_FAQ_COPY.en;
 
   const openModal = () => setIsOpen(true);
   const closeModal = () => setIsOpen(false);
