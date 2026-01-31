@@ -74,7 +74,7 @@ model Listing {
   merchantOriginalId    String?
   source                ListingSource @default(seed)
   priceLastSeenAt       DateTime?     @db.Timestamptz(6)
-  Product               Product       @relation(fields: [productId], references: [id], onDelete: Cascade, name: "listings")
+  Product               Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
 }
 
 model Product {
@@ -122,6 +122,46 @@ model SearchLog {
   query       String
   resultCount Int
   createdAt   DateTime @default(now())
+}
+
+model Merchant {
+  id          String   @id
+  storeName   String
+  website     String?
+  country     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  users       MerchantUser[]
+  feedRuns    MerchantFeedRun[]
+}
+
+model MerchantUser {
+  id          String   @id
+  merchantId  String
+  email       String   @unique
+  passwordHash String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  merchant    Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+
+  @@index([email])
+}
+
+model MerchantFeedRun {
+  id          String   @id
+  merchantId  String
+  filename    String?
+  status      String   @default("processing")
+  rowsTotal   Int?
+  rowsSuccess Int?
+  rowsError   Int?
+  errorLog    String?
+  createdAt   DateTime @default(now())
+  completedAt DateTime?
+  merchant    Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+
+  @@index([merchantId])
+  @@index([createdAt])
 }
 
 enum ListingSource {

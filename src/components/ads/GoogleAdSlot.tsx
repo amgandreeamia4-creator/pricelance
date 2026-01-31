@@ -36,8 +36,18 @@ export function GoogleAdSlot({
   // Fallback preview when AdSense IDs are not set (dev / staging)
   if (!hasRealConfig) {
     return (
-      <div className="flex h-[90px] w-full items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50/80 text-xs text-slate-400">
-        Header banner · Google ad preview (IDs not set)
+      <div className="w-full flex justify-center mb-6">
+        <div className="rounded-3xl border border-slate-200 bg-white h-32 flex items-center justify-center px-8 py-4 max-w-4xl">
+          <div className="flex flex-col items-center justify-center text-center">
+            <h1 className="text-xl sm:text-2xl font-semibold text-slate-800">
+              Compare tech prices online – laptops, phones &amp; more
+            </h1>
+            <p className="mt-2 text-sm sm:text-base text-slate-600 max-w-2xl">
+              PriceLance is an informational service that compares tech prices
+              from multiple online retailers.
+            </p>
+          </div>
+        </div>
       </div>
     );
   }

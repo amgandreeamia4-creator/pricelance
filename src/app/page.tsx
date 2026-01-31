@@ -2,13 +2,18 @@
 import { GoogleAdSlot } from "@/components/ads/GoogleAdSlot";
 import React, { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
-import { SlidersHorizontal, MessageCircle, ChevronDown, ChevronUp } from "lucide-react";
-import { useSpring, animated, config } from '@react-spring/web';
+import {
+  SlidersHorizontal,
+  MessageCircle,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react";
+import { useSpring, animated, config } from "@react-spring/web";
 
 import ThemeToggle from "@/components/ThemeToggle";
 import ProductList from "@/components/ProductList";
 import ChatAssistant from "@/components/ChatAssistant";
-import HowItWorksModal from "@/components/HowItWorksModal";
+
 import GoogleAdUnit from "@/components/ads/GoogleAdUnit";
 import { AffiliateBannerSlot } from "@/components/ads/AffiliateBannerSlot";
 import { STORES, StoreId } from "@/config/catalog";
@@ -17,7 +22,7 @@ import ProductSummary from "@/components/ProductSummary";
 import { useLanguage } from "@/components/LanguageProvider";
 import { fetchEbayItems, type EbayItem } from "@/lib/ebayFeed";
 
-import type { CategoryKey } from '@/config/categoryFilters';
+import type { CategoryKey } from "@/config/categoryFilters";
 
 type CategoryPill = {
   key: CategoryKey;
@@ -25,33 +30,32 @@ type CategoryPill = {
 };
 
 const PRIMARY_CATEGORIES: CategoryPill[] = [
-  { key: 'Laptops', label: 'Laptops' },
-  { key: 'Phones', label: 'Phones' },
-  { key: 'Monitors', label: 'Monitors' },
-  { key: 'Headphones & Audio', label: 'Headphones & Audio' },
-  { key: 'Keyboards & Mouse', label: 'Keyboards & Mouse' },
-  { key: 'TV & Display', label: 'TV & Display' },
-  { key: 'Tablets', label: 'Tablets' },
-  { key: 'Smartwatches', label: 'Smartwatches' },
-  { key: 'Home & Garden', label: 'Home & Garden' },
-  { key: 'Personal Care', label: 'Personal Care' },
-  { key: 'Small Appliances', label: 'Small Appliances' },
-  { key: 'Wellness & Supplements', label: 'Wellness & Supplements' },
-  { key: 'Gifts & Lifestyle', label: 'Gifts & Lifestyle' },
-  { key: 'Books & Media', label: 'Books & Media' },
-  { key: 'Toys & Games', label: 'Toys & Games' },
-  { key: 'Kitchen', label: 'Kitchen' },
+  { key: "Laptops", label: "Laptops" },
+  { key: "Phones", label: "Phones" },
+  { key: "Monitors", label: "Monitors" },
+  { key: "Headphones & Audio", label: "Headphones & Audio" },
+  { key: "Keyboards & Mouse", label: "Keyboards & Mouse" },
+  { key: "TV & Display", label: "TV & Display" },
+  { key: "Tablets", label: "Tablets" },
+  { key: "Smartwatches", label: "Smartwatches" },
+  { key: "Home & Garden", label: "Home & Garden" },
+  { key: "Personal Care", label: "Personal Care" },
+  { key: "Small Appliances", label: "Small Appliances" },
+  { key: "Wellness & Supplements", label: "Wellness & Supplements" },
+  { key: "Gifts & Lifestyle", label: "Gifts & Lifestyle" },
+  { key: "Books & Media", label: "Books & Media" },
+  { key: "Toys & Games", label: "Toys & Games" },
+  { key: "Kitchen", label: "Kitchen" },
 ];
 
 const MOBILE_PRIMARY_CATEGORIES: CategoryPill[] = [
-  { key: 'Laptops', label: 'Laptops' },
-  { key: 'Phones', label: 'Phones' },
-  { key: 'Monitors', label: 'Monitors' },
-  { key: 'Headphones & Audio', label: 'Headphones & Audio' },
-  { key: 'TV & Display', label: 'TV & Display' },
-  { key: 'Home & Garden', label: 'Home & Garden' },
+  { key: "Laptops", label: "Laptops" },
+  { key: "Phones", label: "Phones" },
+  { key: "Monitors", label: "Monitors" },
+  { key: "Headphones & Audio", label: "Headphones & Audio" },
+  { key: "TV & Display", label: "TV & Display" },
+  { key: "Home & Garden", label: "Home & Garden" },
 ];
-
 
 type Listing = {
   id: string;
@@ -102,8 +106,9 @@ export default function Page() {
   const [query, setQuery] = useState("");
   const [products, setProducts] = useState<ProductWithListings[]>([]);
   const [isSearching, setIsSearching] = useState(false);
-  const [selectedProductId, setSelectedProductId] =
-    useState<string | null>(null);
+  const [selectedProductId, setSelectedProductId] = useState<string | null>(
+    null,
+  );
 
   // eBay results state
   const [ebayItems, setEbayItems] = useState<EbayItem[]>([]);
@@ -122,13 +127,19 @@ export default function Page() {
   const [fastOnly, setFastOnly] = useState(false);
 
   // Location
-  const [location, setLocation] = useState("Not set");
+  const [location, setLocation] = useState<string>("Not set");
+  const [userCountry, setUserCountry] = useState<string | null>(null);
+  const [locStatus, setLocStatus] = useState<"idle" | "detecting" | "error">(
+    "idle",
+  );
+  const [locErrorMessage, setLocErrorMessage] = useState<string | null>(null);
 
   // Favorites (local only for now)
   const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
 
   // Category selection state
-  const [activeCategory, setActiveCategory] = React.useState<CategoryKey | null>(null);
+  const [activeCategory, setActiveCategory] =
+    React.useState<CategoryKey | null>(null);
 
   // Dynamic categories from DB
   const [categories, setCategories] = useState<string[]>([]);
@@ -138,7 +149,7 @@ export default function Page() {
   // Saved searches (mock)
   const [savedSearches] = useState([
     "laptop",
-    "monitor", 
+    "monitor",
     "telefon",
     "casti",
     "tastatura",
@@ -147,17 +158,26 @@ export default function Page() {
 
   const [trendProductId, setTrendProductId] = useState<string | null>(null);
   const [trendHistory, setTrendHistory] = useState<
-    { date: string; price: number; currency: string; storeName?: string; isSynthetic?: boolean }[]
+    {
+      date: string;
+      price: number;
+      currency: string;
+      storeName?: string;
+      isSynthetic?: boolean;
+    }[]
   >([]);
-  const [trendTrend, setTrendTrend] = useState<{
-    direction: 'up' | 'down' | 'flat' | 'none';
-    percentChange?: number;
-    startPrice?: number;
-    endPrice?: number;
-    firstDate?: string;
-    lastDate?: string;
-    numPoints: number;
-  } | undefined>(undefined);
+  const [trendTrend, setTrendTrend] = useState<
+    | {
+        direction: "up" | "down" | "flat" | "none";
+        percentChange?: number;
+        startPrice?: number;
+        endPrice?: number;
+        firstDate?: string;
+        lastDate?: string;
+        numPoints: number;
+      }
+    | undefined
+  >(undefined);
   const [isTrendLoading, setIsTrendLoading] = useState(false);
   const [trendError, setTrendError] = useState<string | null>(null);
 
@@ -195,7 +215,12 @@ export default function Page() {
     const isUK = loc.includes("united kingdom") || loc === "uk";
 
     if (isRomania) {
-      if (id === "emag" || id === "altex" || id === "pcgarage" || id === "flanco") {
+      if (
+        id === "emag" ||
+        id === "altex" ||
+        id === "pcgarage" ||
+        id === "flanco"
+      ) {
         return 3;
       }
       if (id === "other_eu" || id === "amazon_de") {
@@ -391,6 +416,15 @@ export default function Page() {
     }
   }, []);
 
+  // Load stored country from localStorage
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const stored = window.localStorage.getItem("pl_country");
+    if (stored) {
+      setUserCountry(stored);
+    }
+  }, []);
+
   // favorites: persist to localStorage
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -466,11 +500,17 @@ export default function Page() {
   function handleCategoryClick(category: CategoryKey) {
     setActiveCategory(category);
     // Clear text query when selecting a category
-    setQuery('');
-    executeSearch({ query: '', category: category });
+    setQuery("");
+    executeSearch({ query: "", category: category });
   }
 
-  async function executeSearch({ query, category }: { query: string; category: CategoryKey | null }) {
+  async function executeSearch({
+    query,
+    category,
+  }: {
+    query: string;
+    category: CategoryKey | null;
+  }) {
     const trimmed = query.trim();
     setQuery(trimmed);
 
@@ -486,8 +526,8 @@ export default function Page() {
     setIsSearching(true);
     try {
       const params = new URLSearchParams();
-      if (trimmed) params.set('q', trimmed);
-      if (category) params.set('category', category);
+      if (trimmed) params.set("q", trimmed);
+      if (category) params.set("category", category);
 
       // Add other filters (but not categoryFilter to avoid conflicts)
       if (storeFilter !== "all") {
@@ -513,7 +553,7 @@ export default function Page() {
       const data = await res.json();
       const nextProducts = Array.isArray(data.products) ? data.products : [];
       setProducts(nextProducts);
-      
+
       // Fetch eBay items using the new feed
       if (trimmed) {
         setIsLoadingEbay(true);
@@ -535,7 +575,7 @@ export default function Page() {
         setEbayItems([]);
         setEbayError(null);
       }
-      
+
       // Auto-select first product if no product is currently selected
       if (nextProducts.length > 0 && !selectedProductId) {
         setSelectedProductId(nextProducts[0].id);
@@ -555,10 +595,77 @@ export default function Page() {
     executeSearch({ query, category: activeCategory });
   }
 
-  function handleUseLocation() {
-    setLocation("Detecting...");
-    setTimeout(() => setLocation("Romania"), 800);
-  }
+  const handleUseMyLocation = () => {
+    if (typeof window === "undefined") return;
+
+    if (!navigator.geolocation) {
+      setLocStatus("error");
+      return;
+    }
+
+    setLocStatus("detecting");
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+
+        try {
+          const res = await fetch(
+            `/api/geo/resolve?lat=${encodeURIComponent(
+              latitude,
+            )}&lng=${encodeURIComponent(longitude)}`,
+          );
+
+          if (!res.ok) {
+            setLocStatus("error");
+            return;
+          }
+
+          const data = (await res.json()) as { countryCode?: string | null };
+
+          if (data.countryCode) {
+            setUserCountry(data.countryCode);
+            try {
+              window.localStorage.setItem("pl_country", data.countryCode);
+            } catch {
+              // ignore localStorage errors
+            }
+            setLocStatus("idle");
+          } else {
+            setLocStatus("error");
+          }
+        } catch (e) {
+          console.error("Failed to resolve geo", e);
+          setLocStatus("error");
+        }
+      },
+      (error) => {
+        // Do not use console.error here to avoid Next dev overlays.
+        if (process.env.NODE_ENV !== "production") {
+          console.warn("Geolocation error", error);
+        }
+
+        let message = "We couldn't detect your location.";
+
+        if (error && typeof error === "object") {
+          // Standard GeolocationPositionError codes: 1 = PERMISSION_DENIED, 2 = POSITION_UNAVAILABLE, 3 = TIMEOUT
+          const anyErr = error as GeolocationPositionError;
+          if (anyErr.code === 1) {
+            message =
+              "Location access was denied. You can allow it in your browser settings and try again.";
+          } else if (anyErr.code === 2) {
+            message =
+              "Location is currently unavailable. Please try again later.";
+          } else if (anyErr.code === 3) {
+            message = "Location request timed out. Please try again.";
+          }
+        }
+
+        setLocErrorMessage(message);
+        setLocStatus("error");
+      },
+    );
+  };
 
   function handleQuickPick(term: string) {
     executeSearch({ query: term, category: activeCategory });
@@ -626,22 +733,38 @@ export default function Page() {
                 AI Assistant (Beta)
               </motion.button>
 
-              <HowItWorksModal>
-                <button 
-                  type="button" 
-                  className="inline-flex items-center justify-center w-10 h-10 rounded-full border border-[var(--pl-card-border)] bg-[var(--pl-card)] text-sm font-medium hover:brightness-110 transition-all"
-                  aria-label="How it works"
-                >
-                  ?
-                </button>
-              </HowItWorksModal>
+              <button
+                type="button"
+                onClick={() => {
+                  if (typeof window === "undefined") return;
+
+                  const el = document.getElementById("faq");
+                  if (!el) return;
+
+                  // If FAQ is hidden, show it
+                  if (el.classList.contains("hidden")) {
+                    el.classList.remove("hidden");
+                    el.style.display = "";
+                  }
+
+                  // Scroll to the FAQ section
+                  el.scrollIntoView({ behavior: "smooth" });
+                }}
+                className="inline-flex items-center justify-center w-10 h-10 rounded-full border border-[var(--pl-card-border)] bg-[var(--pl-card)] text-sm font-medium hover:brightness-110 transition-all"
+                aria-label="FAQ"
+              >
+                FAQ
+              </button>
             </div>
           </div>
 
           {/* Desktop-only header ad slot */}
           <div className="hidden md:flex justify-end mt-2 md:mt-4">
             <GoogleAdSlot
-              slot={process.env.NEXT_PUBLIC_ADSENSE_HEADER_SLOT_ID ?? "demo-header-slot"}
+              slot={
+                process.env.NEXT_PUBLIC_ADSENSE_HEADER_SLOT_ID ??
+                "demo-header-slot"
+              }
               format="horizontal"
               style={{ width: "100%", minHeight: 90 }}
             />
@@ -649,8 +772,9 @@ export default function Page() {
 
           {/* Compact hero description – single sentence */}
           <div className="text-center mt-1 md:mt-2">
-            <p className="text-[11px] sm:text-[12px] text-[var(--pl-text-muted)] leading-relaxed">
-              PriceLance is an informational service that compares tech prices from multiple online retailers.
+            <p className="text-center text-xs text-slate-500 mt-2">
+              Coverage is growing over time, starting with Romanian and European
+              stores.
             </p>
           </div>
         </div>
@@ -695,7 +819,12 @@ export default function Page() {
       {/* SEARCH BAR */}
       <div className="w-full px-6 mt-1 md:mt-2">
         <div className="mx-auto w-full max-w-5xl">
-          <form onSubmit={(e) => { e.preventDefault(); handleSearchSubmit(); }}>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleSearchSubmit();
+            }}
+          >
             <input
               type="text"
               value={query}
@@ -704,15 +833,11 @@ export default function Page() {
               placeholder='Search products (e.g. "laptop gaming", "monitor 27", "iPhone 15")'
               className="w-full px-5 py-3 rounded-2xl bg-[var(--pl-card)] border border-[var(--pl-card-border)] text-[12px] text-[var(--pl-text)] placeholder:text-[var(--pl-text-subtle)] focus:outline-none focus:border-blue-500 focus:shadow-[0_0_15px_var(--pl-primary-glow)] transition-all"
             />
-            <button
-              type="submit"
-              className="sr-only"
-              aria-label="Search"
-            >
+            <button type="submit" className="sr-only" aria-label="Search">
               Search
             </button>
           </form>
-          {process.env.NODE_ENV !== 'production' && (
+          {process.env.NODE_ENV !== "production" && (
             <p className="mt-2 text-[10px] text-[var(--pl-text-subtle)]">
               Debug: no enrichment data for last search.
             </p>
@@ -727,28 +852,34 @@ export default function Page() {
           <div className="flex flex-col gap-4 order-6 lg:order-1">
             {/* LOCATION */}
             <div className={`${cardStyle} p-3 sm:p-4`}>
-              <h3 className="text-[11px] font-semibold tracking-[0.15em] uppercase text-slate-700 dark:text-slate-200 mb-3">
-                Your Location
+              <h3 className="text-xs font-semibold text-slate-900 tracking-wide">
+                YOUR LOCATION
               </h3>
-              <select
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg bg-[var(--pl-bg)] border border-[var(--pl-card-border)] text-[12px] text-[var(--pl-text)] focus:outline-none focus:border-blue-500 appearance-none cursor-pointer"
-              >
-                <option value="Not set">Not set</option>
-                <option value="Romania">Romania</option>
-                <option value="United States">United States</option>
-                <option value="Germany">Germany</option>
-                <option value="United Kingdom">United Kingdom</option>
-              </select>
+
+              <p className="mt-1 text-[11px] text-slate-700">
+                {userCountry ? (
+                  <>
+                    Using <span className="font-semibold">{userCountry}</span>{" "}
+                    to prioritise results.
+                  </>
+                ) : (
+                  "Location not set yet."
+                )}
+              </p>
+
               <button
-                disabled
-                className="mt-3 w-full py-2 rounded-lg bg-[var(--pl-primary)] text-sm font-medium text-white shadow-[0_0_15px_var(--pl-primary-glow)] opacity-50 cursor-not-allowed transition-all"
+                type="button"
+                onClick={handleUseMyLocation}
+                className="mt-2 inline-flex items-center justify-center rounded-2xl bg-blue-500 px-3 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-blue-600 disabled:opacity-60 disabled:cursor-not-allowed"
+                disabled={locStatus === "detecting"}
               >
-                Use my location
+                {locStatus === "detecting" ? "Detecting..." : "Use my location"}
               </button>
-              <p className="mt-2 text-[10px] text-[var(--pl-text-subtle)] text-center">
-                Location-based results coming soon.
+
+              <p className="mt-1 text-[11px] text-slate-500">
+                {locStatus === "error" && locErrorMessage
+                  ? locErrorMessage
+                  : "We use an approximate country-level location to improve store and delivery relevance, only if you allow it."}
               </p>
             </div>
 
@@ -854,16 +985,20 @@ export default function Page() {
             {/* Sidebar ad preview - hidden on mobile */}
             <div className={`${cardStyle} overflow-hidden hidden md:block`}>
               {/* Mobile collapsible header */}
-              <div 
+              <div
                 className="sm:hidden flex items-center justify-between p-3 cursor-pointer hover:bg-[var(--pl-bg)]/50 transition-colors"
                 onClick={() => setAdPreviewOpen(!adPreviewOpen)}
               >
                 <span className="text-[11px] font-semibold tracking-[0.15em] uppercase text-slate-700 dark:text-slate-200">
                   Ad
                 </span>
-                {adPreviewOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                {adPreviewOpen ? (
+                  <ChevronUp className="h-4 w-4" />
+                ) : (
+                  <ChevronDown className="h-4 w-4" />
+                )}
               </div>
-              
+
               {/* Desktop always-visible header */}
               <div className="hidden sm:flex items-center justify-between mb-1.5 p-4 pt-0">
                 <span className="text-[11px] font-semibold tracking-[0.15em] uppercase text-slate-700 dark:text-slate-200">
@@ -873,9 +1008,11 @@ export default function Page() {
                   Preview
                 </span>
               </div>
-              
+
               {/* Collapsible content */}
-              <div className={`${adPreviewOpen ? 'block' : 'hidden'} sm:block p-3 sm:p-4 pt-0 sm:pt-0`}>
+              <div
+                className={`${adPreviewOpen ? "block" : "hidden"} sm:block p-3 sm:p-4 pt-0 sm:pt-0`}
+              >
                 <AffiliateBannerSlot />
               </div>
             </div>
@@ -942,11 +1079,14 @@ export default function Page() {
                   <p className="text-sm text-red-500 mb-2">{ebayError}</p>
                 )}
 
-                {!isLoadingEbay && !ebayError && ebayItems.length === 0 && query && (
-                  <p className="text-sm text-gray-500">
-                    No eBay offers found for "{query}".
-                  </p>
-                )}
+                {!isLoadingEbay &&
+                  !ebayError &&
+                  ebayItems.length === 0 &&
+                  query && (
+                    <p className="text-sm text-gray-500">
+                      No eBay offers found for "{query}".
+                    </p>
+                  )}
 
                 {!isLoadingEbay && ebayItems.length > 0 && (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -987,41 +1127,49 @@ export default function Page() {
             {/* Saved searches - collapsible on mobile */}
             <div className={`${cardStyle} overflow-hidden`}>
               {/* Mobile collapsible header */}
-              <div 
+              <div
                 className="sm:hidden flex items-center justify-between p-3 cursor-pointer hover:bg-[var(--pl-bg)]/50 transition-colors"
                 onClick={() => setSavedSearchesOpen(!savedSearchesOpen)}
               >
                 <span className="text-[11px] font-semibold tracking-[0.15em] uppercase text-slate-700 dark:text-slate-200">
                   Saved Searches
                 </span>
-                {savedSearchesOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                {savedSearchesOpen ? (
+                  <ChevronUp className="h-4 w-4" />
+                ) : (
+                  <ChevronDown className="h-4 w-4" />
+                )}
               </div>
-              
+
               {/* Desktop always-visible header */}
               <div className="hidden sm:flex items-center gap-2 text-[11px] font-semibold tracking-[0.15em] uppercase text-slate-700 dark:text-slate-200 mb-3 p-4 pt-0">
                 <span>Saved Searches</span>
               </div>
-              
+
               {/* Collapsible content */}
-              <div className={`${savedSearchesOpen ? 'block' : 'hidden'} sm:block p-3 sm:p-4 pt-0 sm:pt-0`}>
-              <div className="max-h-[140px] overflow-y-auto pr-1 space-y-0.5">
-                {savedSearches.map((s, i) => (
-                  <div
-                    key={i}
-                    className="flex items-center justify-between py-0.5 group"
-                  >
-                    <span
-                      onClick={() => executeSearch({ query: s, category: activeCategory })}
-                      className="text-xs leading-relaxed text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 cursor-pointer transition-colors"
+              <div
+                className={`${savedSearchesOpen ? "block" : "hidden"} sm:block p-3 sm:p-4 pt-0 sm:pt-0`}
+              >
+                <div className="max-h-[140px] overflow-y-auto pr-1 space-y-0.5">
+                  {savedSearches.map((s, i) => (
+                    <div
+                      key={i}
+                      className="flex items-center justify-between py-0.5 group"
                     >
-                      {s}
-                    </span>
-                    <button className="text-[10px] text-[var(--pl-text-subtle)] hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity">
-                      ×
-                    </button>
-                  </div>
-                ))}
-              </div>
+                      <span
+                        onClick={() =>
+                          executeSearch({ query: s, category: activeCategory })
+                        }
+                        className="text-xs leading-relaxed text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 cursor-pointer transition-colors"
+                      >
+                        {s}
+                      </span>
+                      <button className="text-[10px] text-[var(--pl-text-subtle)] hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
@@ -1054,35 +1202,110 @@ export default function Page() {
             {/* Assistant - hidden on mobile */}
             <div className="order-6 lg:order-3 hidden md:block">
               {(visibleProducts.length > 0 || !products.length) && (
-              <div className={`${cardStyle} overflow-hidden`}>
-                {/* Desktop always-visible content */}
-                <div className="block">
-                  <div id="ai-assistant-panel">
-                    <ChatAssistant
-                      products={visibleProducts}
-                      searchQuery={query}
-                      location={location}
-                      disabled={visibleProducts.length === 0}
-                    />
+                <div className={`${cardStyle} overflow-hidden`}>
+                  {/* Desktop always-visible content */}
+                  <div className="block">
+                    <div id="ai-assistant-panel">
+                      <ChatAssistant
+                        products={visibleProducts}
+                        searchQuery={query}
+                        location={location}
+                        disabled={visibleProducts.length === 0}
+                      />
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
             </div>
           </div>
         </div>
       </div>
 
-      {/* How PriceLance Works + FAQ Section */}
-      <div className={`${cardStyle} p-4 sm:p-6 mt-4 sm:mt-6`}>
-        <p className="text-center text-xs text-[var(--pl-text-subtle)] mt-8">
-          New here? Tap the ? in the header for info.
-        </p>
-      </div>
+      <section
+        id="faq"
+        className="mt-6 px-4 hidden"
+        style={{ display: "none" }}
+      >
+        <div className="max-w-3xl mx-auto text-[11px] leading-relaxed text-slate-700">
+          <p className="font-semibold text-slate-900 mb-1">FAQ</p>
+
+          <p className="font-semibold text-slate-900">
+            Do I buy products on PriceLance?
+          </p>
+          <p className="mb-2">
+            No. PriceLance is an informational comparison tool. When you click
+            an offer, you go to the retailer&apos;s website to complete your
+            purchase under their own terms.
+          </p>
+
+          <p className="font-semibold text-slate-900">
+            Are the prices always 100% accurate?
+          </p>
+          <p className="mb-2">
+            Prices and availability can change quickly. We do our best to keep
+            data fresh, but you should always double-check the final price and
+            details on the retailer&apos;s site before ordering.
+          </p>
+
+          <p className="font-semibold text-slate-900">
+            Where do you get your data from?
+          </p>
+          <p className="mb-2">
+            From manually curated entries, CSV imports, official retailer feeds
+            where available, and affiliate partners. We don&apos;t bypass store
+            rules or scrape protected areas.
+          </p>
+
+          <p className="font-semibold text-slate-900">
+            How can I report an incorrect price?
+          </p>
+          <p>
+            You can email us at{" "}
+            <a
+              href="mailto:support@pricelance.com"
+              className="text-blue-600 hover:underline"
+            >
+              support@pricelance.com
+            </a>{" "}
+            with the product link and a short note. Real-world feedback helps
+            decide what we improve next.
+          </p>
+        </div>
+      </section>
+
+      <section className="mt-8 px-4">
+        <div className="max-w-3xl mx-auto text-left text-[11px] leading-relaxed text-slate-700">
+          <p>
+            PriceLance helps you compare prices for tech products from multiple
+            online stores. We combine clean, manually curated product data with
+            official feeds and affiliate partners so you can see clear offers
+            side by side in one place. Start by searching for a phone, a laptop,
+            or another tech product. We show you offers from different stores
+            with prices, basic delivery info, and links that take you directly
+            to the retailer&apos;s website.
+          </p>
+
+          <h2 className="mt-4 text-xs font-semibold text-slate-900">
+            How PriceLance works
+          </h2>
+
+          <ol className="mt-1 space-y-1 text-[11px]">
+            <li>1. Search or browse the products you&apos;re interested in.</li>
+            <li>
+              2. We scan multiple stores and partners to find relevant offers.
+            </li>
+            <li>3. Compare prices, delivery times, and store reputation.</li>
+            <li>
+              4. Choose the best option and complete your purchase on the
+              store&apos;s website.
+            </li>
+          </ol>
+        </div>
+      </section>
 
       {/* Affiliate Disclosure Footer */}
       <footer className="w-full px-6 py-4 border-t border-[var(--pl-card-border)]">
-  <div className="max-w-7xl mx-auto text-center">
+        <div className="max-w-7xl mx-auto text-center">
           <p className="text-[10px] text-[var(--pl-text-subtle)] leading-relaxed">
             Some links on PriceLance are affiliate links. If you buy through one
             of these links, we may earn a small commission from the retailer, at

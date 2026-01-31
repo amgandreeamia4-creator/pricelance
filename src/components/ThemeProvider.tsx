@@ -26,22 +26,24 @@ export default function ThemeProvider({
 }: {
   children: React.ReactNode;
 }) {
+  // Always start with "dark" to match server render
   const [theme, setTheme] = useState<Theme>("dark");
   const [mounted, setMounted] = useState(false);
 
-  // On mount, read from localStorage
+  // Only after mounting, read from localStorage
   useEffect(() => {
+    setMounted(true);
+
     const stored = localStorage.getItem(STORAGE_KEY) as Theme | null;
     if (stored === "light" || stored === "dark") {
       setTheme(stored);
     }
-    setMounted(true);
   }, []);
 
-  // Apply theme to document and persist
+  // Apply theme to document and persist (only after mounted)
   useEffect(() => {
     if (!mounted) return;
-    
+
     document.documentElement.dataset.theme = theme;
     document.documentElement.classList.toggle("dark", theme === "dark");
     localStorage.setItem(STORAGE_KEY, theme);

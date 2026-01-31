@@ -23,11 +23,13 @@ const LanguageContext = createContext<LanguageContextValue | undefined>(
 const STORAGE_KEY = "pricelance:lang";
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
+  // Always start with "en" to match server render
   const [lang, setLangState] = useState<Language>("en");
+  const [mounted, setMounted] = useState(false);
 
-  // Load initial language from localStorage / browser
+  // Only after mounting, read from localStorage/browser
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    setMounted(true);
 
     const stored = window.localStorage.getItem(STORAGE_KEY);
     if (stored === "en" || stored === "ro") {
