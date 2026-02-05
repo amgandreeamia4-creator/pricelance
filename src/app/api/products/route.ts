@@ -2,8 +2,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { isListingFromDisabledNetwork } from "@/config/affiliateNetworks";
-import { CATEGORY_SYNONYMS, type CategoryKey } from "@/config/categoryFilters";
 import { cookies } from "next/headers";
+import {
+  dbCategoryFromSlug,
+  getCategoryByLabel,
+  type CanonicalCategoryLabel,
+} from "@/config/categories";
 
 type ListingResponse = {
   id: string;
@@ -149,12 +153,44 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
 
     const query = (searchParams.get("q") ?? "").trim();
-    const categoryKeyParam = searchParams.get("category") as CategoryKey | null;
+    const categoryKeyParam = searchParams.get("category") as string | null;
+    const rawCategorySlug = searchParams.get("categorySlug") as string | null;
     const subcategory = searchParams.get("subcategory") ?? undefined;
+    
+    // Normalize category: support both legacy 'category' and new 'categorySlug' params
+    let effectiveCategoryLabel: CanonicalCategoryLabel | null = null;
+    
+    if (rawCategorySlug) {
+      // Map slug to canonical label
+      const canonicalLabel = dbCategoryFromSlug(rawCategorySlug);
+      if (canonicalLabel) {
+        effectiveCategoryLabel = canonicalLabel;
+        console.log('[api/products] Resolved categorySlug to label:', {
+          slug: rawCategorySlug,
+          resolvedLabel: canonicalLabel,
+        });
+      } else {
+        // Unknown slug - return empty results
+        console.warn('[api/products] Unknown categorySlug:', rawCategorySlug);
+        return NextResponse.json({
+          products: [],
+          total: 0,
+          page: 1,
+          perPage: 24,
+        });
+      }
+    } else if (categoryKeyParam) {
+      // Legacy: direct category label provided
+      const node = getCategoryByLabel(categoryKeyParam);
+      if (node) {
+        effectiveCategoryLabel = node.label;
+      }
+    }
+    
     const store = searchParams.get("store") || undefined;
     const sort = searchParams.get("sort") || "relevance"; // relevance | price-asc | price-desc
     const pageParam = searchParams.get("page") ?? "1";
-    const perPageParam = searchParams.get("perPage") ?? "24";
+    const perPageParam = searchParams.get("perPage") ?? searchParams.get("limit") ?? "24";
     const locationParam = searchParams.get("location") || undefined;
 
     const page = Math.max(
@@ -164,12 +200,12 @@ export async function GET(req: NextRequest) {
     const perPageRaw = Number.isNaN(Number(perPageParam))
       ? 24
       : parseInt(perPageParam, 10);
-    const perPage = Math.min(Math.max(perPageRaw, 1), 48);
+    const perPage = Math.min(Math.max(perPageRaw, 1), 50);
     const skip = (page - 1) * perPage;
 
-    const isPhonesCategory = categoryKeyParam === "Phones";
+    const isPhonesCategory = effectiveCategoryLabel === "Phones";
 
-    // Build Prisma where object with category synonyms (NO Listing/listings here)
+    // Build Prisma where object
     const where: any = { AND: [] as any[] };
 
     if (query) {
@@ -182,15 +218,10 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    if (categoryKeyParam && CATEGORY_SYNONYMS[categoryKeyParam]) {
-      const synonyms = CATEGORY_SYNONYMS[categoryKeyParam];
-
+    // Filter by exact canonical category label
+    if (effectiveCategoryLabel) {
       where.AND.push({
-        OR: synonyms.flatMap((term) => [
-          { category: { contains: term, mode: "insensitive" } },
-          { name: { contains: term, mode: "insensitive" } },
-          { displayName: { contains: term, mode: "insensitive" } },
-        ]),
+        category: { equals: effectiveCategoryLabel, mode: "insensitive" },
       });
     }
 

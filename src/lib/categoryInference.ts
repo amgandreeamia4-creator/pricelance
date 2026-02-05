@@ -2,8 +2,15 @@
 // Ingestion-time category inference for product imports
 // Reuses existing canonical category slugs and synonym logic
 
-// Raw feed category name (normalized) -> canonical CategoryKey
-export const FEED_CATEGORY_TO_CANONICAL: Record<string, CategoryKey> = {
+import { CATEGORY_SYNONYMS, type CategoryKey } from '@/config/categoryFilters';
+import {
+  CANONICAL_CATEGORIES,
+  type CanonicalCategoryLabel,
+} from '@/config/categories';
+import { SUBCATEGORY_KEYWORDS, type SubcategoryKey } from '@/lib/categories';
+
+// Raw feed category name (normalized) -> canonical category label
+export const FEED_CATEGORY_TO_CANONICAL: Record<string, CanonicalCategoryLabel> = {
   // Laptops family
   "notebook": "Laptops",
   "notebook / laptop": "Laptops",
@@ -15,6 +22,18 @@ export const FEED_CATEGORY_TO_CANONICAL: Record<string, CategoryKey> = {
   "sisteme pc garage": "Laptops",
   "sisteme brand": "Laptops",
   "all in one pc": "Laptops",
+  "hub usb": "Laptops",
+  "hub-uri usb": "Laptops",
+  "docking station": "Laptops",
+  "baterii externe": "Laptops",
+  "baterie externa": "Laptops",
+  "power bank": "Laptops",
+  "power banks": "Laptops",
+  "incarcator": "Laptops",
+  "incarcatoare": "Laptops",
+  "cooler cpu": "Laptops",
+  "coolere": "Laptops",
+  "cooling fan": "Laptops",
 
   // Phones family
   "telefoane mobile": "Phones",
@@ -22,15 +41,21 @@ export const FEED_CATEGORY_TO_CANONICAL: Record<string, CategoryKey> = {
   "phones": "Phones",
   "smartphone": "Phones",
   "phone flagship": "Phones",
-  "huse gsm dedicate": "Phones",
   "incarcatoare retea gsm": "Phones",
   "incarcatoare auto gsm": "Phones",
   "incarcatoare wireless gsm": "Phones",
-  "folii securizate gsm": "Phones",
-  "folii protectie telefon": "Phones",
-  "accesorii smartphone": "Phones",
   "suporti gsm": "Phones",
   "selfie stick": "Phones",
+
+  // Phone Cases & Protection
+  "huse gsm dedicate": "Phone Cases & Protection",
+  "huse si folii": "Phone Cases & Protection",
+  "huse telefoane": "Phone Cases & Protection",
+  "folii securizate gsm": "Phone Cases & Protection",
+  "folii protectie telefon": "Phone Cases & Protection",
+  "phone cases": "Phone Cases & Protection",
+  "phone covers": "Phone Cases & Protection",
+  "case for phone": "Phone Cases & Protection",
 
   // Monitors / TV & Display
   "monitoare lcd si led": "Monitors",
@@ -57,19 +82,22 @@ export const FEED_CATEGORY_TO_CANONICAL: Record<string, CategoryKey> = {
   "sisteme home cinema": "Headphones & Audio",
   "media-playere": "Headphones & Audio",
 
-  // Keyboards & Mouse
-  "mouse": "Keyboards & Mouse",
-  "mouse gaming": "Keyboards & Mouse",
-  "mouse pad": "Keyboards & Mouse",
-  "mousepad": "Keyboards & Mouse",
-  "tastaturi": "Keyboards & Mouse",
-  "tastaturi gaming": "Keyboards & Mouse",
-  "keyboard": "Keyboards & Mouse",
-  "kit tastatura + mouse": "Keyboards & Mouse",
-  "kit tastatura si mouse": "Keyboards & Mouse",
-  "gamepad": "Keyboards & Mouse",
-  "kit gaming": "Keyboards & Mouse",
-  "accesorii gaming": "Keyboards & Mouse",
+  // Keyboards & Mice
+  "mouse": "Keyboards & Mice",
+  "mouse gaming": "Keyboards & Mice",
+  "mouse pad": "Keyboards & Mice",
+  "mousepad": "Keyboards & Mice",
+  "tastaturi": "Keyboards & Mice",
+  "tastaturi gaming": "Keyboards & Mice",
+  "keyboard": "Keyboards & Mice",
+  "kit tastatura + mouse": "Keyboards & Mice",
+  "kit tastatura si mouse": "Keyboards & Mice",
+  "gamepad": "Keyboards & Mice",
+  "kit gaming": "Keyboards & Mice",
+  "accesorii gaming": "Keyboards & Mice",
+  "controller": "Keyboards & Mice",
+  "gaming chair": "Home & Garden",
+  "scaune gaming": "Home & Garden",
 
   // Tablets
   "tablete": "Tablets",
@@ -206,9 +234,6 @@ function normalizeFeedCategory(category: string): string {
     .replace(/[\u0300-\u036f]/g, ''); // remove diacritics
 }
 
-import { CATEGORY_SYNONYMS, type CategoryKey } from '@/config/categoryFilters';
-import { SUBCATEGORY_KEYWORDS, type SubcategoryKey } from '@/lib/categories';
-
 export interface IngestionCategoryInput {
   title?: string | null;
   description?: string | null;
@@ -218,24 +243,162 @@ export interface IngestionCategoryInput {
 }
 
 /**
- * Infers canonical category slug from ingestion data using existing synonym logic.
+ * Name-based category heuristics for products without feed category
+ * Handles cases where provider category is missing but product name gives strong signal
+ */
+function inferCategoryFromName(productName: string): CanonicalCategoryLabel | null {
+  const name = productName.toLowerCase().trim();
+  
+  // Phone-related (but exclude cases/covers - those are handled separately)
+  if ((name.includes('telefon') || name.includes('smartphone') || name.includes('iphone') || 
+       name.includes('samsung galaxy') || name.includes('google pixel')) &&
+      !name.includes('hus')) {
+    return 'Phones';
+  }
+  
+  // Laptops / PCs
+  if (name.includes('laptop') || name.includes('notebook') || name.includes('ultrabook') ||
+      name.includes('netbook') || name.includes('macbook')) {
+    return 'Laptops';
+  }
+  
+  // Monitors (but not TVs)
+  if ((name.includes('monitor') || name.includes('display')) && 
+      !name.includes('tv') && !name.includes('televisor')) {
+    return 'Monitors';
+  }
+  
+  // TV & Display
+  if (name.includes('tv ') || name.includes('televisor') || name.includes('television') ||
+      name.includes('proiector') || name.includes('projector')) {
+    return 'TV & Display';
+  }
+  
+  // Keyboards & Mice (input devices)
+  if (name.includes('mouse') || name.includes('tastatura') || name.includes('keyboard') ||
+      name.includes('gamepad') || name.includes('controller') || name.includes('joystick')) {
+    return 'Keyboards & Mice';
+  }
+  
+  // Headphones & Audio
+  if (name.includes('casti') || name.includes('headphones') || name.includes('earbuds') ||
+      name.includes('speaker') || name.includes('boxa') || name.includes('soundbar') ||
+      name.includes('audio system')) {
+    return 'Headphones & Audio';
+  }
+  
+  // Tablets
+  if (name.includes('tablet') || name.includes('ipad')) {
+    return 'Tablets';
+  }
+  
+  // Smartwatches
+  if (name.includes('smartwatch') || name.includes('smart watch') || 
+      name.includes('fitness band') || name.includes('fitbit')) {
+    return 'Smartwatches';
+  }
+  
+  // USB Hubs / Docking Stations / Power solutions
+  if (name.includes('hub') || name.includes('docking') || name.includes('charger') ||
+      name.includes('power bank') || name.includes('baterie externa') || name.includes('incarcator')) {
+    return 'Laptops'; // General PC accessories
+  }
+  
+  // Personal Care
+  if (name.includes('epilator') || name.includes('toothbrush') || name.includes('hair dryer') ||
+      name.includes('shaver') || name.includes('trimmer') || name.includes('grooming') ||
+      name.includes('masaj') || name.includes('ras')) {
+    return 'Personal Care';
+  }
+  
+  // Small Appliances
+  if (name.includes('vacuum') || name.includes('aspirator') || name.includes('washing machine') ||
+      name.includes('dryer') || name.includes('spalat')) {
+    return 'Small Appliances';
+  }
+  
+  // Kitchen
+  if (name.includes('kettle') || name.includes('microwave') || name.includes('blender') ||
+      name.includes('coffee machine') || name.includes('fierbatoare')) {
+    return 'Kitchen';
+  }
+  
+  // Home & Garden (furniture, tools, lamps)
+  if (name.includes('chair') || name.includes('desk') || name.includes('lamp') ||
+      name.includes('furniture') || name.includes('scaun') || name.includes('tool') ||
+      name.includes('garden')) {
+    return 'Home & Garden';
+  }
+  
+  // Books & Media / Office supplies
+  if (name.includes('notebook') || name.includes('stationery') || name.includes('backpack') ||
+      name.includes('e-book') || name.includes('ebook')) {
+    // Special case: "notebook" without context usually means laptop
+    if (!name.includes('stationery') && !name.includes('journal')) {
+      return 'Laptops';
+    }
+    return 'Books & Media';
+  }
+  
+  // Wellness & Supplements
+  if (name.includes('supplement') || name.includes('vitamin') || name.includes('scale') ||
+      name.includes('blood pressure') || name.includes('cant')) {
+    return 'Wellness & Supplements';
+  }
+  
+  return null;
+}
+
+/**
+ * Infers canonical category label from ingestion data using existing synonym logic.
  * 
  * Rule priorities:
- * 1. If explicitCategorySlug is a valid CategoryKey → return that
- * 2. If campaignName matches known wellness/supplement campaigns → return default
- * 3. Use existing synonym logic to match title/description against known categories
- * 4. Return null if no match (better than random guess)
+ * 1. If explicitCategorySlug is a valid CanonicalCategoryLabel → return that
+ * 2. Early rule: phone cases/covers → "Phone Cases & Protection"
+ * 3. Feed category mapping
+ * 4. Campaign-specific defaults
+ * 5. Name-based heuristics (NEW - for NULL categories)
+ * 6. Use existing synonym logic to match title/description
+ * 7. As fallback, assign to Gifts & Lifestyle if still unmatched
  */
-export function inferCategorySlugFromIngestion(input: IngestionCategoryInput): CategoryKey | null {
+export function inferCategorySlugFromIngestion(input: IngestionCategoryInput): CanonicalCategoryLabel | null {
   const { title, description, campaignName, explicitCategorySlug, feedCategory } = input;
   
-  // Rule 1: Explicit category slug validation
-  if (explicitCategorySlug) {
-    const normalizedSlug = explicitCategorySlug.trim();
-    // Check if it's a valid CategoryKey
-    if (Object.keys(CATEGORY_SYNONYMS).includes(normalizedSlug)) {
-      return normalizedSlug as CategoryKey;
-    }
+  // Note: explicitCategorySlug is intentionally NOT honored here yet
+  // because we want stronger, early rules (e.g. phone-case detection)
+  // to override existing database values when they clearly indicate
+  // a different canonical category.
+
+  // Rule 1.5: HARD RULE - Phone cases / covers detection
+  // Must come early, before generic Phones rules, to avoid miscategorization
+  const nameRaw = (title ?? "").toLowerCase();
+  const feedRaw = (feedCategory ?? "").toLowerCase();
+
+  const looksLikePhoneCaseByName =
+    nameRaw.startsWith("husa ") ||
+    nameRaw.startsWith("husă ") ||
+    nameRaw.includes(" husa ") ||
+    nameRaw.includes(" husă ") ||
+    nameRaw.includes(" huse ") ||
+    nameRaw.includes(" case ") ||
+    nameRaw.includes(" cover ") ||
+    nameRaw.includes(" folie ");
+
+  const looksLikePhoneCaseByFeed =
+    feedRaw.includes("husa") ||
+    feedRaw.includes("husă") ||
+    feedRaw.includes("huse") ||
+    feedRaw.includes("case") ||
+    feedRaw.includes("cover") ||
+    feedRaw.includes("folii") ||
+    feedRaw.includes("protectie");
+
+  if (looksLikePhoneCaseByName || looksLikePhoneCaseByFeed) {
+      // DEBUG: Log phone case detections
+      if (nameRaw.includes("husa") || nameRaw.includes("husă")) {
+        console.log(`[inference] 🔵 PHONE CASE DETECTED by name: "${title}"`);
+      }
+    return "Phone Cases & Protection";
   }
 
   // Rule 2: Feed category mapping (new shortcut)
@@ -290,6 +453,14 @@ export function inferCategorySlugFromIngestion(input: IngestionCategoryInput): C
     }
   }
 
+    // Rule 3.5: Honor explicitCategorySlug (but only after stronger early rules ran)
+    if (explicitCategorySlug) {
+      const normalizedSlug = explicitCategorySlug.trim();
+      if (Object.keys(CATEGORY_SYNONYMS).includes(normalizedSlug)) {
+        return normalizedSlug as CategoryKey;
+      }
+    }
+
   // Rule 4: Use existing synonym logic on title and description
   const searchableText = [
     title || '',
@@ -305,8 +476,18 @@ export function inferCategorySlugFromIngestion(input: IngestionCategoryInput): C
     }
   }
 
-  // Rule 5: No match found
-  return null;
+  // Rule 5: Name-based heuristics (NEW - handles NULL categories)
+  if (title) {
+    const nameInferred = inferCategoryFromName(title);
+    if (nameInferred) {
+      return nameInferred;
+    }
+  }
+
+  // Rule 6: As absolute fallback, assign unmatched products to Gifts & Lifestyle
+  // This ensures NO product has NULL category
+  // (Better to be in a general category than have NULL which breaks the UI)
+  return 'Gifts & Lifestyle';
 }
 
 /**

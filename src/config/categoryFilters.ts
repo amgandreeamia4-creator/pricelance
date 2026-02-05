@@ -3,9 +3,10 @@
 export type CategoryKey =
   | 'Laptops'
   | 'Phones'
+  | 'Phone Cases & Protection'
   | 'Monitors'
   | 'Headphones & Audio'
-  | 'Keyboards & Mouse'
+  | 'Keyboards & Mice'
   | 'TV & Display'
   | 'Tablets'
   | 'Smartwatches'
@@ -35,6 +36,20 @@ export const CATEGORY_SYNONYMS: Record<CategoryKey, string[]> = {
     'telefoane mobile',
     'mobil',
   ],
+  'Phone Cases & Protection': [
+    'phone case',
+    'phone cases',
+    'phone cover',
+    'phone covers',
+    'phone protection',
+    'husa',
+    'husă',
+    'huse',
+    'huse telefoane',
+    'huse si folii',
+    'case',
+    'cover',
+  ],
   Monitors: [
     'monitor',
     'monitoare',
@@ -52,7 +67,7 @@ export const CATEGORY_SYNONYMS: Record<CategoryKey, string[]> = {
     'casti audio',
     'căști audio',
   ],
-  'Keyboards & Mouse': [
+  'Keyboards & Mice': [
     'keyboard',
     'keyboards',
     'mouse',

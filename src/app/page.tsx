@@ -21,41 +21,42 @@ import PriceTrendChart from "@/components/PriceTrendChart";
 import ProductSummary from "@/components/ProductSummary";
 import { useLanguage } from "@/components/LanguageProvider";
 import { fetchEbayItems, type EbayItem } from "@/lib/ebayFeed";
-
-import type { CategoryKey } from "@/config/categoryFilters";
+import type { CategorySlug } from "@/config/categories";
 
 type CategoryPill = {
-  key: CategoryKey;
+  key: CategorySlug;
   label: string;
 };
 
 const PRIMARY_CATEGORIES: CategoryPill[] = [
-  { key: "Laptops", label: "Laptops" },
-  { key: "Phones", label: "Phones" },
-  { key: "Monitors", label: "Monitors" },
-  { key: "Headphones & Audio", label: "Headphones & Audio" },
-  { key: "Keyboards & Mouse", label: "Keyboards & Mouse" },
-  { key: "TV & Display", label: "TV & Display" },
-  { key: "Tablets", label: "Tablets" },
-  { key: "Smartwatches", label: "Smartwatches" },
-  { key: "Home & Garden", label: "Home & Garden" },
-  { key: "Personal Care", label: "Personal Care" },
-  { key: "Small Appliances", label: "Small Appliances" },
-  { key: "Wellness & Supplements", label: "Wellness & Supplements" },
-  { key: "Gifts & Lifestyle", label: "Gifts & Lifestyle" },
-  { key: "Books & Media", label: "Books & Media" },
-  { key: "Toys & Games", label: "Toys & Games" },
-  { key: "Kitchen", label: "Kitchen" },
+  { key: "laptops", label: "Laptops" },
+  { key: "phones", label: "Phones" },
+  { key: "phone-cases-protection", label: "Phone Cases & Protection" },
+  { key: "monitors", label: "Monitors" },
+  { key: "tv-display", label: "TV & Display" },
+  { key: "headphones-audio", label: "Headphones & Audio" },
+  { key: "keyboards-mice", label: "Keyboards & Mice" },
+  { key: "tablets", label: "Tablets" },
+  { key: "smartwatches", label: "Smartwatches" },
+  { key: "home-garden", label: "Home & Garden" },
+  { key: "personal-care", label: "Personal Care" },
+  { key: "small-appliances", label: "Small Appliances" },
+  { key: "wellness-supplements", label: "Wellness & Supplements" },
+  { key: "gifts-lifestyle", label: "Gifts & Lifestyle" },
+  { key: "books-media", label: "Books & Media" },
+  { key: "toys-games", label: "Toys & Games" },
+  { key: "kitchen", label: "Kitchen" },
 ];
 
 const MOBILE_PRIMARY_CATEGORIES: CategoryPill[] = [
-  { key: "Laptops", label: "Laptops" },
-  { key: "Phones", label: "Phones" },
-  { key: "Monitors", label: "Monitors" },
-  { key: "Headphones & Audio", label: "Headphones & Audio" },
-  { key: "TV & Display", label: "TV & Display" },
-  { key: "Home & Garden", label: "Home & Garden" },
+  { key: "laptops", label: "Laptops" },
+  { key: "phones", label: "Phones" },
+  { key: "monitors", label: "Monitors" },
+  { key: "headphones-audio", label: "Headphones & Audio" },
+  { key: "tv-display", label: "TV & Display" },
+  { key: "home-garden", label: "Home & Garden" },
 ];
+
 
 type Listing = {
   id: string;
@@ -139,7 +140,7 @@ export default function Page() {
 
   // Category selection state
   const [activeCategory, setActiveCategory] =
-    React.useState<CategoryKey | null>(null);
+    React.useState<CategorySlug | null>(null);
 
   // Dynamic categories from DB
   const [categories, setCategories] = useState<string[]>([]);
@@ -497,24 +498,24 @@ export default function Page() {
     );
   };
 
-  function handleCategoryClick(category: CategoryKey) {
-    setActiveCategory(category);
+  function handleCategoryClick(categorySlug: CategorySlug) {
+    setActiveCategory(categorySlug);
     // Clear text query when selecting a category
     setQuery("");
-    executeSearch({ query: "", category: category });
+    executeSearch({ query: "", categorySlug });
   }
 
   async function executeSearch({
     query,
-    category,
+    categorySlug,
   }: {
     query: string;
-    category: CategoryKey | null;
+    categorySlug: CategorySlug | null;
   }) {
     const trimmed = query.trim();
     setQuery(trimmed);
 
-    if (!trimmed && !category) {
+    if (!trimmed && !categorySlug) {
       setProducts([]);
       setSelectedProductId(null);
       // Clear eBay results when search is cleared
@@ -527,7 +528,10 @@ export default function Page() {
     try {
       const params = new URLSearchParams();
       if (trimmed) params.set("q", trimmed);
-      if (category) params.set("category", category);
+
+      if (categorySlug) {
+        params.set("categorySlug", categorySlug);
+      }
 
       // Add other filters (but not categoryFilter to avoid conflicts)
       if (storeFilter !== "all") {
@@ -542,11 +546,34 @@ export default function Page() {
       });
 
       if (!res.ok) {
-        console.error("Search failed", res.status);
+        let errorInfo = `HTTP ${res.status}`;
+        try {
+          const errBody = await res.json();
+          if (errBody && typeof errBody === "object") {
+            const msg = (errBody as any).error ?? (errBody as any).message;
+            const code = (errBody as any).code;
+            if (msg || code) {
+              errorInfo += ` – ${msg ?? ""}${code ? ` (code: ${code})` : ""}`;
+            }
+          }
+        } catch (e) {
+          // If body is not JSON, fall back to text
+          try {
+            const text = await res.text();
+            if (text) {
+              errorInfo += ` – body: ${text.slice(0, 300)}`;
+            }
+          } catch {
+            // ignore
+          }
+        }
+
+        console.error("[Search] /api/products failed:", errorInfo);
+
         setProducts([]);
         // Clear eBay results on search error
         setEbayItems([]);
-        setEbayError(null);
+        setEbayError(errorInfo);
         return;
       }
 
@@ -592,7 +619,7 @@ export default function Page() {
   }
 
   function handleSearchSubmit() {
-    executeSearch({ query, category: activeCategory });
+    executeSearch({ query, categorySlug: activeCategory });
   }
 
   const handleUseMyLocation = () => {
@@ -668,7 +695,7 @@ export default function Page() {
   };
 
   function handleQuickPick(term: string) {
-    executeSearch({ query: term, category: activeCategory });
+    executeSearch({ query: term, categorySlug: activeCategory });
   }
 
   function scrollToAssistant() {
@@ -1158,7 +1185,7 @@ export default function Page() {
                     >
                       <span
                         onClick={() =>
-                          executeSearch({ query: s, category: activeCategory })
+                          executeSearch({ query: s, categorySlug: activeCategory })
                         }
                         className="text-xs leading-relaxed text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 cursor-pointer transition-colors"
                       >

@@ -83,6 +83,7 @@ model Product {
   displayName         String?
   description         String?
   category            String?
+  primaryCategory     String?
   brand               String?
   imageUrl            String?
   thumbnailUrl        String?

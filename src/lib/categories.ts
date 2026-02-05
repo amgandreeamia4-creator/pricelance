@@ -8,7 +8,7 @@ export type CategorySlug =
   | 'phones'
   | 'monitors'
   | 'headphones-audio'
-  | 'keyboards-mouse'
+  | 'keyboards-mice'
   | 'tv-display'
   | 'tablets'
   | 'smartwatches'
@@ -77,8 +77,8 @@ export const CATEGORY_CONFIG: CategoryConfig[] = [
     ],
   },
   {
-    slug: 'keyboards-mouse',
-    categoryKey: 'Keyboards & Mouse',
+    slug: 'keyboards-mice',
+    categoryKey: 'Keyboards & Mice',
     nameRo: 'Tastaturi & Mouse',
     h1: 'Compară prețuri la Tastaturi și Mouse',
     descriptionParagraphs: [

@@ -15,17 +15,39 @@ the following environment variables.
 
 These control which product providers are enabled at runtime.
 
-- `PROVIDER_REALSTORE_ENABLED="true"`
-  - Real-time product search provider (RapidAPI-based aggregator).
-  - **Recommended: true in production.**
+### Safe Production Defaults (recommended for immediate deployment)
 
-- `PROVIDER_STATIC_ENABLED="false"`
-  - Static catalog provider for development/testing.
-  - **Recommended: false in production.**
+```
+# Safe demo mode - always shows products even without external APIs
+PROVIDER_STATIC_ENABLED="true"
+PROVIDER_DUMMYJSON_ENABLED="false"
+PROVIDER_REALSTORE_ENABLED="false"
+```
+
+### When External APIs are Ready
+
+```
+# Real-time product search with external aggregator
+PROVIDER_REALSTORE_ENABLED="true"
+PROVIDER_STATIC_ENABLED="false"
+PROVIDER_DUMMYJSON_ENABLED="false"
+```
+
+### Provider Details
+
+- `PROVIDER_STATIC_ENABLED="true"`
+  - Static catalog provider with demo products (laptops, phones, etc.)
+  - **Safe fallback**: Always enabled if no other providers are configured
+  - **Recommended: true for initial production deployment**
+
+- `PROVIDER_REALSTORE_ENABLED="false"`
+  - Real-time product search provider (RapidAPI-based aggregator)
+  - **Requires REALTIME_PRODUCT_SEARCH_API_KEY to be set**
+  - **Recommended: true when external API is ready**
 
 - `PROVIDER_DUMMYJSON_ENABLED="false"`
-  - DummyJSON demo provider.
-  - **Recommended: false in production.**
+  - DummyJSON demo provider
+  - **Recommended: false in production**
 
 ## Real-time product search (RapidAPI)
 

@@ -1,3 +1,6 @@
+// NOTE: If no providers are enabled via env, we automatically fall back
+// to the static demo provider so the site always shows products.
+
 // src/lib/providers/index.ts
 import type { ProductProvider, ProviderId } from "./types";
 import { staticProvider } from "./staticProvider";
@@ -20,19 +23,27 @@ const providerMap: Record<ProviderId, ProductProvider> = {
  */
 export function getEnabledProviders(): ProductProvider[] {
   const enabledConfigs = providerConfigs.filter((cfg) => cfg.enabled);
-  const enabledProviders = enabledConfigs
+  const providers = enabledConfigs
     .map((cfg) => providerMap[cfg.id])
     .filter((p): p is ProductProvider => p != null);
+
+  // SAFE FALLBACK: if nothing is enabled, always fall back to static
+  if (providers.length === 0) {
+    console.warn(
+      "[PriceLance] No product providers enabled via env – falling back to static demo provider.",
+    );
+    providers.push(staticProvider);
+  }
 
   // Always log provider resolution for transparency
   console.log(
     "[providers] getEnabledProviders() called. Enabled:",
-    enabledProviders.map((p) => p.name),
+    providers.map((p) => p.name),
     "| Config flags:",
-    providerConfigs.map((c) => `${c.id}=${c.enabled}`)
+    providerConfigs.map((c) => `${c.id}=${c.enabled}`),
   );
 
-  return enabledProviders;
+  return providers;
 }
 
 /**
@@ -50,5 +61,5 @@ console.log(
   "[providers] Module loaded. Static providers array:",
   providers.map((p) => p.name),
   "| Config flags:",
-  providerConfigs.map((c) => `${c.id}=${c.enabled}`)
+  providerConfigs.map((c) => `${c.id}=${c.enabled}`),
 );
