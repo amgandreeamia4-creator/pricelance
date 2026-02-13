@@ -785,17 +785,19 @@ export default function Page() {
             </div>
           </div>
 
-          {/* Desktop-only header ad slot */}
-          <div className="hidden md:flex justify-end mt-2 md:mt-4">
-            <GoogleAdSlot
-              slot={
-                process.env.NEXT_PUBLIC_ADSENSE_HEADER_SLOT_ID ??
-                "demo-header-slot"
-              }
-              format="horizontal"
-              style={{ width: "100%", minHeight: 90 }}
-            />
-          </div>
+          {/* Desktop-only header ad slot: show only when we have search results */}
+          {products.length > 0 && (
+            <div className="hidden md:flex justify-end mt-2 md:mt-4">
+              <GoogleAdSlot
+                slot={
+                  process.env.NEXT_PUBLIC_ADSENSE_HEADER_SLOT_ID ??
+                  "demo-header-slot"
+                }
+                format="horizontal"
+                style={{ width: "100%", minHeight: 90 }}
+              />
+            </div>
+          )}
 
           {/* Compact hero description – single sentence */}
           <div className="text-center mt-1 md:mt-2">
