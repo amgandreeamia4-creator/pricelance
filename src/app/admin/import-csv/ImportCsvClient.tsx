@@ -1,10 +1,18 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { AFFILIATE_INGEST_PROVIDERS, type AffiliateIngestProviderId } from '@/config/affiliateIngestion.client';
 
 // SIMPLE TEST: This should appear when the component loads
 console.log("[ImportCsvClient] Component loaded!");
+
+type MerchantFeed = {
+  id: string;
+  name: string;
+  merchant: {
+    storeName: string;
+  };
+};
 
 type ImportState = {
   status: "idle" | "running" | "done" | "error";
@@ -15,11 +23,38 @@ type ImportState = {
 export default function ImportCsvClient() {
   const [file, setFile] = useState<File | null>(null);
   const [provider, setProvider] = useState<AffiliateIngestProviderId>('profitshare');
+  const [merchantFeedId, setMerchantFeedId] = useState<string>("");
+  const [availableFeeds, setAvailableFeeds] = useState<MerchantFeed[]>([]);
+  const [isLoadingFeeds, setIsLoadingFeeds] = useState(false);
+  
   const [state, setState] = useState<ImportState>({
     status: "idle",
     message: null,
     rawResponse: null,
   });
+
+  useEffect(() => {
+    fetchFeeds();
+  }, []);
+
+  async function fetchFeeds() {
+    setIsLoadingFeeds(true);
+    try {
+      const res = await fetch("/api/admin/merchant-feeds", {
+        headers: {
+          "x-admin-token": process.env.NEXT_PUBLIC_ADMIN_TOKEN || "",
+        },
+      });
+      const data = await res.json();
+      if (data.ok) {
+        setAvailableFeeds(data.feeds);
+      }
+    } catch (err) {
+      console.error("Failed to fetch merchant feeds:", err);
+    } finally {
+      setIsLoadingFeeds(false);
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -27,6 +62,7 @@ export default function ImportCsvClient() {
     console.log("[ImportCsvClient] handleSubmit called!");
     console.log("[ImportCsvClient] File:", file);
     console.log("[ImportCsvClient] Provider:", provider);
+    console.log("[ImportCsvClient] Merchant Feed ID:", merchantFeedId);
 
     if (!file) {
       setState({
@@ -40,6 +76,9 @@ export default function ImportCsvClient() {
     const formData = new FormData();
     formData.append("file", file);
     formData.append("provider", provider);
+    if (merchantFeedId) {
+      formData.append("merchantFeedId", merchantFeedId);
+    }
 
     console.log("[ImportCsvClient] FormData created:", Object.fromEntries(formData.entries()));
 
@@ -154,6 +193,28 @@ export default function ImportCsvClient() {
               </label>
             ))}
           </div>
+        </div>
+
+        <div>
+          <label className="block text-xs font-semibold uppercase tracking-[0.15em] text-[var(--pl-text-subtle)] mb-2">
+            Merchant Feed (Optional)
+          </label>
+          <select
+            value={merchantFeedId}
+            onChange={(e) => setMerchantFeedId(e.target.value)}
+            disabled={isLoadingFeeds}
+            className="w-full rounded-xl border border-[var(--pl-card-border)] bg-[var(--pl-bg)] px-3 py-2 text-sm text-[var(--pl-text)] focus:border-[var(--pl-primary)] focus:outline-none"
+          >
+            <option value="">No merchant feed (standard import)</option>
+            {availableFeeds.map((f) => (
+              <option key={f.id} value={f.id}>
+                {f.merchant.storeName} — {f.name}
+              </option>
+            ))}
+          </select>
+          <p className="mt-1 text-[10px] text-slate-500">
+            If selected, imported listings will be linked to this merchant and feed.
+          </p>
         </div>
 
         <button

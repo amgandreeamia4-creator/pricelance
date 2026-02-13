@@ -531,7 +531,7 @@ async function seedProduct(p: any) {
   console.log(`Seeding product: ${p.name}`);
 
   // 1) Create the Product
-  const product = await prisma.product.create({
+  const product = await (prisma.product.create as any)({
     data: {
       // Use provided id if present, otherwise generate a stable UUID
       id: p.id ?? randomUUID(),
@@ -542,14 +542,13 @@ async function seedProduct(p: any) {
       brand: p.brand ?? null,
       thumbnailUrl: p.thumbnailUrl ?? null,
       imageUrl: p.imageUrl ?? null,
-      updatedAt: new Date(),
     },
   });
 
   // 2) Create Listings
   if (Array.isArray(p.listings)) {
     for (const l of p.listings) {
-      await prisma.listing.create({
+      await (prisma.listing.create as any)({
         data: {
           id: l.id ?? undefined,
           productId: product.id,
@@ -589,7 +588,6 @@ async function seedProduct(p: any) {
           rating: typeof l.rating === "number" ? l.rating : null,
           reviewCount:
             typeof l.reviewCount === "number" ? l.reviewCount : null,
-          updatedAt: new Date(),
         },
       });
     }

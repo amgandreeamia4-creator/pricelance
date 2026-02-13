@@ -1,4 +1,3 @@
-// @ts-nocheck
 // src/app/api/admin/products/route.ts
 // Admin API for listing and creating products (no auth for internal use)
 
@@ -58,7 +57,7 @@ export async function GET(req: NextRequest) {
       brand: p.brand,
       category: p.category,
       imageUrl: p.imageUrl,
-      listingsCount: p._count.Listing,
+      listingsCount: p._count.listings,
     }));
 
     return NextResponse.json({
@@ -112,7 +111,7 @@ export async function POST(req: NextRequest) {
     const imageUrl =
       typeof body.imageUrl === "string" ? body.imageUrl.trim() || null : null;
 
-    const product = await prisma.product.create({
+    const product = await (prisma.product.create as any)({
       data: {
         id: randomUUID(),
         name,
@@ -120,7 +119,6 @@ export async function POST(req: NextRequest) {
         brand,
         category,
         imageUrl,
-        updatedAt: new Date(),
       },
     });
 

@@ -118,7 +118,6 @@ export async function POST(req: NextRequest) {
         countryCode,
         source: "manual", // Mark as manually created via admin UI
         priceLastSeenAt: new Date(),
-        updatedAt: new Date(),
       },
     });
 

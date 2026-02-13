@@ -1,4 +1,3 @@
-// @ts-nocheck
 // src/app/api/internal/catalog-stats/route.ts
 
 import { NextRequest, NextResponse } from "next/server";
@@ -88,7 +87,7 @@ export async function GET(req: NextRequest) {
 
       entry.productCount += 1;
 
-      for (const l of p.Listing) {
+      for (const l of p.listings) {
         const price = l.price;
         if (typeof price === "number" && !Number.isNaN(price)) {
           entry.listingCount += 1;
@@ -108,7 +107,7 @@ export async function GET(req: NextRequest) {
         };
 
       providerStats.productCount += 1;
-      providerStats.listingCount += p.Listing.length;
+      providerStats.listingCount += p.listings.length;
 
       providerMap.set(provider, providerStats);
     }

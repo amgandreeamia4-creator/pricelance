@@ -1,4 +1,3 @@
-// @ts-nocheck
 // src/app/api/admin/recategorize-manuka/route.ts
 // Admin-only helper to recategorize existing Manuka products
 
@@ -81,7 +80,6 @@ export async function POST(req: NextRequest) {
             where: { id: product.id },
             data: { 
               category: inferredCategory,
-              updatedAt: new Date(),
             },
           });
 

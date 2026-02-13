@@ -41,6 +41,28 @@ type Props = {
   hasProductSelected: boolean;
 };
 
+// Custom tooltip component - defined outside to avoid recreation on each render
+const CustomTooltip = ({ active, payload }: any) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    return (
+      <div className="rounded-lg border border-slate-200 bg-white p-2 shadow-lg">
+        <p className="text-xs font-medium text-slate-900">{data.formattedDate}</p>
+        <p className="text-xs text-slate-600">
+          {data.displayPrice} {data.currency}
+        </p>
+        {data.storeName && (
+          <p className="text-xs text-slate-500">{data.storeName}</p>
+        )}
+        {data.isSynthetic && (
+          <p className="text-xs text-blue-600">Current price</p>
+        )}
+      </div>
+    );
+  }
+  return null;
+};
+
 export default function PriceTrendChart({ points, trend, isLoading, error, hasProductSelected }: Props) {
   const hasData = Array.isArray(points) && points.length > 0;
 
@@ -67,28 +89,6 @@ export default function PriceTrendChart({ points, trend, isLoading, error, hasPr
       };
     });
   }, [points, hasData]);
-
-  // Custom tooltip for better UX
-  const CustomTooltip = ({ active, payload }: any) => {
-    if (active && payload && payload.length) {
-      const data = payload[0].payload;
-      return (
-        <div className="rounded-lg border border-slate-200 bg-white p-2 shadow-lg">
-          <p className="text-xs font-medium text-slate-900">{data.formattedDate}</p>
-          <p className="text-xs text-slate-600">
-            {data.displayPrice} {data.currency}
-          </p>
-          {data.storeName && (
-            <p className="text-xs text-slate-500">{data.storeName}</p>
-          )}
-          {data.isSynthetic && (
-            <p className="text-xs text-blue-600">Current price</p>
-          )}
-        </div>
-      );
-    }
-    return null;
-  };
 
   // Format trend summary
   const getTrendSummary = () => {

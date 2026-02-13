@@ -134,6 +134,8 @@ async function upsertListing(
   row: ProfitshareRow,
   affiliateProvider?: string,
   affiliateProgram?: string,
+  merchantId?: string,
+  merchantFeedId?: string,
 ): Promise<{ isNew: boolean; hasListing: boolean }> {
   const inStock = parseAvailability(row.availability);
 
@@ -158,6 +160,8 @@ async function upsertListing(
     inStock,
     ...(affiliateProvider && { affiliateProvider }),
     ...(affiliateProgram && { affiliateProgram }),
+    ...(merchantId && { merchantId }),
+    ...(merchantFeedId && { merchantFeedId }),
   };
 
   if (existing) {
@@ -187,6 +191,8 @@ async function processBatch(
   rows: ProfitshareRow[],
   affiliateMetadata: { provider?: string; program?: string }[],
   startIdx: number,
+  merchantId?: string,
+  merchantFeedId?: string,
 ): Promise<{
   createdProducts: number;
   updatedProducts: number;
@@ -222,6 +228,8 @@ async function processBatch(
         row,
         metadata.provider,
         metadata.program,
+        merchantId,
+        merchantFeedId,
       );
       if (hasListing) {
         if (isNewListing) createdListings++;
@@ -281,6 +289,21 @@ export async function POST(req: NextRequest) {
     const provider = isValidProvider(providerParam)
       ? providerParam
       : "profitshare";
+
+    const merchantFeedId = formData.get("merchantFeedId") as string | null;
+    let merchantId: string | undefined = undefined;
+
+    if (merchantFeedId) {
+      const feed = await (prisma as any).merchantFeed.findUnique({
+        where: { id: merchantFeedId },
+        select: { merchantId: true },
+      });
+      if (feed) {
+        merchantId = feed.merchantId;
+      } else {
+        console.warn(`[import-csv] MerchantFeed not found: ${merchantFeedId}`);
+      }
+    }
 
     console.log(
       "[import-csv] Provider selection - param:",
@@ -464,6 +487,8 @@ export async function POST(req: NextRequest) {
         affiliateProgram: "2performant_ro",
         network: "TWOPERFORMANT",
         startRowNumber: 2,
+        merchantId,
+        merchantFeedId: merchantFeedId || undefined,
       });
 
       const processedRows =
@@ -590,7 +615,13 @@ export async function POST(req: NextRequest) {
     for (let i = 0; i < limitedRows.length; i += BATCH_SIZE) {
       const batch = limitedRows.slice(i, i + BATCH_SIZE);
       const batchMetadata = limitedMetadata.slice(i, i + BATCH_SIZE);
-      const batchResult = await processBatch(batch, batchMetadata, i);
+      const batchResult = await processBatch(
+        batch,
+        batchMetadata,
+        i,
+        merchantId,
+        merchantFeedId || undefined
+      );
 
       createdProducts += batchResult.createdProducts;
       updatedProducts += batchResult.updatedProducts;

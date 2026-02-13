@@ -1,4 +1,3 @@
-// @ts-nocheck
 // src/app/admin/system-check/page.tsx
 // Admin system health dashboard.
 // Auth is handled by middleware (HTTP Basic Auth in production).
@@ -335,8 +334,8 @@ async function fetchCategoryCoverage(): Promise<CategoryCoverageRow[]> {
       let withMultipleListings = 0;
 
       for (const p of products) {
-        const listingCount = Array.isArray(p.Listing)
-          ? p.Listing.length
+        const listingCount = Array.isArray(p.listings)
+          ? p.listings.length
           : 0;
         if (listingCount >= 1) withListings++;
         if (listingCount >= 2) withMultipleListings++;

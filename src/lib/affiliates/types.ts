@@ -25,6 +25,8 @@ export type NormalizedListing = {
   inStock?: boolean;
   countryCode?: string;
   source?: "sheet" | "affiliate";
+  merchantId?: string;
+  merchantFeedId?: string;
 };
 
 export interface AffiliateAdapter {

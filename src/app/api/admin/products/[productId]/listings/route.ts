@@ -223,7 +223,6 @@ export async function POST(req: NextRequest, context: RouteContext) {
         countryCode,
         storeLogoUrl,
         priceLastSeenAt: new Date(),
-        updatedAt: new Date(),
       },
     });
 

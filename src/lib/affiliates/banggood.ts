@@ -9,7 +9,7 @@ const BANGGOOD_APP_SECRET = process.env.BANGGOOD_APP_SECRET;
 
 if (process.env.NODE_ENV !== "production") {
   if (!BANGGOOD_APP_KEY || !BANGGOOD_APP_SECRET) {
-    // eslint-disable-next-line no-console
+     
     console.warn(
       "[Banggood] BANGGOOD_APP_KEY / BANGGOOD_APP_SECRET are not set. Banggood import will fail until they are configured."
     );

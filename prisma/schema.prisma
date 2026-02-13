@@ -67,7 +67,7 @@ model Listing {
   rating                Float?
   reviewCount           Int?
   createdAt             DateTime      @default(now())
-  updatedAt             DateTime
+  updatedAt             DateTime      @updatedAt
   countryCode           String?
   affiliateProgram      String?
   affiliateProvider     String?
@@ -75,6 +75,13 @@ model Listing {
   source                ListingSource @default(seed)
   priceLastSeenAt       DateTime?     @db.Timestamptz(6)
   Product               Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
+  merchantId            String?
+  merchant              Merchant?     @relation(fields: [merchantId], references: [id])
+  merchantFeedId        String?
+  merchantFeed          MerchantFeed? @relation(fields: [merchantFeedId], references: [id])
+
+  @@index([merchantId])
+  @@index([merchantFeedId])
 }
 
 model Product {
@@ -88,7 +95,7 @@ model Product {
   imageUrl            String?
   thumbnailUrl        String?
   createdAt           DateTime              @default(now())
-  updatedAt           DateTime
+  updatedAt           DateTime              @updatedAt
   gtin                String?
   source              String?
   externalId          String?
@@ -128,12 +135,29 @@ model SearchLog {
 model Merchant {
   id          String   @id
   storeName   String
+  name        String?
   website     String?
+  domain      String?
+  logoUrl     String?
   country     String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   users       MerchantUser[]
   feedRuns    MerchantFeedRun[]
+  feeds       MerchantFeed[]
+  listings    Listing[]
+}
+
+model MerchantFeed {
+  id          String   @id
+  merchantId  String
+  merchant    Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  name        String
+  sourceType  String   // e.g. 'csv', 'affiliate-api', 'manual'
+  sourceSlug  String   // e.g. 'profitshare', 'twoPerformant'
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  listings    Listing[]
 }
 
 model MerchantUser {

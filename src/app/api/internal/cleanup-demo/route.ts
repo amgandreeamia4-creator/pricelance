@@ -1,4 +1,3 @@
-// @ts-nocheck
 // src/app/api/internal/cleanup-demo/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";

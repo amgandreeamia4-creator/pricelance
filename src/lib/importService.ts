@@ -288,6 +288,14 @@ export interface ImportOptions {
    * NOTE: Currently kept only in options; Listing model does not yet have `network`.
    */
   network?: string;
+  /**
+   * Merchant ID to associate with the listings.
+   */
+  merchantId?: string;
+  /**
+   * Merchant Feed ID to associate with the listings.
+   */
+  merchantFeedId?: string;
 }
 
 function isValidAbsoluteUrl(url: string): boolean {
@@ -374,7 +382,6 @@ async function findOrCreateProduct(
       name: productTitle,
       brand: finalBrand,
       category: normalizedCategory || null,
-      subcategory: normalizedSubcategory || null,
       gtin: normalizedGtin || null,
     },
   });
@@ -444,13 +451,15 @@ export async function importNormalizedListings(
 
   if (!rows.length) return summary;
 
-  const {
+    const {
     defaultCountryCode,
     startRowNumber = 2,
     validateUrls = false,
     urlTimeoutMs = 4000,
     affiliateProvider,
     affiliateProgram,
+    merchantId,
+    merchantFeedId,
   } = options;
 
   // Cache product lookups by GTIN or brand+title (case-insensitive)
@@ -679,6 +688,8 @@ export async function importNormalizedListings(
             imageUrl, // Update imageUrl if provided
             ...(affiliateProvider && { affiliateProvider }),
             ...(affiliateProgram && { affiliateProgram }),
+            ...(merchantId && { merchantId }),
+            ...(merchantFeedId && { merchantFeedId }),
           },
         });
         summary.listingsUpdated++;
@@ -717,6 +728,8 @@ export async function importNormalizedListings(
             imageUrl, // Include imageUrl in new listings
             ...(affiliateProvider && { affiliateProvider }),
             ...(affiliateProgram && { affiliateProgram }),
+            ...(merchantId && { merchantId }),
+            ...(merchantFeedId && { merchantFeedId }),
           },
         });
         summary.listingsCreated++;

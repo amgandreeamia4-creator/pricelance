@@ -32,13 +32,80 @@ type ProductResponse = {
   listings: ListingResponse[];
 };
 
+// Try to extract a human-friendly domain from a URL
+function extractDomain(url: string | null | undefined): string | null {
+  if (!url) return null;
+  try {
+    const u = new URL(url);
+    const host = u.hostname.replace(/^www\./i, "");
+    return host;
+  } catch {
+    return null;
+  }
+}
+
+// Given a listing, try to infer a nice store name
+function deriveStoreName(listing: any): string | null {
+  // 1) Existing storeName in DB wins
+  if (listing.storeName && typeof listing.storeName === "string") {
+    return listing.storeName;
+  }
+
+  // 2) Fallback: derive from URL domain
+  const url = listing.url ?? listing.productUrl ?? listing.affiliateUrl;
+  const domain = extractDomain(url);
+  if (domain) return domain;
+
+  return null;
+}
+
+// Compute best (lowest) price from a list of listings
+function computeBestPrice(listings: { price: number | null }[]): number | null {
+  let best = Infinity;
+  for (const l of listings) {
+    if (typeof l.price === "number" && !Number.isNaN(l.price)) {
+      if (l.price < best) best = l.price;
+    }
+  }
+  return best === Infinity ? null : best;
+}
+
+// Normalize various DB price types (number, string, Decimal) into a JS number
+function normalizePrice(rawPrice: any): number | null {
+  if (rawPrice === null || rawPrice === undefined) return null;
+
+  let numeric: number;
+
+  if (typeof rawPrice === "number") {
+    numeric = rawPrice;
+  } else if (typeof rawPrice === "object" && rawPrice !== null) {
+    // Handle Prisma.Decimal or similar objects with toNumber()
+    const maybeDecimal = rawPrice as {
+      toNumber?: () => number;
+      toString?: () => string;
+    };
+    if (typeof maybeDecimal.toNumber === "function") {
+      numeric = maybeDecimal.toNumber();
+    } else if (typeof maybeDecimal.toString === "function") {
+      numeric = Number(maybeDecimal.toString());
+    } else {
+      numeric = Number(rawPrice as any);
+    }
+  } else {
+    // string or other primitive
+    numeric = Number(rawPrice);
+  }
+
+  return Number.isFinite(numeric) ? numeric : null;
+}
+
 // ---------------------------------------------------------------------
 // Helper for sorting by lowest price
 // ---------------------------------------------------------------------
 function getBestPrice(product: { listings: { price: number | null }[] }) {
   if (!product.listings || product.listings.length === 0) return Infinity;
   const prices = product.listings.map((l) =>
-    typeof l.price === "number" ? l.price : Infinity
+      typeof l.price === "number" ? l.price : Infinity,
   );
   return Math.min(...prices);
 }
@@ -127,21 +194,58 @@ function isRealPhone(product: ProductResponse): boolean {
   const category = (product.category || "").toLowerCase();
 
   const strongCategoryHints = ["telefon", "smartphone", "telefon mobil"];
-  const strongCategory = strongCategoryHints.some((kw) =>
-    category.includes(kw)
-  );
+  const strongCategory = strongCategoryHints.some((kw) => category.includes(kw));
 
   const hasNegative = PHONE_NEGATIVE_KEYWORDS.some((kw) =>
-    text.includes(kw.toLowerCase())
+      text.includes(kw.toLowerCase()),
   );
   if (hasNegative) return false;
 
   const hasPositive = PHONE_POSITIVE_KEYWORDS.some((kw) =>
-    text.includes(kw.toLowerCase())
+      text.includes(kw.toLowerCase()),
   );
 
   if (strongCategory) return true;
   return hasPositive;
+}
+
+const LAPTOP_NEGATIVE_KEYWORDS = [
+  // Power / charging
+  "baterie",
+  "baterii",
+  "battery",
+  "power bank",
+  "powerbank",
+  "încărcător",
+  "incarcator",
+  "charger",
+  "alimentator",
+  // Adapters / docks
+  "adaptor",
+  "adapter",
+  "dock",
+  "docking",
+  "station",
+  // Generic accessories / bags
+  "husă",
+  "husa",
+  "case",
+  "geantă",
+  "geanta",
+  "bag",
+  "backpack",
+];
+
+function isRealLaptop(product: ProductResponse): boolean {
+  const text = `${product.name || ""} ${product.displayName || ""}`.toLowerCase();
+
+  const hasNegative = LAPTOP_NEGATIVE_KEYWORDS.some((kw) =>
+      text.includes(kw.toLowerCase()),
+  );
+
+  // For now we only drop clear negatives (accessories).
+  // Everything else stays in the Laptops category.
+  return !hasNegative;
 }
 
 // ---------------------------------------------------------------------
@@ -156,22 +260,22 @@ export async function GET(req: NextRequest) {
     const categoryKeyParam = searchParams.get("category") as string | null;
     const rawCategorySlug = searchParams.get("categorySlug") as string | null;
     const subcategory = searchParams.get("subcategory") ?? undefined;
-    
+
     // Normalize category: support both legacy 'category' and new 'categorySlug' params
     let effectiveCategoryLabel: CanonicalCategoryLabel | null = null;
-    
+
     if (rawCategorySlug) {
-      // Map slug to canonical label
+      // Map slug to canonical label using single source helper
       const canonicalLabel = dbCategoryFromSlug(rawCategorySlug);
       if (canonicalLabel) {
         effectiveCategoryLabel = canonicalLabel;
-        console.log('[api/products] Resolved categorySlug to label:', {
+        console.log("[api/products] Resolved categorySlug to label:", {
           slug: rawCategorySlug,
           resolvedLabel: canonicalLabel,
         });
       } else {
         // Unknown slug - return empty results
-        console.warn('[api/products] Unknown categorySlug:', rawCategorySlug);
+        console.warn("[api/products] Unknown categorySlug:", rawCategorySlug);
         return NextResponse.json({
           products: [],
           total: 0,
@@ -182,34 +286,33 @@ export async function GET(req: NextRequest) {
     } else if (categoryKeyParam) {
       // Legacy: direct category label provided
       const node = getCategoryByLabel(categoryKeyParam);
-      if (node) {
-        effectiveCategoryLabel = node.label;
-      }
+      if (node) effectiveCategoryLabel = node.label;
     }
-    
+
     const store = searchParams.get("store") || undefined;
     const sort = searchParams.get("sort") || "relevance"; // relevance | price-asc | price-desc
     const pageParam = searchParams.get("page") ?? "1";
-    const perPageParam = searchParams.get("perPage") ?? searchParams.get("limit") ?? "24";
+    const perPageParam =
+        searchParams.get("perPage") ?? searchParams.get("limit") ?? "24";
     const locationParam = searchParams.get("location") || undefined;
 
     const page = Math.max(
-      1,
-      Number.isNaN(Number(pageParam)) ? 1 : parseInt(pageParam, 10)
+        1,
+        Number.isNaN(Number(pageParam)) ? 1 : parseInt(pageParam, 10),
     );
     const perPageRaw = Number.isNaN(Number(perPageParam))
-      ? 24
-      : parseInt(perPageParam, 10);
+        ? 24
+        : parseInt(perPageParam, 10);
     const perPage = Math.min(Math.max(perPageRaw, 1), 50);
     const skip = (page - 1) * perPage;
 
-    const isPhonesCategory = effectiveCategoryLabel === "Phones";
-
-    // Build Prisma where object
-    const where: any = { AND: [] as any[] };
+    // ========================================
+    // Step 1: Build productWhere (Product-level filters only)
+    // ========================================
+    const productWhereAndClauses: any[] = [];
 
     if (query) {
-      where.AND.push({
+      productWhereAndClauses.push({
         OR: [
           { name: { contains: query, mode: "insensitive" } },
           { displayName: { contains: query, mode: "insensitive" } },
@@ -218,98 +321,113 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    // Filter by exact canonical category label
     if (effectiveCategoryLabel) {
-      where.AND.push({
-        category: { equals: effectiveCategoryLabel, mode: "insensitive" },
+      // EXACT category equality
+      productWhereAndClauses.push({
+        category: { equals: effectiveCategoryLabel },
       });
     }
 
     if (subcategory) {
-      where.subcategory = subcategory;
+      productWhereAndClauses.push({ subcategory });
     }
 
-    const effectiveWhere = where.AND.length ? where : undefined;
+    const productWhere = productWhereAndClauses.length
+        ? { AND: productWhereAndClauses }
+        : undefined;
 
-    // For Phones, pull more rows and filter in memory so phones aren't drowned by cases
-    const take = isPhonesCategory ? 300 : perPage;
-    const effectiveSkip = isPhonesCategory ? 0 : skip;
-
-    // 1) Fetch products ONLY (no relations)
-    const dbProducts = (await prisma.product.findMany({
-      where: effectiveWhere,
-      skip: effectiveSkip,
-      take,
-    })) as any[];
-
-    if (dbProducts.length === 0) {
-      return NextResponse.json({
-        products: [],
-        total: 0,
-        page,
-        perPage,
-      });
-    }
-
-    // 2) Fetch listings separately, linked by productId and optionally filtered by store/location
-    const productIds = dbProducts.map((p) => p.id);
-
-    // Read user location from cookie (opt-in location preference)
-    const userLocation = (await cookies()).get('userLocation')?.value?.toLowerCase() || undefined;
-    const effectiveLocation = locationParam || userLocation;
-
-    const listingsWhere: any = {
-      productId: { in: productIds },
-      // Always filter for in-stock items
-      inStock: true,
-    };
+    // ========================================
+    // Step 2: Build listingWhere (Listing-level filters only)
+    // ========================================
+    // IMPORTANT: we intentionally do NOT force `inStock: true` here,
+    // because many legacy/manual listings have inStock = null/false.
+    // Requiring true was wiping out valid offers on the homepage.
+    const listingWhere: any = {};
 
     if (store) {
-      listingsWhere.storeId = store;
+      listingWhere.storeId = store;
     }
+
+    // Read user location from cookie (opt-in location preference)
+    const userLocation =
+      (await cookies()).get("userLocation")?.value?.toLowerCase() || undefined;
+    const effectiveLocation = locationParam || userLocation;
 
     // Location filtering: opt-in only (if location set, prioritize local but show international)
     if (effectiveLocation && effectiveLocation.trim()) {
-      listingsWhere.OR = [
-        { countryCode: { equals: effectiveLocation, mode: 'insensitive' } },  // Local
-        { countryCode: null },                                            // Unknown location
-        { countryCode: { not: effectiveLocation } }                        // International
+      listingWhere.OR = [
+        {
+          countryCode: { equals: effectiveLocation, mode: "insensitive" }, // Local
+        },
+        { countryCode: null }, // Unknown location
+        { countryCode: { not: effectiveLocation } }, // International
       ];
     }
     // If no location set: no countryCode filter (show all worldwide)
 
-    const dbListings = (await prisma.listing.findMany({
-      where: listingsWhere,
+    // ========================================
+    // Step 3: Count total products using productWhere ONLY
+    // ========================================
+    const total = await prisma.product.count({ where: productWhere });
+
+    // ========================================
+    // Step 4: Fetch products using productWhere, with listings filtered via include
+    // ========================================
+    const dbProducts = (await prisma.product.findMany({
+      where: productWhere,
+      skip: skip,
+      take: perPage,
+      include: {
+        listings: {
+          where: listingWhere,
+          orderBy: [{ price: "asc" }], // Lowest price first
+        },
+      },
     })) as any[];
 
-    // 3) Group listings by productId
-    const listingsByProductId = new Map<string, any[]>();
-
-    for (const l of dbListings) {
-      const pid = l.productId as string;
-      const existing = listingsByProductId.get(pid);
-      if (existing) {
-        existing.push(l);
-      } else {
-        listingsByProductId.set(pid, [l]);
-      }
-    }
-
-    // 4) Filter listings based on disabled affiliate networks
+    // ========================================
+    // Step 5: Filter listings based on disabled affiliate networks
+    // ========================================
+    // TEMP: show ALL listings (affiliate + non-affiliate) on the homepage.
+    // We rely on the AFFILIATE badge (based on `affiliateProvider`) to
+    // distinguish affiliate offers. Disabled-network filtering will be
+    // reintroduced later in a more controlled way.
     const filterListingsForVisibility = (listings: any[]) => {
-      return listings.filter((l) =>
-        !isListingFromDisabledNetwork({
-          affiliateProvider: l.affiliateProvider,
-          affiliateProgram: l.affiliateProgram,
-          url: l.url,
-        })
-      );
+      return listings;
     };
 
-    // 5) Map products + listings into ProductResponse[]
+    // ========================================
+    // Step 6: Map to ProductResponse[] (includes are already filtered)
+    // ========================================
     const products: ProductResponse[] = dbProducts.map((p: any) => {
-      const rawListings = listingsByProductId.get(p.id) ?? [];
-      const visibleListings = filterListingsForVisibility(rawListings);
+      const visibleListingsRaw = filterListingsForVisibility(p.listings ?? []);
+
+      // Normalize listings: clean storeName, url, price
+      const normalizedListings: ListingResponse[] = visibleListingsRaw.map(
+          (l: any) => {
+            const url = l.url ?? l.productUrl ?? l.affiliateUrl ?? null;
+            const inferredStoreName = deriveStoreName(l);
+
+            return {
+              id: l.id,
+              storeId: l.storeId ?? null,
+              storeName: inferredStoreName ?? l.storeName ?? null,
+              price: normalizePrice(l.price),
+              currency: l.currency ?? null,
+              url,
+              affiliateProvider: l.affiliateProvider ?? null,
+              source: l.source ?? null,
+              fastDelivery: l.fastDelivery ?? null,
+              imageUrl: l.imageUrl ?? null,
+            };
+          },
+      );
+
+      // You can compute best price / offer count if needed later
+      const bestPrice = computeBestPrice(normalizedListings);
+      const offerCount = normalizedListings.length;
+      void bestPrice;
+      void offerCount;
 
       return {
         id: p.id,
@@ -318,70 +436,56 @@ export async function GET(req: NextRequest) {
         brand: p.brand,
         imageUrl: p.imageUrl,
         category: p.category ?? null,
-        listings: visibleListings.map(
-          (l: any): ListingResponse => ({
-            id: l.id,
-            storeId: l.storeId ?? null,
-            storeName: l.storeName ?? null,
-            price: l.price,
-            currency: l.currency ?? null,
-            url: l.url ?? l.productUrl ?? l.affiliateUrl ?? null,
-            affiliateProvider: l.affiliateProvider ?? null,
-            source: l.source ?? null,
-            fastDelivery: l.fastDelivery ?? null,
-            imageUrl: l.imageUrl ?? null,
-          })
-        ),
+        listings: normalizedListings,
       };
     });
 
-    // 6) Keep only products that actually have visible offers
-    let visibleProducts: ProductResponse[] = products.filter(
-      (p) => p.listings.length > 0
-    );
+    // Optional category-specific filtering to remove obvious accessories.
+    // Use the slug from the query for simple branching.
+    let filteredProducts: ProductResponse[] = products;
 
-    // 7) Sorting based on best price
+    if (rawCategorySlug === "phones") {
+      filteredProducts = filteredProducts.filter((p) => isRealPhone(p));
+    } else if (rawCategorySlug === "laptops") {
+      filteredProducts = filteredProducts.filter((p) => isRealLaptop(p));
+    }
+
+    // ========================================
+    // Step 7: Sort by price if requested
+    // ========================================
+    let sortedProducts: ProductResponse[] = filteredProducts;
+
     if (sort === "price-asc") {
-      visibleProducts = [...visibleProducts].sort(
-        (a, b) => getBestPrice(a) - getBestPrice(b)
+      sortedProducts = [...filteredProducts].sort(
+          (a, b) => getBestPrice(a) - getBestPrice(b),
       );
     } else if (sort === "price-desc") {
-      visibleProducts = [...visibleProducts].sort(
-        (a, b) => getBestPrice(b) - getBestPrice(a)
+      sortedProducts = [...filteredProducts].sort(
+          (a, b) => getBestPrice(b) - getBestPrice(a),
       );
     }
-    // else "relevance": keep order from DB
+    // else "relevance": keep order from DB / current ordering
 
-    // -----------------------------------------------------------------
-    // SPECIAL CASE: Phones category – try to show REAL phones first,
-    // BUT NEVER return 0 because of our filter.
-    // -----------------------------------------------------------------
-    if (isPhonesCategory) {
-      const phoneOnly = visibleProducts.filter(isRealPhone);
-
-      if (phoneOnly.length >= perPage) {
-        visibleProducts = phoneOnly.slice(0, perPage);
-      } else if (phoneOnly.length > 0) {
-        const leftovers = visibleProducts.filter((p) => !isRealPhone(p));
-        const needed = Math.max(0, perPage - phoneOnly.length);
-        visibleProducts = phoneOnly.concat(leftovers.slice(0, needed));
-      } else {
-        // 0 detected phones → FALL BACK, do NOT empty the list
-        // visibleProducts stays as-is (cases + misc)
-      }
-    }
+    // ========================================
+    // Step 8: Debug log and return
+    // ========================================
+    console.log("[api/products]", {
+      categorySlug: rawCategorySlug,
+      total,
+      productsCount: sortedProducts.length,
+    });
 
     return NextResponse.json({
-      products: visibleProducts,
-      total: visibleProducts.length,
+      products: sortedProducts,
+      total,
       page,
       perPage,
     });
   } catch (err) {
     console.error("[GET /api/products] Error:", err);
     return NextResponse.json(
-      { products: [], error: "Internal server error" },
-      { status: 500 }
+        { products: [], error: "Internal server error" },
+        { status: 500 },
     );
   }
 }

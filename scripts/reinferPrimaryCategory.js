@@ -1,8 +1,8 @@
 // scripts/reinferPrimaryCategory.js
 
-require('dotenv').config();
+import 'dotenv/config.js';
 
-const { PrismaClient } = require('@prisma/client');
+import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 const CATEGORY_RULES = [

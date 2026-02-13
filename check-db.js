@@ -1,5 +1,5 @@
 // Check database connection and data
-const { PrismaClient } = require('@prisma/client');
+import { PrismaClient } from '@prisma/client';
 
 const checkDB = async () => {
   const prisma = new PrismaClient();

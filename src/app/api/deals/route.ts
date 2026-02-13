@@ -1,4 +1,3 @@
-// @ts-nocheck
 // src/app/api/deals/route.ts
 
 import { NextRequest, NextResponse } from "next/server";
@@ -101,10 +100,10 @@ export async function GET(req: NextRequest) {
 
     for (const p of products) {
       // Require at least one listing
-      if (!p.Listing || p.Listing.length === 0) continue;
+      if (!p.listings || p.listings.length === 0) continue;
 
       // Filter out disabled networks from listings
-      const filteredListings = (p.Listing as any[]).filter((l: any) => {
+      const filteredListings = (p.listings as any[]).filter((l: any) => {
         // Additional safety filter: exclude disabled networks using affiliate fields
         if (shouldHideListing(l)) {
           return false;

@@ -19,7 +19,7 @@ export type StoreMeta = {
   logoUrl?: string;
 };
 
-const STORE_REGISTRY: Record<StoreId, StoreMeta> = {
+export const STORE_REGISTRY: Record<StoreId, StoreMeta> = {
   emag: {
     id: "emag",
     name: "eMAG",
