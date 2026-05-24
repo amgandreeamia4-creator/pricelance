@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import ContactForm from "@/components/contact/ContactForm";
 
 export const metadata: Metadata = {
   title: "Contact PriceLance",
@@ -14,18 +15,10 @@ export default function ContactPage() {
         </h1>
         <p className="text-slate-700 dark:text-slate-300 mb-4">
           If you have questions, feedback, or want to report an issue with the data shown
-          on PriceLance, we&apos;d be happy to hear from you.
+          on PriceLance, we&apos;d be happy to hear from you — use the form below or email us.
         </p>
-        <p className="text-slate-700 dark:text-slate-300">
-          You can reach us at{" "}
-          <a
-            href="mailto:support@pricelance.com"
-            className="text-blue-600 hover:underline"
-          >
-            support@pricelance.com
-          </a>
-          .
-        </p>
+
+        <ContactForm />
       </div>
     </main>
   );

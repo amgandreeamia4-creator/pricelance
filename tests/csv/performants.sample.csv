@@ -1,0 +1,4 @@
+Advertiser name,Category,Manufacturer,Product code,Product name,Product descript,Product affiliate link,Product link,Product picture,Price without VAT,Price with VAT,Price with discou(nt),Currency
+emag.ro,telefoane,BrandA,PRD-001,"Laptop Model C","Desc","","https://emag.ro/product-c","https://emag.ro/img-c.jpg",,,1999.99,RON
+altex.ro,telefoane,BrandB,PRD-002,"Phone Model D","Desc","https://altex.ro/aff-d","https://altex.ro/product-d","https://altex.ro/img-d.jpg",,899.5,,RON
+pcgarage.ro,audio,BrandC,PRD-003,"Speaker Z","Desc","","https://pcgarage.ro/product-z",,149.99,,RON

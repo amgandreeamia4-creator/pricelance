@@ -20,6 +20,7 @@
 import { BaseAffiliateAdapter } from './base';
 import type { NormalizedListing } from './types';
 import { parseProfitshareCsv, parseAvailability } from './profitshare';
+import { normalizeCsvRow } from '@/lib/canonical';
 
 export class ProfitshareAdapter extends BaseAffiliateAdapter {
   id = 'profitshare';
@@ -51,41 +52,42 @@ export class ProfitshareAdapter extends BaseAffiliateAdapter {
       const rowNumber = i + 2; // +2 because row 1 is header, and we're 1-indexed
 
       try {
-        // Extract store name from URL for store_id
-        const storeId = this.extractStoreId(row.storeName);
+        const norm = normalizeCsvRow(row as any, 'profitshare');
+        if (!norm.ok) {
+          console.error(`[ProfitshareAdapter] Normalization failed row ${rowNumber}: ${norm.error}`);
+          continue;
+        }
 
-        // Parse availability
-        const inStock = parseAvailability(row.availability);
+        const c = norm.canonical;
 
-        // Create normalized listing
+        // If brand missing, use adapter heuristic
+        const brand = c.brand ?? this.extractBrand(c.productName, c.category ?? undefined);
+
+        const storeId = this.extractStoreId(c.listing.storeName);
+
         const normalizedListing: NormalizedListing = {
-          // Product fields (required)
-          productTitle: row.name.trim(),
-          brand: this.extractBrand(row.name, row.categoryRaw),
-          category: this.normalizeCategory(row.categoryRaw),
-          gtin: row.gtin?.trim() || undefined,
+          productTitle: c.productName,
+          brand,
+          category: this.normalizeCategory(c.category ?? undefined),
+          gtin: c.externalId ?? undefined,
 
-          // Listing fields (optional for product-only rows)
           storeId,
-          storeName: row.storeName.trim(),
-          url: row.affiliateUrl || row.productUrl,
-          price: row.price,
-          currency: row.currency.toUpperCase(),
+          storeName: c.listing.storeName,
+          url: c.listing.url,
+          price: c.listing.price,
+          currency: c.listing.currency.toUpperCase(),
 
-          // Optional listing metadata
-          deliveryDays: undefined, // Profitshare doesn't provide this
-          fastDelivery: undefined, // Profitshare doesn't provide this
-          inStock,
-          countryCode: 'RO', // Profitshare is Romania-focused
+          deliveryDays: undefined,
+          fastDelivery: undefined,
+          inStock: c.listing.inStock ?? true,
+          countryCode: 'RO',
 
-          // Source tracking
           source: 'affiliate',
         };
 
         normalized.push(normalizedListing);
       } catch (error) {
         console.error(`[ProfitshareAdapter] Error processing row ${rowNumber}:`, error);
-        // Continue processing other rows
       }
     }
 

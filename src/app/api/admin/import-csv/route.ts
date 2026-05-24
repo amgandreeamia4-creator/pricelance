@@ -13,6 +13,7 @@ import {
   parseAvailability,
   type ProfitshareRow,
 } from "@/lib/affiliates/profitshare";
+import { normalizeCsvRow } from "@/lib/canonical";
 import { isValidProvider } from "@/config/affiliateIngestion";
 import { importNormalizedListings } from "@/lib/importService";
 import { parse } from "csv-parse/sync";
@@ -25,6 +26,28 @@ const MAX_IMPORT_ROWS = 300;
 
 // Use loose typing to avoid TS complaining if schema drifts
 const db: any = prisma;
+
+function buildImportErrorResponse(message: string, status = 400) {
+  const payload = {
+    ok: false,
+    totalRows: 0,
+    processedRows: 0,
+    createdProducts: 0,
+    updatedProducts: 0,
+    createdListings: 0,
+    updatedListings: 0,
+    failedRows: 0,
+    errors: [
+      {
+        rowIndex: 0,
+        reason: message,
+        rawRow: null,
+      },
+    ],
+    warnings: undefined as string[] | undefined,
+  };
+  return NextResponse.json(payload, { status });
+}
 
 // Helper functions for 2Performant CSV processing
 function detectDelimiter(raw: string): string {
@@ -201,6 +224,14 @@ async function processBatch(
   skippedMissingExternalId: number;
   failedRows: number;
   errors: { rowNumber: number; message: string; code: string | null }[];
+  debugErrors: Array<{
+    rowNumber: number;
+    rawRow: ProfitshareRow;
+    transformedData: Record<string, any>;
+    errorMessage: string;
+    errorStack?: string;
+    errorCode?: string | null;
+  }>;
 }> {
   let createdProducts = 0;
   let updatedProducts = 0;
@@ -212,47 +243,80 @@ async function processBatch(
     message: string;
     code: string | null;
   }[] = [];
+  const debugErrors: Array<{
+    rowNumber: number;
+    rawRow: ProfitshareRow;
+    transformedData: Record<string, any>;
+    errorMessage: string;
+    errorStack?: string;
+    errorCode?: string | null;
+  }> = [];
 
   for (let i = 0; i < rows.length; i++) {
     const row = rows[i];
     const metadata = affiliateMetadata[i];
     const rowNum = startIdx + i + 2; // +2 for header + 1-index
 
-    try {
-      const { productId, isNew: isNewProduct } = await findOrCreateProduct(row);
-      if (isNewProduct) createdProducts++;
-      else updatedProducts++;
+    // First normalize the CSV row into canonical shape
+    const norm = normalizeCsvRow(row as any, "profitshare");
+    if (!norm.ok) {
+      failedRows++;
+      errors.push({ rowNumber: rowNum, message: norm.error, code: null });
+      console.error("[import-csv] normalize failed", { provider: "profitshare", rowNumber: rowNum, reason: norm.error, rawRow: row });
+      continue;
+    }
 
-      const { isNew: isNewListing, hasListing } = await upsertListing(
-        productId,
-        row,
-        metadata.provider,
-        metadata.program,
+    try {
+      // Import via canonical pipeline
+      const summary = await importNormalizedListings([norm.canonical], {
+        source: "affiliate",
+        defaultCountryCode: "RO",
+        affiliateProvider: "profitshare",
+        affiliateProgram: "profitshare_ro",
+        startRowNumber: rowNum,
         merchantId,
         merchantFeedId,
-      );
-      if (hasListing) {
-        if (isNewListing) createdListings++;
-        else updatedListings++;
+      });
+
+      createdProducts += summary.productsCreated;
+      updatedProducts += summary.productsMatched;
+      createdListings += summary.listingsCreated;
+      updatedListings += summary.listingsUpdated;
+      failedRows += summary.errors.length;
+      errors.push(...summary.errors.map((e) => ({ rowNumber: e.rowNumber, message: e.message, code: null })));
+      for (const de of summary.debugErrors || []) {
+        if (debugErrors.length < 10) debugErrors.push({ rowNumber: de.rowNumber, rawRow: row, transformedData: de.transformedData, errorMessage: de.errorMessage, errorStack: de.errorStack, errorCode: de.errorCode });
       }
     } catch (err: any) {
       failedRows++;
       const message = err instanceof Error ? err.message : String(err);
-      errors.push({
-        rowNumber: rowNum,
-        message,
-        code: err?.code ?? null,
-      });
-      console.error("[import-csv] Row failed", {
-        rowNumber: rowNum,
-        message,
-        rowPreview: {
-          name: row.name,
-          storeName: row.storeName,
-          price: row.price,
-          affiliateProvider: metadata.provider,
-        },
-      });
+      const errorStack = err instanceof Error && err.stack ? err.stack : undefined;
+      const errorCode = err?.code ?? null;
+
+      const transformedData = {
+        productName: row.name,
+        storeName: row.storeName,
+        price: row.price,
+        currency: row.currency,
+        affiliateUrl: row.affiliateUrl,
+        productUrl: row.productUrl,
+        imageUrl: row.imageUrl,
+        category: row.categoryRaw,
+        sku: row.sku,
+        gtin: row.gtin,
+        availability: row.availability,
+        affiliateProvider: metadata.provider,
+        affiliateProgram: metadata.program,
+        merchantId,
+        merchantFeedId,
+      };
+
+      errors.push({ rowNumber: rowNum, message, code: errorCode });
+      if (debugErrors.length < 10) {
+        debugErrors.push({ rowNumber: rowNum, rawRow: row, transformedData, errorMessage: message, errorStack, errorCode });
+      }
+
+      console.error("[import-csv] Row failed", { rowNumber: rowNum, message, errorCode, rawRow: { name: row.name, storeName: row.storeName, price: row.price, affiliateUrl: row.affiliateUrl, category: row.categoryRaw }, transformedData, stack: errorStack });
     }
   }
 
@@ -264,6 +328,7 @@ async function processBatch(
     skippedMissingExternalId: 0,
     failedRows,
     errors,
+    debugErrors,
   };
 }
 
@@ -313,25 +378,16 @@ export async function POST(req: NextRequest) {
     );
 
     if (!file || !(file instanceof File)) {
-      return NextResponse.json(
-        { ok: false, error: "Missing CSV file" },
-        { status: 400 },
-      );
+      return buildImportErrorResponse("Missing CSV file", 400);
     }
 
     if (!file.name.toLowerCase().endsWith(".csv")) {
-      return NextResponse.json(
-        { ok: false, error: "File must be a CSV file" },
-        { status: 400 },
-      );
+      return buildImportErrorResponse("File must be a CSV file", 400);
     }
 
     const content = await file.text();
     if (!content.trim()) {
-      return NextResponse.json(
-        { ok: false, error: "CSV file is empty" },
-        { status: 400 },
-      );
+      return buildImportErrorResponse("CSV file is empty", 400);
     }
 
     // -----------------------------------------------------------------------
@@ -361,8 +417,8 @@ export async function POST(req: NextRequest) {
       console.log(`[import-csv] Parsed ${totalRows} rows with delimiter "${delimiter}"`);
 
       // Validate and extract 2Performant rows
-      let invalidRows = 0;
       const validRows: TwoPerformantImportRow[] = [];
+      const tpErrors: Array<{ rowIndex: number; reason: string; rawRow: any; transformedRow?: any }> = [];
 
       for (const row of normalizedRows) {
         const title = (row["title"] ?? row["product name"] ?? row["name"] ?? "").trim();
@@ -408,7 +464,8 @@ export async function POST(req: NextRequest) {
         const hasRequiredFields = Boolean(title && affCode && price != null && price > 0);
 
         if (!hasRequiredFields) {
-          invalidRows++;
+          const rowIndex = normalizedRows.indexOf(row) + 2;
+          tpErrors.push({ rowIndex, reason: `Missing required fields (title/aff_code/price)`, rawRow: row });
           console.log(`[import-csv] Invalid row - title: "${title}", affCode: "${affCode}", price: ${price}`);
           continue;
         }
@@ -446,11 +503,12 @@ export async function POST(req: NextRequest) {
             updatedProducts: 0,
             createdListings: 0,
             updatedListings: 0,
-            skippedMissingFields: invalidRows,
+            skippedMissingFields: tpErrors.length,
             skippedMissingExternalId: 0,
-            failedRows: invalidRows,
-            failed: invalidRows,
+            failedRows: tpErrors.length,
+            failed: tpErrors.length,
             errors: [],
+            debugErrors: [],
             truncated: isCapped,
             capped: isCapped,
             maxRowsPerImport: MAX_IMPORT_ROWS,
@@ -461,26 +519,21 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      // Convert valid rows to NormalizedListing format
-      const normalizedListings = limitedRows.map((row) => ({
-        productTitle: row.title,
-        brand: detectBrandFromName(row.title) || "Unknown",
-        category: row.categoryRaw || "General",
-        gtin: undefined,
-        storeId: row.storeName?.toLowerCase().replace(/[^a-z0-9\s]/g, "").replace(/\s+/g, "_") || "unknown",
-        storeName: row.storeName || "Unknown",
-        url: row.affCode,
-        price: row.price,
-        currency: row.currency || "RON",
-        imageUrl: row.imageUrls, // Pass the extracted image URL
-        deliveryDays: undefined,
-        fastDelivery: undefined,
-        inStock: true, // Default to true, could be enhanced with availability parsing
-        countryCode: "RO",
-        source: "affiliate" as const,
-      }));
+      // Convert valid rows to CanonicalListingInput via normalizer
+      const canonicalRows = [] as any[];
+      for (let i = 0; i < limitedRows.length; i++) {
+        const r = limitedRows[i];
+        const rowIndex = i + 2;
+        const norm = normalizeCsvRow(r as any, "2performant");
+        if (!norm.ok) {
+          tpErrors.push({ rowIndex, reason: norm.error, rawRow: r });
+          console.error("[import-csv] 2performant normalization failed", { rowIndex, reason: norm.error, rawRow: r });
+          continue;
+        }
+        canonicalRows.push(norm.canonical);
+      }
 
-      const summary = await importNormalizedListings(normalizedListings, {
+      const summary = await importNormalizedListings(canonicalRows, {
         source: "affiliate",
         defaultCountryCode: "RO",
         affiliateProvider: "2performant",
@@ -491,46 +544,60 @@ export async function POST(req: NextRequest) {
         merchantFeedId: merchantFeedId || undefined,
       });
 
-      const processedRows =
-        summary.listingRows + summary.productOnlyRows;
+      const processedRows = summary.listingRows + summary.productOnlyRows;
       const skippedRows = totalRows - processedRows;
-      const failedRows = summary.errors.length;
-      const ok = processedRows > 0;
 
-      const errors = summary.errors.map((e) => ({
-        rowNumber: e.rowNumber,
-        message: e.message,
-        code: null as string | null,
-      }));
+      // Build standardized errors list merging summary.errors and local tpErrors
+      const errorsList: Array<{ rowIndex: number; reason: string; rawRow: any; transformedRow?: any }> = [];
+
+      // start with normalization/validation errors
+      errorsList.push(...tpErrors);
+
+      // then errors from import service
+      for (const e of summary.errors) {
+        const debug = (summary as any).debugErrors?.find((d: any) => d.rowNumber === e.rowNumber);
+        errorsList.push({ rowIndex: e.rowNumber, reason: e.message, rawRow: debug?.rawRow ?? null, transformedRow: debug?.transformedData ?? null });
+      }
+
+      const failedRows = errorsList.length;
+
+      // success rule: fail if any rows failed
+      const ok = failedRows === 0;
 
       const message = isCapped
         ? `Processed first ${limitedRows.length} rows out of ${totalRows}. Split your CSV and re-upload remaining rows.` 
         : null;
 
-      return NextResponse.json(
-        {
-          ok,
-          totalRows,
-          processedRows,
-          skippedRows,
-          skipped: skippedRows,
-          createdProducts: summary.productsCreated,
-          updatedProducts: summary.productsMatched,
-          createdListings: summary.listingsCreated,
-          updatedListings: summary.listingsUpdated,
-          skippedMissingFields: invalidRows,
-          skippedMissingExternalId: 0,
-          failedRows,
-          failed: failedRows,
-          errors,
-          truncated: isCapped,
-          message,
-          capped: isCapped,
-          maxRowsPerImport: MAX_IMPORT_ROWS,
-          provider,
-        },
-        { status: 200 },
-      );
+      // Server-side: log each error in full
+      for (const errItem of errorsList) {
+        console.error("[CSV IMPORT ROW FAILED]", { provider: "2performant", rowIndex: errItem.rowIndex, reason: errItem.reason, rawRow: errItem.rawRow, transformedRow: errItem.transformedRow });
+      }
+
+      const response = {
+        ok,
+        totalRows,
+        processedRows,
+        skippedRows,
+        skipped: skippedRows,
+        createdProducts: summary.productsCreated,
+        updatedProducts: summary.productsMatched,
+        createdListings: summary.listingsCreated,
+        updatedListings: summary.listingsUpdated,
+          skippedMissingFields: tpErrors.length,
+        skippedMissingExternalId: 0,
+        failedRows,
+        errors: errorsList.slice(0, 10),
+        warnings: undefined as string[] | undefined,
+        truncated: isCapped,
+        message,
+        capped: isCapped,
+        maxRowsPerImport: MAX_IMPORT_ROWS,
+        provider,
+      };
+
+      console.log("[CSV IMPORT SUMMARY]", { totalRows, createdListings: summary.listingsCreated, failedRows });
+
+      return NextResponse.json(response, { status: 200 });
     }
 
     // -----------------------------------------------------------------------
@@ -543,19 +610,13 @@ export async function POST(req: NextRequest) {
     } catch (err: any) {
       const message = err instanceof Error ? err.message : String(err);
       console.error("[admin/import-csv] CSV parse error (profitshare):", err);
-      return NextResponse.json(
-        { ok: false, error: `Failed to parse profitshare CSV: ${message}` },
-        { status: 500 },
-      );
+      return buildImportErrorResponse(`Failed to parse profitshare CSV: ${message}`, 500);
     }
 
     const { rows, skippedMissingFields, headerError } = parseResult;
 
     if (headerError) {
-      return NextResponse.json(
-        { ok: false, error: headerError },
-        { status: 400 },
-      );
+      return buildImportErrorResponse(headerError, 400);
     }
 
     const adaptedRows = rows as ProfitshareRow[];
@@ -592,6 +653,7 @@ export async function POST(req: NextRequest) {
           failedRows: 0,
           failed: 0,
           errors: [],
+          debugErrors: [],
           truncated: false,
           message: null,
           capped: isCapped,
@@ -609,6 +671,14 @@ export async function POST(req: NextRequest) {
     let failedRows = 0;
     let errors: { rowNumber: number; message: string; code: string | null }[] =
       [];
+    let debugErrors: Array<{
+      rowNumber: number;
+      rawRow: ProfitshareRow;
+      transformedData: Record<string, any>;
+      errorMessage: string;
+      errorStack?: string;
+      errorCode?: string | null;
+    }> = [];
 
     const startTime = Date.now();
 
@@ -629,6 +699,7 @@ export async function POST(req: NextRequest) {
       updatedListings += batchResult.updatedListings;
       failedRows += batchResult.failedRows;
       errors.push(...batchResult.errors);
+      debugErrors.push(...batchResult.debugErrors);
     }
 
     const durationMs = Date.now() - startTime;
@@ -636,21 +707,31 @@ export async function POST(req: NextRequest) {
       `[import-csv] (profitshare) Import complete: processedRows=${limitedRows.length}, created=${createdProducts}/${createdListings}, updated=${updatedProducts}/${updatedListings}, failed=${failedRows}, duration=${durationMs}ms`,
     );
 
-    if (errors.length > 50) {
-      errors = errors.slice(0, 50);
+    // Build standardized errors list from collected errors + debugErrors
+    const errorsList: Array<{ rowIndex: number; reason: string; rawRow: any; transformedRow?: any }> = [];
+
+    // errors array contains { rowNumber, message }
+    for (const e of errors) {
+      const dbg = debugErrors.find((d) => d.rowNumber === e.rowNumber);
+      errorsList.push({ rowIndex: e.rowNumber, reason: e.message, rawRow: dbg?.rawRow ?? null, transformedRow: dbg?.transformedData ?? null });
     }
+
+    // Server-side: log each error fully
+    for (const errItem of errorsList) {
+      console.error("[CSV IMPORT ROW FAILED]", { provider: "profitshare", rowIndex: errItem.rowIndex, reason: errItem.reason, rawRow: errItem.rawRow, transformedRow: errItem.transformedRow });
+    }
+
+    // Limit returned errors to first 10
+    const returnedErrors = errorsList.slice(0, 10);
 
     const message = isCapped
       ? `Processed first ${limitedRows.length} rows out of ${totalRows}. Split your CSV and re-upload remaining rows.` 
       : null;
 
     const skippedRows = skippedMissingFields;
-    const successCount =
-      createdProducts +
-      updatedProducts +
-      createdListings +
-      updatedListings;
-    const ok = successCount > 0;
+    const ok = errorsList.length === 0;
+
+    console.log("[CSV IMPORT SUMMARY]", { totalRows, createdListings, failedRows: errorsList.length });
 
     return NextResponse.json(
       {
@@ -665,9 +746,9 @@ export async function POST(req: NextRequest) {
         updatedListings,
         skippedMissingFields,
         skippedMissingExternalId: 0,
-        failedRows,
-        failed: failedRows,
-        errors,
+        failedRows: errorsList.length,
+        errors: returnedErrors,
+        debugErrors: debugErrors.slice(0, 10),
         truncated: isCapped,
         message,
         capped: isCapped,

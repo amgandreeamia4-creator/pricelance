@@ -1,5 +1,6 @@
 import React from "react";
 import type { Metadata } from "next";
+import AboutSection from "@/components/about/AboutSection";
 
 export const metadata: Metadata = {
   title: "Privacy Policy – PriceLance",
@@ -15,13 +16,12 @@ export default function PrivacyPage() {
         Last updated: 2025-12-25
       </p>
 
-      {/* Who Operates PriceLance */}
+      {/* Who Operates PriceLance - Using canonical AboutSection */}
       <section className="mb-6">
         <h2 className="text-xl font-semibold mb-2">Who Operates PriceLance</h2>
-        <p className="text-sm text-gray-800 dark:text-gray-100">
-          PriceLance is an informational service that helps you compare prices
-          for technology products from multiple online retailers. This Privacy
-          Policy explains what information we collect when you use PriceLance
+        <AboutSection variant="intro" />
+        <p className="text-base text-slate-700 dark:text-slate-200 leading-relaxed mt-4">
+          This Privacy Policy explains what information we collect when you use PriceLance
           and how we use it.
         </p>
       </section>

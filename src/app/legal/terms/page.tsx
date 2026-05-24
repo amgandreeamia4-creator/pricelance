@@ -1,5 +1,7 @@
 import React from "react";
 import type { Metadata } from "next";
+import AboutSection from "@/components/about/AboutSection";
+import { DATA_SOURCES_STATEMENT } from "@/config/aboutContent";
 
 export const metadata: Metadata = {
   title: "Terms of Service – PriceLance",
@@ -15,15 +17,10 @@ export default function TermsPage() {
         Last updated: 2025-12-25
       </p>
 
-      {/* What PriceLance Is */}
+      {/* What PriceLance Is - Using canonical AboutSection for consistency */}
       <section className="mb-6">
         <h2 className="text-xl font-semibold mb-2">What PriceLance Is</h2>
-        <p className="text-sm text-gray-800 dark:text-gray-100">
-          PriceLance is an informational service that helps you compare prices
-          for technology products from multiple online retailers. PriceLance
-          does not sell products directly. You always complete purchases on
-          retailer websites, under their own terms and conditions.
-        </p>
+        <AboutSection variant="disclaimer" />
       </section>
 
       {/* No Guarantee of Accuracy */}
@@ -75,11 +72,8 @@ export default function TermsPage() {
       <section className="mb-6">
         <h2 className="text-xl font-semibold mb-2">Data Sources and Scraping</h2>
         <p className="text-sm text-gray-800 dark:text-gray-100">
-          PriceLance gathers price and product information from a combination
-          of: manually curated data, CSV imports, official retailer feeds where
-          available, and affiliate feeds. We do not intentionally scrape
-          retailer websites or bypass any access controls. We only use data that
-          retailers choose to expose publicly or that we add manually.
+          {/* Canonical data sources statement - imported from aboutContent.ts */}
+          {DATA_SOURCES_STATEMENT}
         </p>
       </section>
 

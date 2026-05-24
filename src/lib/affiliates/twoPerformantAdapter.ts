@@ -20,6 +20,7 @@
 import { BaseAffiliateAdapter } from "./base";
 import type { NormalizedListing } from "./types";
 import { parseTwoPerformantCsv, parseAvailability } from "./twoPerformant";
+import { normalizeCsvRow } from "@/lib/canonical";
 
 export class TwoPerformantAdapter extends BaseAffiliateAdapter {
   id = "2performant";
@@ -60,44 +61,39 @@ export class TwoPerformantAdapter extends BaseAffiliateAdapter {
       const rowNumber = i + 2; // +2 because row 1 is header, and we're 1-indexed
 
       try {
-        // Extract store name into canonical storeId
-        const storeId = this.extractStoreId(row.storeName);
+        const norm = normalizeCsvRow(row as any, '2performant');
+        if (!norm.ok) {
+          console.error(`[TwoPerformantAdapter] Normalization failed row ${rowNumber}: ${norm.error}`);
+          continue;
+        }
 
-        // Parse availability
-        const inStock = parseAvailability(row.availability);
+        const c = norm.canonical;
+        const brand = c.brand ?? this.extractBrand(c.productName, c.category ?? undefined);
+        const storeId = this.extractStoreId(c.listing.storeName);
 
-        // Create normalized listing
         const normalizedListing: NormalizedListing = {
-          // Product fields (required)
-          productTitle: row.name.trim(),
-          brand: this.extractBrand(row.name, row.categoryRaw),
-          category: this.normalizeCategory(row.categoryRaw),
-          gtin: row.gtin?.trim() || undefined,
+          productTitle: c.productName,
+          brand,
+          category: this.normalizeCategory(c.category ?? undefined),
+          gtin: c.externalId ?? undefined,
 
-          // Listing fields (optional for product-only rows)
           storeId,
-          storeName: row.storeName.trim(),
-          url: row.affiliateUrl || row.productUrl,
-          price: row.price,
-          currency: row.currency.toUpperCase(),
+          storeName: c.listing.storeName,
+          url: c.listing.url,
+          price: c.listing.price,
+          currency: c.listing.currency.toUpperCase(),
 
-          // Optional listing metadata
-          deliveryDays: undefined, // 2Performant feed: not mapped yet
-          fastDelivery: undefined, // 2Performant feed: not mapped yet
-          inStock,
-          countryCode: "RO", // current 2Performant feed is RO-focused
+          deliveryDays: undefined,
+          fastDelivery: undefined,
+          inStock: c.listing.inStock ?? true,
+          countryCode: 'RO',
 
-          // Source tracking
-          source: "affiliate",
+          source: 'affiliate',
         };
 
         normalized.push(normalizedListing);
       } catch (error) {
-        console.error(
-          `[TwoPerformantAdapter] Error processing row ${rowNumber}:`,
-          error,
-        );
-        // Continue processing other rows
+        console.error(`[TwoPerformantAdapter] Error processing row ${rowNumber}:`, error);
       }
     }
 

@@ -1,0 +1,294 @@
+
+> pricelance-app@0.1.0 lint
+> eslint .
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+C:\Users\Gaea\Documents\pricecompare-clean\pricelance\pricelance\prisma\seed.ts
+  530:31  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  534:51  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  551:39  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  652:31  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+C:\Users\Gaea\Documents\pricecompare-clean\pricelance\pricelance\scripts\debugCategoryApi.ts
+  34:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+C:\Users\Gaea\Documents\pricecompare-clean\pricelance\pricelance\scripts\fix-database-url.mjs
+  11:7  warning  '__dirname' is assigned a value but never used  @typescript-eslint/no-unused-vars
+C:\Users\Gaea\Documents\pricecompare-clean\pricelance\pricelance\scripts\migrateCatalogToDB.ts
+  50:47  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+C:\Users\Gaea\Documents\pricecompare-clean\pricelance\pricelance\scripts\product-stats.ts
+  22:11  warning  'productsWithOneListing' is assigned a value but never used  @typescript-eslint/no-unused-vars
+C:\Users\Gaea\Documents\pricecompare-clean\pricelance\pricelance\scripts\runRealstore.ts
+  143:17  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+C:\Users\Gaea\Documents\pricecompare-clean\pricelance\pricelance\scripts\test-api-categories.ts
+  27:45  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+C:\Users\Gaea\Documents\pricecompare-clean\pricelance\pricelance\scripts\test-category-consistency.ts
+  58:7  warning  'extraKeys' is assigned a value but never used  @typescript-eslint/no-unused-vars
+C:\Users\Gaea\Documents\pricecompare-clean\pricelance\pricelance\scripts\testTopCategories.ts
+   2:13  warning  'http' is defined but never used          @typescript-eslint/no-unused-vars
+  52:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  60:17  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+C:\Users\Gaea\Documents\pricecompare-clean\pricelance\pricelance\src\app\admin\comparison-health\page.tsx
+  44:72  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+C:\Users\Gaea\Documents\pricecompare-clean\pricelance\pricelance\src\app\admin\import-csv\ImportCsvClient.tsx
+  12:16  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+C:\Users\Gaea\Documents\pricecompare-clean\pricelance\pricelance\src\app\admin\import-feeds\ImportFeedsClient.tsx
+  14:42  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  44:17  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  66:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+C:\Users\Gaea\Documents\pricecompare-clean\pricelance\pricelance\src\app\admin\system-check\page.tsx
+  129:56  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  133:43  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  220:34  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  223:38  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  228:38  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  279:34  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  285:38  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+C:\Users\Gaea\Documents\pricecompare-clean\pricelance\pricelance\src\app\api\admin\import-csv\route.ts
+   27:11  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   48:52  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   48:82  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   49:29  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  230:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  334:57  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  518:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+C:\Users\Gaea\Documents\pricecompare-clean\pricelance\pricelance\src\app\api\admin\import-from-url\route.ts
+  38:25  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+C:\Users\Gaea\Documents\pricecompare-clean\pricelance\pricelance\src\app\api\admin\listings\route.ts
+  108:53  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+C:\Users\Gaea\Documents\pricecompare-clean\pricelance\pricelance\src\app\api\admin\offer-stats\route.ts
+  10:27  warning  'req' is defined but never used           @typescript-eslint/no-unused-vars
+  24:41  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  25:25  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  62:45  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+C:\Users\Gaea\Documents\pricecompare-clean\pricelance\pricelance\src\app\api\admin\products\[productId]\listings\route.ts
+   55:56  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  210:53  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+C:\Users\Gaea\Documents\pricecompare-clean\pricelance\pricelance\src\app\api\admin\products\route.ts
+  114:53  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+C:\Users\Gaea\Documents\pricecompare-clean\pricelance\pricelance\src\app\api\admin\reinfer-categories\route.ts
+   7:42  warning  'inferSubcategoryFromText' is defined but never used  @typescript-eslint/no-unused-vars
+  48:22  warning  Unexpected any. Specify a different type              @typescript-eslint/no-explicit-any
+C:\Users\Gaea\Documents\pricecompare-clean\pricelance\pricelance\src\app\api\assistant\query\route.ts
+  191:53  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  198:17  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  198:36  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  199:41  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  220:31  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  221:33  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  221:52  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  222:31  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  222:55  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  223:46  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  239:30  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+C:\Users\Gaea\Documents\pricecompare-clean\pricelance\pricelance\src\app\api\assistant\route.ts
+  528:29  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  533:30  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+C:\Users\Gaea\Documents\pricecompare-clean\pricelance\pricelance\src\app\api\assistant\summary\route.ts
+   8:58  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  11:21  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  14:40  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  26:34  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+C:\Users\Gaea\Documents\pricecompare-clean\pricelance\pricelance\src\app\api\categories\route.ts
+   6:10  warning  'CATEGORY_LABELS' is defined but never used  @typescript-eslint/no-unused-vars
+  75:45  warning  Unexpected any. Specify a different type     @typescript-eslint/no-explicit-any
+  80:18  warning  Unexpected any. Specify a different type     @typescript-eslint/no-explicit-any
+  82:17  warning  Unexpected any. Specify a different type     @typescript-eslint/no-explicit-any
+C:\Users\Gaea\Documents\pricecompare-clean\pricelance\pricelance\src\app\api\deals\route.ts
+    8:28  warning  'AFFILIATE_FLAGS' is defined but never used  @typescript-eslint/no-unused-vars
+  106:47  warning  Unexpected any. Specify a different type     @typescript-eslint/no-explicit-any
+  106:65  warning  Unexpected any. Specify a different type     @typescript-eslint/no-explicit-any
+  121:54  warning  Unexpected any. Specify a different type     @typescript-eslint/no-explicit-any
+  121:72  warning  Unexpected any. Specify a different type     @typescript-eslint/no-explicit-any
+  137:13  warning  Unexpected any. Specify a different type     @typescript-eslint/no-explicit-any
+  165:28  warning  Unexpected any. Specify a different type     @typescript-eslint/no-explicit-any
+  179:42  warning  Unexpected any. Specify a different type     @typescript-eslint/no-explicit-any
+  180:39  warning  Unexpected any. Specify a different type     @typescript-eslint/no-explicit-any
+  184:35  warning  Unexpected any. Specify a different type     @typescript-eslint/no-explicit-any
+C:\Users\Gaea\Documents\pricecompare-clean\pricelance\pricelance\src\app\api\ebay-deals\route.ts
+   4:27  warning  'req' is defined but never used           @typescript-eslint/no-unused-vars
+  37:46  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+C:\Users\Gaea\Documents\pricecompare-clean\pricelance\pricelance\src\app\api\favorites\route.ts
+   35:38  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  158:21  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  186:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+C:\Users\Gaea\Documents\pricecompare-clean\pricelance\pricelance\src\app\api\feeds\ebay\route.ts
+  79:17  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+C:\Users\Gaea\Documents\pricecompare-clean\pricelance\pricelance\src\app\api\feeds\ebay\search\route.ts
+  26:17  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+C:\Users\Gaea\Documents\pricecompare-clean\pricelance\pricelance\src\app\api\geo\resolve\route.ts
+  54:40  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+C:\Users\Gaea\Documents\pricecompare-clean\pricelance\pricelance\src\app\api\price-history\route.ts
+  80:34  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+C:\Users\Gaea\Documents\pricecompare-clean\pricelance\pricelance\src\app\api\products\route.ts
+    4:10  warning  'isListingFromDisabledNetwork' is defined but never used  @typescript-eslint/no-unused-vars
+   48:35  warning  Unexpected any. Specify a different type                  @typescript-eslint/no-explicit-any
+   74:35  warning  Unexpected any. Specify a different type                  @typescript-eslint/no-explicit-any
+   92:36  warning  Unexpected any. Specify a different type                  @typescript-eslint/no-explicit-any
+  312:35  warning  Unexpected any. Specify a different type                  @typescript-eslint/no-explicit-any
+  345:25  warning  Unexpected any. Specify a different type                  @typescript-eslint/no-explicit-any
+  386:12  warning  Unexpected any. Specify a different type                  @typescript-eslint/no-explicit-any
+  395:52  warning  Unexpected any. Specify a different type                  @typescript-eslint/no-explicit-any
+  402:60  warning  Unexpected any. Specify a different type                  @typescript-eslint/no-explicit-any
+  407:15  warning  Unexpected any. Specify a different type                  @typescript-eslint/no-explicit-any
+C:\Users\Gaea\Documents\pricecompare-clean\pricelance\pricelance\src\app\api\saved-searches\route.ts
+  132:21  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  157:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+C:\Users\Gaea\Documents\pricecompare-clean\pricelance\pricelance\src\app\c\[slug]\CategoryProductGrid.tsx
+  144:17  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+C:\Users\Gaea\Documents\pricecompare-clean\pricelance\pricelance\src\app\components\AdSenseScriptLoader.tsx
+  19:30  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  19:60  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  20:30  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+C:\Users\Gaea\Documents\pricecompare-clean\pricelance\pricelance\src\app\layout.tsx
+  4:8  warning  'Link' is defined but never used  @typescript-eslint/no-unused-vars
+C:\Users\Gaea\Documents\pricecompare-clean\pricelance\pricelance\src\app\page.tsx
+     7:3   warning  'MessageCircle' is defined but never used                                                                                                                                                                                                                                                @typescript-eslint/no-unused-vars
+    11:10  warning  'useSpring' is defined but never used                                                                                                                                                                                                                                                    @typescript-eslint/no-unused-vars
+    11:21  warning  'animated' is defined but never used                                                                                                                                                                                                                                                     @typescript-eslint/no-unused-vars
+    11:31  warning  'config' is defined but never used                                                                                                                                                                                                                                                       @typescript-eslint/no-unused-vars
+    17:8   warning  'GoogleAdUnit' is defined but never used                                                                                                                                                                                                                                                 @typescript-eslint/no-unused-vars
+    88:6   warning  'EbayListing' is defined but never used                                                                                                                                                                                                                                                  @typescript-eslint/no-unused-vars
+   106:10  warning  'assistantOpen' is assigned a value but never used                                                                                                                                                                                                                                       @typescript-eslint/no-unused-vars
+   106:25  warning  'setAssistantOpen' is assigned a value but never used                                                                                                                                                                                                                                    @typescript-eslint/no-unused-vars
+   120:11  warning  'lang' is assigned a value but never used                                                                                                                                                                                                                                                @typescript-eslint/no-unused-vars
+   131:20  warning  'setLocation' is assigned a value but never used                                                                                                                                                                                                                                         @typescript-eslint/no-unused-vars
+   147:10  warning  'isCategoriesLoading' is assigned a value but never used                                                                                                                                                                                                                                 @typescript-eslint/no-unused-vars
+   148:10  warning  'categoriesError' is assigned a value but never used                                                                                                                                                                                                                                     @typescript-eslint/no-unused-vars
+   283:60  warning  Unexpected any. Specify a different type                                                                                                                                                                                                                                                 @typescript-eslint/no-explicit-any
+   553:37  warning  Unexpected any. Specify a different type                                                                                                                                                                                                                                                 @typescript-eslint/no-explicit-any
+   553:63  warning  Unexpected any. Specify a different type                                                                                                                                                                                                                                                 @typescript-eslint/no-explicit-any
+   554:38  warning  Unexpected any. Specify a different type                                                                                                                                                                                                                                                 @typescript-eslint/no-explicit-any
+   559:18  warning  'e' is defined but never used                                                                                                                                                                                                                                                            @typescript-eslint/no-unused-vars
+   697:12  warning  'handleQuickPick' is defined but never used                                                                                                                                                                                                                                              @typescript-eslint/no-unused-vars
+  1129:27  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+  1209:43  warning  Unexpected any. Specify a different type                                                                                                                                                                                                                                                 @typescript-eslint/no-explicit-any
+C:\Users\Gaea\Documents\pricecompare-clean\pricelance\pricelance\src\app\products\[id]\page.tsx
+  134:33  warning  'index' is defined but never used                                                                                                                                                                                                                                                        @typescript-eslint/no-unused-vars
+  190:15  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+  246:27  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+C:\Users\Gaea\Documents\pricecompare-clean\pricelance\pricelance\src\app\products\page.tsx
+  39:33  warning  Unexpected any. Specify a different type                                                                                                                                                                                                                                                 @typescript-eslint/no-explicit-any
+  41:77  warning  Unexpected any. Specify a different type                                                                                                                                                                                                                                                 @typescript-eslint/no-explicit-any
+  55:13  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+C:\Users\Gaea\Documents\pricecompare-clean\pricelance\pricelance\src\components\CategoryProductGrid.tsx
+  151:17  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+C:\Users\Gaea\Documents\pricecompare-clean\pricelance\pricelance\src\components\LanguageProvider.tsx
+  28:10  warning  'mounted' is assigned a value but never used  @typescript-eslint/no-unused-vars
+C:\Users\Gaea\Documents\pricecompare-clean\pricelance\pricelance\src\components\PriceTrendChart.tsx
+   6:3   warning  'LineChart' is defined but never used     @typescript-eslint/no-unused-vars
+   7:3   warning  'Line' is defined but never used          @typescript-eslint/no-unused-vars
+  16:10  warning  'useSpring' is defined but never used     @typescript-eslint/no-unused-vars
+  16:21  warning  'animated' is defined but never used      @typescript-eslint/no-unused-vars
+  45:45  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  81:16  warning  'e' is defined but never used             @typescript-eslint/no-unused-vars
+C:\Users\Gaea\Documents\pricecompare-clean\pricelance\pricelance\src\components\ProductCard.tsx
+  15:9   warning  'source' is assigned a value but never used                                                                                                                                                                                                                                              @typescript-eslint/no-unused-vars
+  28:9   warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+  46:15  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+C:\Users\Gaea\Documents\pricecompare-clean\pricelance\pricelance\src\components\ProductList.tsx
+   84:27  warning  Unexpected any. Specify a different type                                                                                                                                                                                                                                                 @typescript-eslint/no-explicit-any
+  128:43  warning  Unexpected any. Specify a different type                                                                                                                                                                                                                                                 @typescript-eslint/no-explicit-any
+  134:81  warning  Unexpected any. Specify a different type                                                                                                                                                                                                                                                 @typescript-eslint/no-explicit-any
+  184:19  warning  'setSortKey' is assigned a value but never used                                                                                                                                                                                                                                          @typescript-eslint/no-unused-vars
+  298:40  warning  Unexpected any. Specify a different type                                                                                                                                                                                                                                                 @typescript-eslint/no-explicit-any
+  365:23  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+C:\Users\Gaea\Documents\pricecompare-clean\pricelance\pricelance\src\components\ProductSummary.tsx
+  106:3  warning  'selectedProductId' is defined but never used  @typescript-eslint/no-unused-vars
+C:\Users\Gaea\Documents\pricecompare-clean\pricelance\pricelance\src\components\ResultControls.tsx
+  15:3  warning  'disabled' is defined but never used  @typescript-eslint/no-unused-vars
+C:\Users\Gaea\Documents\pricecompare-clean\pricelance\pricelance\src\components\ads\GoogleAdUnit.tsx
+  7:18  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+C:\Users\Gaea\Documents\pricecompare-clean\pricelance\pricelance\src\config\affiliateIngestion.server.ts
+  9:24  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+C:\Users\Gaea\Documents\pricecompare-clean\pricelance\pricelance\src\config\affiliateIngestion.ts
+  29:24  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+C:\Users\Gaea\Documents\pricecompare-clean\pricelance\pricelance\src\config\affiliateNetworks.ts
+  110:15  warning  'networkKey' is assigned a value but never used  @typescript-eslint/no-unused-vars
+C:\Users\Gaea\Documents\pricecompare-clean\pricelance\pricelance\src\config\affiliates.ts
+  77:52  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+C:\Users\Gaea\Documents\pricecompare-clean\pricelance\pricelance\src\lib\affiliates\twoPerformant.ts
+  218:9   warning  'idxAvailability' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  247:11  warning  'rowNumber' is assigned a value but never used        @typescript-eslint/no-unused-vars
+C:\Users\Gaea\Documents\pricecompare-clean\pricelance\pricelance\src\lib\brandDetector.ts
+  25:6  warning  'Brand' is defined but never used  @typescript-eslint/no-unused-vars
+C:\Users\Gaea\Documents\pricecompare-clean\pricelance\pricelance\src\lib\categoryInference.ts
+  7:3  warning  'CANONICAL_CATEGORIES' is defined but never used  @typescript-eslint/no-unused-vars
+C:\Users\Gaea\Documents\pricecompare-clean\pricelance\pricelance\src\lib\dealsClient.ts
+  45:17  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+C:\Users\Gaea\Documents\pricecompare-clean\pricelance\pricelance\src\lib\demoFilter.ts
+  146:30  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+C:\Users\Gaea\Documents\pricecompare-clean\pricelance\pricelance\src\lib\ebayClient.ts
+  141:38  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  144:37  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+C:\Users\Gaea\Documents\pricecompare-clean\pricelance\pricelance\src\lib\ebayFeed.ts
+  30:50  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+C:\Users\Gaea\Documents\pricecompare-clean\pricelance\pricelance\src\lib\importService.ts
+   47:10   warning  'parseLegacyProfitshareRow' is defined but never used       @typescript-eslint/no-unused-vars
+  190:190  warning  Unexpected any. Specify a different type                    @typescript-eslint/no-explicit-any
+  330:9    warning  'normalizedSubcategory' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  338:58   warning  Unexpected any. Specify a different type                    @typescript-eslint/no-explicit-any
+  362:37   warning  Unexpected any. Specify a different type                    @typescript-eslint/no-explicit-any
+  371:51   warning  Unexpected any. Specify a different type                    @typescript-eslint/no-explicit-any
+  481:33   warning  Unexpected any. Specify a different type                    @typescript-eslint/no-explicit-any
+  559:68   warning  Unexpected any. Specify a different type                    @typescript-eslint/no-explicit-any
+  565:43   warning  Unexpected any. Specify a different type                    @typescript-eslint/no-explicit-any
+  639:66   warning  Unexpected any. Specify a different type                    @typescript-eslint/no-explicit-any
+  663:41   warning  Unexpected any. Specify a different type                    @typescript-eslint/no-explicit-any
+  699:41   warning  Unexpected any. Specify a different type                    @typescript-eslint/no-explicit-any
+C:\Users\Gaea\Documents\pricecompare-clean\pricelance\pricelance\src\lib\ingestService.ts
+   42:18  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   52:18  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   66:18  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  126:43  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+C:\Users\Gaea\Documents\pricecompare-clean\pricelance\pricelance\src\lib\productAggregator.ts
+    8:15  warning  'ProductProvider' is defined but never used  @typescript-eslint/no-unused-vars
+   73:16  warning  Unexpected any. Specify a different type     @typescript-eslint/no-explicit-any
+   73:35  warning  Unexpected any. Specify a different type     @typescript-eslint/no-explicit-any
+  108:12  warning  Unexpected any. Specify a different type     @typescript-eslint/no-explicit-any
+  116:26  warning  Unexpected any. Specify a different type     @typescript-eslint/no-explicit-any
+  138:49  warning  Unexpected any. Specify a different type     @typescript-eslint/no-explicit-any
+  150:52  warning  Unexpected any. Specify a different type     @typescript-eslint/no-explicit-any
+  163:16  warning  Unexpected any. Specify a different type     @typescript-eslint/no-explicit-any
+  174:45  warning  Unexpected any. Specify a different type     @typescript-eslint/no-explicit-any
+  188:19  warning  Unexpected any. Specify a different type     @typescript-eslint/no-explicit-any
+  225:24  warning  Unexpected any. Specify a different type     @typescript-eslint/no-explicit-any
+  287:38  warning  Unexpected any. Specify a different type     @typescript-eslint/no-explicit-any
+  302:57  warning  Unexpected any. Specify a different type     @typescript-eslint/no-explicit-any
+C:\Users\Gaea\Documents\pricecompare-clean\pricelance\pricelance\src\lib\productRepository.ts
+   51:49  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   53:44  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   81:21  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   85:55  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   94:17  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  124:16  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  135:22  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  169:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  247:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  247:31  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  249:28  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  250:44  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  263:28  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  265:20  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  266:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  273:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  273:31  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  274:28  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  276:20  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  277:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  284:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  284:31  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  285:27  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  288:17  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  293:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+C:\Users\Gaea\Documents\pricecompare-clean\pricelance\pricelance\src\lib\providers\catalogProvider.ts
+   9:37  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  24:27  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  35:36  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  59:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+C:\Users\Gaea\Documents\pricecompare-clean\pricelance\pricelance\src\lib\providers\realStoreProvider.ts
+   52:11  warning  'RTPSearchResponse' is defined but never used  @typescript-eslint/no-unused-vars
+   85:27  warning  Unexpected any. Specify a different type       @typescript-eslint/no-explicit-any
+  130:35  warning  Unexpected any. Specify a different type       @typescript-eslint/no-explicit-any
+  537:19  warning  Unexpected any. Specify a different type       @typescript-eslint/no-explicit-any
+  563:15  warning  Unexpected any. Specify a different type       @typescript-eslint/no-explicit-any
+C:\Users\Gaea\Documents\pricecompare-clean\pricelance\pricelance\src\lib\providers\staticProvider.ts
+  38:25  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+✖ 224 problems (0 errors, 224 warnings)

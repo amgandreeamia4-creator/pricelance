@@ -18,6 +18,8 @@
     "fix-db-url": "node scripts/fix-database-url.mjs",
     "db:seed": "prisma db seed",
     "seed:laptops": "tsx scripts/seed-laptops.ts"
+    ,
+    "test:csv": "ts-node tests/runCsvTests.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.19.0",

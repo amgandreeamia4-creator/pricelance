@@ -1,6 +1,3 @@
-// IMPORTANT: After changing relation names, run 'npx prisma generate' locally
-// (and 'npx prisma db push' if needed) before committing to regenerate the client.
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -31,7 +28,7 @@ model CuratedProduct {
   defaultPrice    Float?
   defaultCurrency String           @default("USD")
   createdAt       DateTime         @default(now())
-  curatedListings  CuratedListing[]
+  curatedListings CuratedListing[]
 }
 
 model Favorite {
@@ -74,14 +71,9 @@ model Listing {
   merchantOriginalId    String?
   source                ListingSource @default(seed)
   priceLastSeenAt       DateTime?     @db.Timestamptz(6)
-  Product               Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
   merchantId            String?
   merchant              Merchant?     @relation(fields: [merchantId], references: [id])
-  merchantFeedId        String?
-  merchantFeed          MerchantFeed? @relation(fields: [merchantFeedId], references: [id])
-
-  @@index([merchantId])
-  @@index([merchantFeedId])
+  Product               Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
 }
 
 model Product {
@@ -90,7 +82,6 @@ model Product {
   displayName         String?
   description         String?
   category            String?
-  primaryCategory     String?
   brand               String?
   imageUrl            String?
   thumbnailUrl        String?
@@ -100,7 +91,7 @@ model Product {
   source              String?
   externalId          String?
   Favorite            Favorite[]
-  listings             Listing[]
+  listings            Listing[]
   ProductPriceHistory ProductPriceHistory[]
 }
 
@@ -133,60 +124,37 @@ model SearchLog {
 }
 
 model Merchant {
-  id          String   @id
-  storeName   String
-  name        String?
-  website     String?
-  domain      String?
-  logoUrl     String?
-  country     String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  users       MerchantUser[]
-  feedRuns    MerchantFeedRun[]
-  feeds       MerchantFeed[]
-  listings    Listing[]
-}
-
-model MerchantFeed {
-  id          String   @id
-  merchantId  String
-  merchant    Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
-  name        String
-  sourceType  String   // e.g. 'csv', 'affiliate-api', 'manual'
-  sourceSlug  String   // e.g. 'profitshare', 'twoPerformant'
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  listings    Listing[]
+  id        String            @id
+  name      String
+  website   String?
+  country   String?
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+  listings  Listing[]
+  feedRuns  MerchantFeedRun[]
+  users     MerchantUser[]
 }
 
 model MerchantUser {
-  id          String   @id
-  merchantId  String
-  email       String   @unique
+  id           String           @id
+  merchantId   String
+  email        String           @unique
   passwordHash String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  merchant    Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
-
-  @@index([email])
+  role         MerchantUserRole @default(OWNER)
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  merchant     Merchant         @relation(fields: [merchantId], references: [id])
 }
 
 model MerchantFeedRun {
-  id          String   @id
-  merchantId  String
-  filename    String?
-  status      String   @default("processing")
-  rowsTotal   Int?
-  rowsSuccess Int?
-  rowsError   Int?
-  errorLog    String?
-  createdAt   DateTime @default(now())
-  completedAt DateTime?
-  merchant    Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
-
-  @@index([merchantId])
-  @@index([createdAt])
+  id           String   @id
+  merchantId   String
+  filename     String?
+  rowsTotal    Int
+  rowsImported Int
+  rowsFailed   Int
+  createdAt    DateTime @default(now())
+  merchant     Merchant @relation(fields: [merchantId], references: [id])
 }
 
 enum ListingSource {
@@ -194,4 +162,9 @@ enum ListingSource {
   sheet
   seed
   affiliate
+}
+
+enum MerchantUserRole {
+  OWNER
+  STAFF
 }

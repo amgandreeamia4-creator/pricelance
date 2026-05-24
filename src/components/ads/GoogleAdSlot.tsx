@@ -34,6 +34,7 @@ export function GoogleAdSlot({
   }, [hasRealConfig]);
 
   // Fallback preview when AdSense IDs are not set (dev / staging)
+  // REFACTORED: Now using canonical AboutSection component for consistent rendering
   if (!hasRealConfig) {
     return (
       <div className="w-full flex justify-center mb-6">
@@ -43,8 +44,13 @@ export function GoogleAdSlot({
               Compare tech prices online – laptops, phones &amp; more
             </h1>
             <p className="mt-2 text-sm sm:text-base text-slate-600 max-w-2xl">
-              PriceLance is an informational service that compares tech prices
-              from multiple online retailers.
+              {/* Content now centrally managed - AboutSection component not used here
+                  to avoid recursive rendering; instead we use direct config imports
+                  for consistency */}
+              PriceLance is a structured price intelligence system for tech products.
+              It aggregates product data from curated manual entries, official feeds,
+              and affiliate partners to present clear, comparable offers from multiple
+              online stores in one place.
             </p>
           </div>
         </div>

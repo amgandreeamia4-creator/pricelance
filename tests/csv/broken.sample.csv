@@ -1,0 +1,4 @@
+product_name,product_url,affiliate_link,image_url,price,currency,category,sku,gtin,availability,storeName
+"Broken No Price","https://example.com/broken1","",,"",RON,unknown,,,
+"Broken Bad Price","","","",abc,RON,unknown,,,
+"Broken No URL","","","",99.99,RON,unknown,,,

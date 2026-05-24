@@ -14,8 +14,10 @@ type MerchantFeed = {
   };
 };
 
+type ImportStatus = "idle" | "uploading" | "success" | "partial-success" | "failed";
+
 type ImportState = {
-  status: "idle" | "running" | "done" | "error";
+  status: ImportStatus;
   message: string | null;
   rawResponse: any | null;
 };
@@ -32,6 +34,8 @@ export default function ImportCsvClient() {
     message: null,
     rawResponse: null,
   });
+
+  const [errorsCollapsed, setErrorsCollapsed] = useState(true);
 
   useEffect(() => {
     fetchFeeds();
@@ -66,7 +70,7 @@ export default function ImportCsvClient() {
 
     if (!file) {
       setState({
-        status: "error",
+        status: "failed",
         message: "Please choose a CSV file first.",
         rawResponse: null,
       });
@@ -83,7 +87,7 @@ export default function ImportCsvClient() {
     console.log("[ImportCsvClient] FormData created:", Object.fromEntries(formData.entries()));
 
     setState({
-      status: "running",
+      status: "uploading",
       message: "Import in progress...",
       rawResponse: null,
     });
@@ -108,27 +112,36 @@ export default function ImportCsvClient() {
       
       console.log("[ImportCsvClient] Parsed JSON:", json);
 
-      if (!res.ok || !json?.ok) {
-        console.log("[ImportCsvClient] Import failed - res.ok:", res.ok, "json.ok:", json?.ok);
-        setState({
-          status: "error",
-          message:
-            json?.error || json?.message || `Import failed (HTTP ${res.status})`,
-          rawResponse: json,
-        });
-        return;
-      }
+      // Determine success / partial / failed according to backend summary
+      const createdListings = Number(json?.createdListings || 0);
+      const failedRows = Number(json?.failedRows || 0);
+      const okFlag = Boolean(json?.ok);
 
-      console.log("[ImportCsvClient] Import succeeded!");
+      const isSuccess = okFlag === true && failedRows === 0;
+      const isPartial = okFlag === false || failedRows > 0;
+
+      const nextStatus: ImportStatus = isSuccess
+        ? "success"
+        : createdListings > 0
+        ? "partial-success"
+        : "failed";
+
+      let nextMessage = json?.message || "";
+      if (nextStatus === "success") nextMessage = "Import completed successfully.";
+      if (nextStatus === "partial-success") nextMessage = "Import completed with errors.";
+      if (nextStatus === "failed") nextMessage = "Import failed — no listings were created.";
+
+      console.log("[ImportCsvClient] Import completed with status:", nextStatus, { createdListings, failedRows, okFlag });
+
       setState({
-        status: "done",
-        message: json.message || "Import completed successfully.",
+        status: nextStatus,
+        message: nextMessage,
         rawResponse: json,
       });
     } catch (err) {
       console.error("Import failed:", err);
       setState({
-        status: "error",
+        status: "failed",
         message: "Import failed: network or server error.",
         rawResponse: null,
       });
@@ -141,8 +154,10 @@ export default function ImportCsvClient() {
       {state.status !== "idle" && (
         <div
           className={`rounded-xl border px-4 py-2 text-sm ${
-            state.status === "error"
+            state.status === "failed"
               ? "border-red-200 bg-red-50 text-red-700"
+              : state.status === "partial-success"
+              ? "border-yellow-200 bg-yellow-50 text-yellow-700"
               : "border-emerald-200 bg-emerald-50 text-emerald-700"
           }`}
         >
@@ -219,18 +234,60 @@ export default function ImportCsvClient() {
 
         <button
           type="submit"
-          disabled={!file || state.status === "running"}
+          disabled={!file || state.status === "uploading"}
           className="inline-flex items-center justify-center rounded-xl bg-[var(--pl-primary)] px-4 py-2 text-sm font-medium text-white shadow-[0_0_16px_var(--pl-primary-glow)] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {state.status === "running" ? "Importing..." : "Import CSV"}
+          {state.status === "uploading" ? "Importing..." : "Import CSV"}
         </button>
       </form>
 
-      {/* Debug JSON output */}
+      {/* Summary + Errors */}
       {state.rawResponse && (
-        <pre className="mt-4 max-h-64 overflow-auto rounded-xl bg-slate-950/95 p-3 text-[11px] text-slate-100">
+        <div className="mt-4 space-y-3">
+          <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm">
+            <strong>Import summary</strong>
+            <div className="mt-2 text-xs text-slate-700 space-y-1">
+              <div>Total rows: {state.rawResponse.totalRows ?? "-"}</div>
+              <div>Processed: {state.rawResponse.processedRows ?? "-"}</div>
+              <div>Created listings: {state.rawResponse.createdListings ?? 0}</div>
+              <div>Failed rows: {state.rawResponse.failedRows ?? 0}</div>
+            </div>
+          </div>
+
+          {/* Errors panel (first 10 only) */}
+          {Array.isArray(state.rawResponse.errors) && state.rawResponse.errors.length > 0 && (
+            <div className="rounded-xl border border-yellow-200 bg-yellow-50 p-3 text-sm">
+              <div className="flex items-center justify-between">
+                <strong>Errors (first {Math.min(10, state.rawResponse.errors.length)})</strong>
+                <button
+                  className="text-xs text-slate-600 underline"
+                  onClick={() => setErrorsCollapsed((s) => !s)}
+                >
+                  {errorsCollapsed ? "Show" : "Hide"}
+                </button>
+              </div>
+
+              {!errorsCollapsed && (
+                <div className="mt-3 space-y-3 text-xs text-slate-800">
+                  {state.rawResponse.errors.slice(0, 10).map((err: any) => (
+                    <div key={String(err.rowIndex) + String(err.reason)} className="rounded-md border border-yellow-100 bg-yellow-25 p-3">
+                      <div className="text-sm font-medium">Row {err.rowIndex}</div>
+                      <div className="mt-1 text-xs text-slate-600">{err.reason}</div>
+                      <pre className="mt-2 max-h-48 overflow-auto rounded-md bg-slate-950/95 p-2 text-[11px] text-slate-100">
+{JSON.stringify(err.rawRow ?? err, null, 2)}
+                      </pre>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Raw JSON dump for deeper debugging */}
+          <pre className="mt-2 max-h-64 overflow-auto rounded-xl bg-slate-900/95 p-3 text-[11px] text-slate-100">
 {JSON.stringify(state.rawResponse, null, 2)}
-        </pre>
+          </pre>
+        </div>
       )}
     </div>
   );

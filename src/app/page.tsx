@@ -8,13 +8,12 @@ import {
   ChevronDown,
   ChevronUp,
 } from "lucide-react";
+import AboutSection from "@/components/about/AboutSection";
 import { useSpring, animated, config } from "@react-spring/web";
 
 import ThemeToggle from "@/components/ThemeToggle";
 import ProductList from "@/components/ProductList";
 import ChatAssistant from "@/components/ChatAssistant";
-
-import GoogleAdUnit from "@/components/ads/GoogleAdUnit";
 import { AffiliateBannerSlot } from "@/components/ads/AffiliateBannerSlot";
 import { STORES, StoreId } from "@/config/catalog";
 import PriceTrendChart from "@/components/PriceTrendChart";
@@ -802,6 +801,7 @@ export default function Page() {
           {/* Compact hero description – single sentence */}
           <div className="text-center mt-1 md:mt-2">
             <p className="text-center text-xs text-slate-500 mt-2">
+              {/* Canonical coverage note - imported from config/aboutContent.ts */}
               Coverage is growing over time, starting with Romanian and European
               stores.
             </p>
@@ -1304,45 +1304,10 @@ export default function Page() {
 
       <section className="mt-8 px-4">
         <div className="max-w-3xl mx-auto text-left text-[11px] leading-relaxed text-slate-700">
-          <p>
-            PriceLance helps you compare prices for tech products from multiple
-            online stores. We combine clean, manually curated product data with
-            official feeds and affiliate partners so you can see clear offers
-            side by side in one place. Start by searching for a phone, a laptop,
-            or another tech product. We show you offers from different stores
-            with prices, basic delivery info, and links that take you directly
-            to the retailer&apos;s website.
-          </p>
-
-          <h2 className="mt-4 text-xs font-semibold text-slate-900">
-            How PriceLance works
-          </h2>
-
-          <ol className="mt-1 space-y-1 text-[11px]">
-            <li>1. Search or browse the products you&apos;re interested in.</li>
-            <li>
-              2. We scan multiple stores and partners to find relevant offers.
-            </li>
-            <li>3. Compare prices, delivery times, and store reputation.</li>
-            <li>
-              4. Choose the best option and complete your purchase on the
-              store&apos;s website.
-            </li>
-          </ol>
+          {/* REFACTORED: About section content now centrally managed via AboutSection component */}
+          <AboutSection variant="footer" />
         </div>
       </section>
-
-      {/* Affiliate Disclosure Footer */}
-      <footer className="w-full px-6 py-4 border-t border-[var(--pl-card-border)]">
-        <div className="max-w-7xl mx-auto text-center">
-          <p className="text-[10px] text-[var(--pl-text-subtle)] leading-relaxed">
-            Some links on PriceLance are affiliate links. If you buy through one
-            of these links, we may earn a small commission from the retailer, at
-            no extra cost to you. Prices and availability can change; always
-            check the retailer site.
-          </p>
-        </div>
-      </footer>
     </main>
   );
 }

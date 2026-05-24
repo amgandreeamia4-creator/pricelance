@@ -1,0 +1,4 @@
+product_name,product_url,affiliate_link,image_url,price,currency,category,sku,gtin,availability,storeName
+"Laptop Model A","https://emag.ro/product-a","https://emag.ro/aff-a","https://emag.ro/img-a.jpg",1999.99,RON,telefoane,SKU-A,1234567890123,in stock,emag.ro
+"Phone Model B","https://altex.ro/product-b","https://altex.ro/aff-b","https://altex.ro/img-b.jpg",899.5,RON,telefoane,SKU-B,2345678901234,in stock,altex.ro
+"Headphones X","https://pcgarage.ro/product-x","https://pcgarage.ro/aff-x","https://pcgarage.ro/img-x.jpg",149.99,RON,audio,SKU-X,3456789012345,in stock,pcgarage.ro
