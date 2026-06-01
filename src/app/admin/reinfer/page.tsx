@@ -46,7 +46,9 @@ export default function ReinferCategoriesPage() {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "x-admin-token": "oneeverywhereharadevharapld3s3r112369",
+            // SECURITY: do not hardcode admin tokens. Provide token via secure server-side auth.
+            // Replace at runtime with a safe mechanism (e.g., fetch via server-side route or prompt admin login).
+            "x-admin-token": process.env.NEXT_PUBLIC_ADMIN_TOKEN || "<REDACTED_ADMIN_TOKEN>",
           },
         });
 

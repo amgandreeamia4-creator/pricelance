@@ -1,3 +1,4 @@
 ### Cleanup demo/static products from the database
 POST http://localhost:3000/api/internal/cleanup-demo
-x-internal-key: dragon-in-the-price-lake-9e4f28c7
+# SECURITY: internal key redacted in repository. Set `x-internal-key` locally when running tests.
+# x-internal-key: <REDACTED_INTERNAL_API_KEY>
