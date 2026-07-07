@@ -46,10 +46,9 @@ export default function MerchantFeedsClient() {
     setIsLoading(true);
     setError(null);
     try {
-      const adminToken = process.env.NEXT_PUBLIC_ADMIN_TOKEN || "";
       const [merchantsRes, feedsRes] = await Promise.all([
-        fetch("/api/admin/merchants", { headers: { "x-admin-token": adminToken } }),
-        fetch("/api/admin/merchant-feeds", { headers: { "x-admin-token": adminToken } })
+        fetch("/api/admin/merchants"),
+        fetch("/api/admin/merchant-feeds")
       ]);
 
       const merchantsData = await merchantsRes.json();
@@ -75,7 +74,6 @@ export default function MerchantFeedsClient() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-admin-token": process.env.NEXT_PUBLIC_ADMIN_TOKEN || "",
         },
         body: JSON.stringify({ storeName: newMerchantStoreName }),
       });
@@ -110,7 +108,6 @@ export default function MerchantFeedsClient() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-admin-token": process.env.NEXT_PUBLIC_ADMIN_TOKEN || "",
         },
         body: JSON.stringify({
           merchantId: selectedMerchantId,
@@ -125,8 +122,7 @@ export default function MerchantFeedsClient() {
         setFormMsg({ type: 'success', text: "Feed created successfully!" });
         setNewFeedName("");
         // Refresh feeds list
-        const adminToken = process.env.NEXT_PUBLIC_ADMIN_TOKEN || "";
-        const feedsRes = await fetch("/api/admin/merchant-feeds", { headers: { "x-admin-token": adminToken } });
+        const feedsRes = await fetch("/api/admin/merchant-feeds");
         const feedsData = await feedsRes.json();
         if (feedsData.ok) setFeeds(feedsData.feeds);
       } else {

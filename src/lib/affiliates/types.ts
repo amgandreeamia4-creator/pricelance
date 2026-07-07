@@ -29,8 +29,17 @@ export type NormalizedListing = {
   merchantFeedId?: string;
 };
 
+export type AffiliateNormalizeMetaResult = {
+  normalized: NormalizedListing[];
+  totalRows: number;
+  skippedRows: number;
+  skippedMissingFields?: number;
+  headerError?: string;
+};
+
 export interface AffiliateAdapter {
   id: string;
   name: string;
   normalize(raw: string): NormalizedListing[];
+  normalizeWithMeta(raw: string): AffiliateNormalizeMetaResult;
 }

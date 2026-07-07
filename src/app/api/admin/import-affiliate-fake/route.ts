@@ -22,8 +22,8 @@
 // =============================================================================
 
 import { NextRequest, NextResponse } from "next/server";
-import { fakeAffiliateAdapter } from "@/lib/affiliates/fakeAffiliateAdapter";
-import { importNormalizedListings } from "@/lib/importService";
+import { fakeAffiliateAdapter } from "@/lib/ingestion/adapters";
+import { ingestionQueue, ingestionQueueEvents } from "@/lib/ingestionQueue";
 import { validateAdminToken } from "@/lib/adminAuth";
 
 export const dynamic = "force-dynamic";
@@ -101,20 +101,21 @@ export async function POST(req: NextRequest) {
       }
 
       // Step 2: Import using core pipeline with affiliate metadata
-      const summary = await importNormalizedListings(normalized, {
-        source: "affiliate",
-        defaultCountryCode: "RO",
-        affiliateProvider: "fake",
+      const job = await ingestionQueue.add("affiliate_import", {
+        provider: "fake",
+        csv,
+        merchantFeedId: undefined,
+        merchantId: undefined,
         affiliateProgram: "fake_test_program",
-        startRowNumber: 2,
       });
+      const jobResult = await job.waitUntilFinished(ingestionQueueEvents);
 
       console.log("[admin/import-affiliate-fake] Import completed:", {
         rowsProcessed: normalized.length,
-        summary,
+        result: jobResult,
       });
 
-      return NextResponse.json({ summary }, { status: 200 });
+      return NextResponse.json({ summary: (jobResult as any).summary }, { status: 200 });
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Failed to process affiliate CSV";

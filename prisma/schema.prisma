@@ -44,7 +44,7 @@ model Favorite {
 }
 
 model Listing {
-  id                    String        @id
+  id                    String        @id @default(cuid())
   productId             String
   storeName             String
   storeLogoUrl          String?

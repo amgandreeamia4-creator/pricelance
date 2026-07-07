@@ -3,7 +3,7 @@
 
 import { prisma } from "@/lib/db";
 import { getEnabledProviders } from "@/lib/providers";
-import { importNormalizedListings } from "@/lib/importService";
+import { importNormalizedListings } from "@/lib/ingestion/importService";
 import type { NormalizedListing } from "@/lib/affiliates/types";
 import type { ProductProvider } from "@/lib/providers/types";
 import { CATEGORY_SYNONYMS, type CategoryKey } from "@/config/categoryFilters";

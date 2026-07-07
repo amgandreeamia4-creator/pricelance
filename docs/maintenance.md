@@ -1,6 +1,6 @@
 # PriceLance Maintenance Runbook
 
-This document describes the suggested maintenance routine for PriceLance to ensure data quality, system health, and compliance.
+This document describes the suggested maintenance routine for PriceLance to ensure data quality, system health, and compliance. For deployment and environment guidance, see [docs/DEPLOYMENT.md](DEPLOYMENT.md). For the documentation hub, see [docs/INDEX.md](INDEX.md).
 
 ## Admin Tools
 

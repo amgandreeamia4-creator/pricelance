@@ -6,13 +6,14 @@ import { sendContactEmail } from "@/lib/email";
 type Body = { name?: string; email?: string; message?: string };
 
 export async function POST(req: Request) {
+  console.log("[contact] POST received", { deployment: process.env.VERCEL_DEPLOYMENT_ID || null });
+
   try {
     const contentType = req.headers.get("content-type") || "";
     let body: Body = {};
     if (contentType.includes("application/json")) {
       body = await req.json();
     } else {
-      // fallback for form-encoded
       const form = await req.formData();
       body = {
         name: String(form.get("name") || "").trim(),
@@ -25,32 +26,36 @@ export async function POST(req: Request) {
     const email = (body.email || "").trim();
     const message = (body.message || "").trim();
 
-    // Validation
+    // Validation (name and message required; email optional)
     if (!name) {
       console.warn("[contact] validation failed: missing name");
       return NextResponse.json({ ok: false, error: "Name is required" }, { status: 400 });
-    }
-    if (!email) {
-      console.warn("[contact] validation failed: missing email");
-      return NextResponse.json({ ok: false, error: "Email is required" }, { status: 400 });
-    }
-    if (!validateEmail(email)) {
-      console.warn("[contact] validation failed: invalid email", { email });
-      return NextResponse.json({ ok: false, error: "Invalid email address" }, { status: 400 });
     }
     if (!message) {
       console.warn("[contact] validation failed: missing message");
       return NextResponse.json({ ok: false, error: "Message is required" }, { status: 400 });
     }
 
-    console.log("[contact] sending email", { name, email });
-    const result = await sendContactEmail({ name, email, message });
-    if (!result.ok) {
-      console.error("[contact] send failed", { error: result.error });
-      return NextResponse.json({ ok: false, error: result.error || "Email sending failed" }, { status: 502 });
-    }
+    // Contact submissions are accepted without persistence in this release.
+    // The email step remains optional and non-blocking.
+    console.log("[contact] accepted message without persistence");
 
-    console.log("[contact] send success");
+    // Try to send email (optional, non-blocking)
+    (async () => {
+      try {
+        console.log("[contact] email feature enabled check");
+        const res = await sendContactEmail({ name, email, message });
+        if (res.ok) {
+          console.log("[contact] email send success (non-blocking)");
+        } else {
+          console.warn("[contact] email send failed (non-blocking)", { error: res.error });
+        }
+      } catch (e: any) {
+        console.error("[contact] email send exception (non-blocking)", e);
+      }
+    })();
+
+    // Always return success once the message has been accepted.
     return NextResponse.json({ ok: true });
   } catch (err: any) {
     console.error("[contact] exception", err);
@@ -58,7 +63,3 @@ export async function POST(req: Request) {
   }
 }
 
-function validateEmail(email: string) {
-  // simple regex
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-}

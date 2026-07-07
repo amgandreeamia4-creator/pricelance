@@ -1,6 +1,6 @@
 # PriceLance Deployment Checklist
 
-This checklist is tailored to the PriceLance Next.js 16 (App Router) app backed by Prisma + Supabase Postgres. Use it before and after each production deployment.
+This checklist is tailored to the PriceLance Next.js 16 (App Router) app backed by Prisma + Supabase Postgres. Use it before and after each production deployment. For the broader deployment guide, see [docs/DEPLOYMENT.md](DEPLOYMENT.md). For the local setup flow, see [docs/ONBOARDING.md](ONBOARDING.md).
 
 ---
 

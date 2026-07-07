@@ -215,6 +215,35 @@ class FakeAffiliateAdapter extends BaseAffiliateAdapter implements AffiliateAdap
   id = "fake-affiliate";
   name = "Fake Affiliate (Test Only)";
 
+  normalizeWithMeta(raw: string) {
+    if (!raw || !raw.trim()) {
+      return {
+        normalized: [],
+        totalRows: 0,
+        skippedRows: 0,
+        skippedMissingFields: 0,
+      };
+    }
+
+    try {
+      const normalized = this.normalize(raw);
+      return {
+        normalized,
+        totalRows: normalized.length,
+        skippedRows: 0,
+        skippedMissingFields: 0,
+      };
+    } catch (error) {
+      return {
+        normalized: [],
+        totalRows: 0,
+        skippedRows: 0,
+        skippedMissingFields: 0,
+        headerError: error instanceof Error ? error.message : String(error),
+      };
+    }
+  }
+
   /**
    * Normalize fake affiliate CSV data into NormalizedListing[].
    * This is a TEST adapter - it does not connect to any real affiliate network.

@@ -1,7 +1,6 @@
-import { profitshareAdapter } from '@/lib/affiliates/profitshareAdapter';
-import { twoPerformantAdapter } from '@/lib/affiliates/twoPerformantAdapter';
-import { importNormalizedListings } from '@/lib/importService';
-import type { ImportOptions } from '@/lib/importService';
+import { profitshareAdapter, twoPerformantAdapter } from '@/lib/ingestion/adapters';
+import { importNormalizedListings } from '@/lib/ingestion/importService';
+import type { ImportOptions } from '@/lib/ingestion/importService';
 
 export async function runImportPipeline(raw: string, provider: string, options: ImportOptions, dbClient?: any) {
   // Choose adapter

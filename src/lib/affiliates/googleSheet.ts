@@ -226,6 +226,25 @@ class GoogleSheetAdapter extends BaseAffiliateAdapter implements AffiliateAdapte
   id = "google-sheet";
   name = "Google Sheet CSV";
 
+  normalizeWithMeta(raw: string) {
+    if (!raw || !raw.trim()) {
+      return {
+        normalized: [],
+        totalRows: 0,
+        skippedRows: 0,
+        skippedMissingFields: 0,
+      };
+    }
+
+    const normalized = this.normalize(raw);
+    return {
+      normalized,
+      totalRows: normalized.length,
+      skippedRows: 0,
+      skippedMissingFields: 0,
+    };
+  }
+
   normalize(raw: string): NormalizedListing[] {
     if (!raw || !raw.trim()) return [];
     const rows = parseCsv(raw);

@@ -6,12 +6,11 @@ type AdminAuthError =
 
 /**
  * Validate the admin token sent in the x-admin-token header.
- * Uses ADMIN_TOKEN (preferred) and falls back to NEXT_PUBLIC_ADMIN_TOKEN
- * so that older client code still works as long as env vars match.
+ * Only `ADMIN_TOKEN` (server-side) is accepted. Client-side `NEXT_PUBLIC_*`
+ * values are ignored to prevent exposing secrets to the browser.
  */
 export function validateAdminToken(headerToken: string | null): AdminAuthError | null {
-  const expected =
-    process.env.ADMIN_TOKEN || process.env.NEXT_PUBLIC_ADMIN_TOKEN || "";
+  const expected = process.env.ADMIN_TOKEN || "";
 
   if (!expected) {
     return { error: "Missing admin token", status: 500 };

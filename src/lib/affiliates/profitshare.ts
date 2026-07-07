@@ -9,8 +9,8 @@ import type { NormalizedListing } from './types';
  */
 export type ProfitshareRow = {
   name: string;
-  productUrl: string;
-  affiliateUrl: string;
+  productUrl?: string;
+  affiliateUrl?: string;
   imageUrl?: string;
   price: number;
   currency: string;
@@ -18,7 +18,7 @@ export type ProfitshareRow = {
   sku?: string;
   gtin?: string;
   availability?: string;
-  storeName: string;
+  storeName?: string;
 };
 
 /**
@@ -132,16 +132,6 @@ function normalizeHeader(header: string): string {
  * Extract store name from a product URL's domain.
  * e.g., "https://www.emag.ro/laptop-xyz" -> "emag.ro"
  */
-function extractStoreFromUrl(url: string): string {
-  try {
-    const parsed = new URL(url);
-    // Remove 'www.' prefix if present
-    return parsed.hostname.replace(/^www\./, "");
-  } catch {
-    return "unknown";
-  }
-}
-
 /**
  * Parse a price string to a number.
  * Handles Romanian format (1.234,56) and international format (1,234.56).
@@ -356,21 +346,17 @@ export function parseProfitshareCsv(content: string): {
       continue;
     }
     
-    // Extract store name from product URL (or affiliate URL as fallback)
-    const urlForStore = productUrl || affiliateUrl;
-    const storeName = extractStoreFromUrl(urlForStore);
-    
     const currency = getCell(rawRow, headerMap, "currency") || "RON";
     const imageUrl = getCell(rawRow, headerMap, "imageUrl") || undefined;
     const categoryRaw = getCell(rawRow, headerMap, "categoryRaw") || undefined;
     const sku = getCell(rawRow, headerMap, "sku") || undefined;
     const gtin = getCell(rawRow, headerMap, "gtin") || undefined;
     const availability = getCell(rawRow, headerMap, "availability") || undefined;
-    
+
     rows.push({
       name,
-      productUrl: productUrl || affiliateUrl,
-      affiliateUrl: affiliateUrl || productUrl,
+      productUrl,
+      affiliateUrl,
       imageUrl,
       price,
       currency: currency.toUpperCase(),
@@ -378,7 +364,6 @@ export function parseProfitshareCsv(content: string): {
       sku,
       gtin,
       availability,
-      storeName,
     });
   }
   

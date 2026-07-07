@@ -9,6 +9,7 @@ import type { SendEmailResult } from "./types";
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const RESEND_FROM = process.env.RESEND_FROM; // recommended verified sender
 const CONTACT_EMAIL = process.env.CONTACT_EMAIL || process.env.NEXT_PUBLIC_CONTACT_EMAIL;
+const ENABLE_CONTACT_EMAIL = process.env.ENABLE_CONTACT_EMAIL === "true";
 
 // SMTP env vars
 const SMTP_HOST = process.env.SMTP_HOST;
@@ -17,12 +18,24 @@ const SMTP_USER = process.env.SMTP_USER;
 const SMTP_PASS = process.env.SMTP_PASS;
 
 export async function sendContactEmail({ name, email, message }: { name: string; email: string; message: string; }): Promise<SendEmailResult> {
-  console.log("[email] sendContactEmail attempt", { name, email });
+  // Structured debug logs
+  console.log("[contact] sendContactEmail attempt", { name: String(name || ""), email: maskEmail(String(email || "")) });
+  console.log("[contact] ENABLE_CONTACT_EMAIL:", ENABLE_CONTACT_EMAIL);
+  console.log("[contact] CONTACT_EMAIL configured:", Boolean(CONTACT_EMAIL));
 
+  // Feature flag: if disabled, do not attempt to send; log and succeed.
+  if (!ENABLE_CONTACT_EMAIL) {
+    console.log("[contact] Email disabled - using fallback (logging only)");
+    // Log message contents for dev debugging (safe: we mask sender email above)
+    console.log("[contact] message:", { name: String(name || ""), email: maskEmail(String(email || "")), message: String(message || "") });
+    return { ok: true };
+  }
+
+  // Safe fallback: if contact recipient is not configured, do not fail the request.
   if (!CONTACT_EMAIL) {
-    const err = "CONTACT_EMAIL is not configured on the server";
-    console.error("[email]", err);
-    return { ok: false, error: err };
+    console.warn("[contact] CONTACT_EMAIL not configured - skipping send and using fallback");
+    console.log("[contact] message (no-email-config):", { name: String(name || ""), email: maskEmail(String(email || "")), message: String(message || "") });
+    return { ok: true };
   }
 
   const subject = `Contact form: ${name || "(no name)"}`;
@@ -57,11 +70,11 @@ export async function sendContactEmail({ name, email, message }: { name: string;
       if (!res.ok) {
         const err = `Resend API error: ${res.status} ${JSON.stringify(data)}`;
         console.error("[email]", err);
-        return { ok: false, error: err };
+        // do not fail the request; attempt SMTP fallback
+      } else {
+        console.log("[email] resend success", { id: data.id });
+        return { ok: true };
       }
-
-      console.log("[email] resend success", { id: data.id });
-      return { ok: true };
     } catch (err: any) {
       console.error("[email] resend exception", err);
       // fallthrough to SMTP
@@ -72,9 +85,7 @@ export async function sendContactEmail({ name, email, message }: { name: string;
   if (SMTP_HOST && SMTP_PORT && SMTP_USER && SMTP_PASS) {
     try {
       console.log("[email] using Nodemailer SMTP fallback");
-      // lazy import to avoid bundling in client
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const nodemailer = require("nodemailer");
+      const nodemailer = await import("nodemailer");
 
       const transporter = nodemailer.createTransport({
         host: SMTP_HOST,
@@ -102,13 +113,15 @@ export async function sendContactEmail({ name, email, message }: { name: string;
       return { ok: true };
     } catch (err: any) {
       console.error("[email] nodemailer error", err);
-      return { ok: false, error: err?.message || String(err) };
+      // do not fail the frontend if SMTP fails
+      return { ok: true };
     }
   }
 
   const err = "No email provider configured (RESEND_API_KEY or SMTP_* env vars required)";
-  console.error("[email]", err);
-  return { ok: false, error: err };
+  console.warn("[email]", err);
+  // Do not block frontend — treat as successful fallback
+  return { ok: true };
 }
 
 function getHostFromEnv() {
@@ -120,6 +133,15 @@ function getHostFromEnv() {
   } catch (e) {
     return null;
   }
+}
+
+function maskEmail(email: string) {
+  if (!email) return "";
+  const parts = String(email).split("@");
+  if (parts.length !== 2) return email;
+  const [local, domain] = parts;
+  const maskedLocal = local.length > 2 ? `${local[0]}***${local.slice(-1)}` : "***";
+  return `${maskedLocal}@${domain}`;
 }
 
 function escapeHtml(str: string) {

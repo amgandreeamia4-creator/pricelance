@@ -19,18 +19,14 @@
 
 import { BaseAffiliateAdapter } from "./base";
 import type { NormalizedListing } from "./types";
-import { parseTwoPerformantCsv, parseAvailability } from "./twoPerformant";
+import { parseTwoPerformantCsv } from "./twoPerformant";
 import { normalizeCsvRow } from "@/lib/canonical";
 
 export class TwoPerformantAdapter extends BaseAffiliateAdapter {
   id = "2performant";
   name = "2Performant";
 
-  /**
-   * Normalize 2Performant CSV content into NormalizedListing[].
-   * Each listing is tagged with normalized store and product data.
-   */
-  normalize(raw: string): NormalizedListing[] {
+  normalizeWithMeta(raw: string) {
     const {
       rows,
       skippedMissingFields,
@@ -39,15 +35,25 @@ export class TwoPerformantAdapter extends BaseAffiliateAdapter {
     } = parseTwoPerformantCsv(raw);
 
     if (headerError) {
-      console.error(`[TwoPerformantAdapter] Header error: ${headerError}`);
-      return [];
+      return {
+        normalized: [] as NormalizedListing[],
+        totalRows,
+        skippedRows: skippedMissingFields,
+        skippedMissingFields,
+        headerError,
+      };
     }
 
     if (rows.length === 0) {
       console.log(
         `[TwoPerformantAdapter] No valid rows found. Skipped ${skippedMissingFields} of ${totalRows} rows.`,
       );
-      return [];
+      return {
+        normalized: [] as NormalizedListing[],
+        totalRows,
+        skippedRows: skippedMissingFields,
+        skippedMissingFields,
+      };
     }
 
     console.log(
@@ -61,7 +67,15 @@ export class TwoPerformantAdapter extends BaseAffiliateAdapter {
       const rowNumber = i + 2; // +2 because row 1 is header, and we're 1-indexed
 
       try {
-        const norm = normalizeCsvRow(row as any, '2performant');
+        const rowWithStore = {
+          ...row,
+          storeName:
+            row.storeName ||
+            this.extractStoreName(row.productUrl || row.affiliateUrl) ||
+            'Unknown',
+        };
+
+        const norm = normalizeCsvRow(rowWithStore as any, '2performant');
         if (!norm.ok) {
           console.error(`[TwoPerformantAdapter] Normalization failed row ${rowNumber}: ${norm.error}`);
           continue;
@@ -100,7 +114,20 @@ export class TwoPerformantAdapter extends BaseAffiliateAdapter {
     console.log(
       `[TwoPerformantAdapter] Successfully normalized ${normalized.length} listings`,
     );
-    return normalized;
+    return {
+      normalized,
+      totalRows,
+      skippedRows: skippedMissingFields,
+      skippedMissingFields,
+    };
+  }
+
+  normalize(raw: string): NormalizedListing[] {
+    const result = this.normalizeWithMeta(raw);
+    if (result.headerError) {
+      throw new Error(result.headerError);
+    }
+    return result.normalized;
   }
 
   /**
@@ -171,6 +198,16 @@ export class TwoPerformantAdapter extends BaseAffiliateAdapter {
 
     const lowerKey = normalized.toLowerCase();
     return categoryMap[lowerKey] || normalized;
+  }
+
+  private extractStoreName(url?: string): string | undefined {
+    if (!url) return undefined;
+    try {
+      const parsed = new URL(url);
+      return parsed.hostname.replace(/^www\./, '');
+    } catch {
+      return undefined;
+    }
   }
 }
 

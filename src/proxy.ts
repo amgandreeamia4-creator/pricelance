@@ -42,7 +42,8 @@ export function proxy(req: NextRequest) {
       );
       gateDisabledWarningLogged = true;
     }
-    return NextResponse.next();
+    // In production we must fail CLOSED: block access if the admin password is missing.
+    return new NextResponse("Admin gate misconfigured", { status: 503 });
   }
 
   // HTTP Basic Auth check

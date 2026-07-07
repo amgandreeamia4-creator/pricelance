@@ -36,8 +36,8 @@
 
 export type TwoPerformantRow = {
   name: string;
-  productUrl: string;        // merchant product URL (if available)
-  affiliateUrl: string;      // 2Performant deeplink (if available)
+  productUrl?: string;        // merchant product URL (if available)
+  affiliateUrl?: string;      // 2Performant deeplink (if available)
   imageUrl?: string;
   price: number;
   currency: string;
@@ -45,7 +45,7 @@ export type TwoPerformantRow = {
   sku?: string;
   gtin?: string;
   availability?: string;
-  storeName: string;
+  storeName?: string;
   // Affiliate metadata specific to 2Performant
   affiliateProvider: string; // always "2performant"
   affiliateProgram?: string;
@@ -105,7 +105,7 @@ function parseCsv(content: string): string[][] {
       } else {
         if (char === '"') {
           inQuotes = true;
-        } else if (char === "," || char === ";") {
+        } else if (char === "," || char === ";" || char === "\t" || char === "|") {
           row.push(current.trim());
           current = "";
         } else {
@@ -161,19 +161,6 @@ function parsePrice(priceStr: string): number | null {
 
   const num = parseFloat(cleaned);
   return Number.isFinite(num) && num > 0 ? num : null;
-}
-
-/**
- * Extract host from URL and strip "www." prefix.
- */
-function extractHost(url: string | undefined): string | undefined {
-  if (!url) return undefined;
-  try {
-    const u = new URL(url);
-    return u.hostname.replace(/^www\./, "");
-  } catch {
-    return undefined;
-  }
 }
 
 /**
@@ -282,18 +269,10 @@ export function parseTwoPerformantCsv(content: string): TwoPerformantParseResult
     const currencyCell = cell(rawRow, idxCurrency);
     const currency = (currencyCell || "RON").toUpperCase();
 
-    let storeName = cell(rawRow, idxAdvertiser);
-    if (!storeName) {
-      storeName =
-        extractHost(productUrl) ||
-        extractHost(affiliateUrl) ||
-        "unknown";
-    }
-
     rows.push({
       name,
-      productUrl: productUrl || affiliateUrl || "",
-      affiliateUrl: affiliateUrl || productUrl || "",
+      productUrl,
+      affiliateUrl,
       imageUrl,
       price,
       currency,
@@ -301,7 +280,6 @@ export function parseTwoPerformantCsv(content: string): TwoPerformantParseResult
       sku: undefined,
       gtin: undefined,
       availability: undefined,
-      storeName,
       affiliateProvider: "2performant",
       affiliateProgram: undefined,
     });

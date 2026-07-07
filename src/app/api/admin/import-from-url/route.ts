@@ -1,26 +1,21 @@
-// src/app/api/admin/import-from-url/route.ts
+﻿// src/app/api/admin/import-from-url/route.ts
 // Import CSV data from a remote URL and reuse the core CSV import logic.
 
 import { NextRequest, NextResponse } from "next/server";
-import { googleSheetAdapter } from "@/lib/affiliates/googleSheet";
-import { importNormalizedListings } from "@/lib/importService";
+import { prisma } from "@/lib/db";
+import { googleSheetAdapter } from "@/lib/ingestion/adapters";
+import { ingestionQueue, ingestionQueueEvents } from "@/lib/ingestionQueue";
 import { validateAdminToken } from "@/lib/adminAuth";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-/**
- * POST /api/admin/import-from-url
- * Body: { url: string }
- *
- * Downloads a CSV from the given URL and runs the shared CSV importer.
- */
 export async function POST(req: NextRequest) {
   const authError = validateAdminToken(req.headers.get("x-admin-token"));
   if (authError) {
     return NextResponse.json(
       { error: authError.error },
-      { status: authError.status }
+      { status: authError.status },
     );
   }
 
@@ -31,19 +26,33 @@ export async function POST(req: NextRequest) {
     } catch {
       return NextResponse.json(
         { error: "Request body must be valid JSON" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     const raw = body as any;
     const url = typeof raw?.url === "string" ? raw.url.trim() : "";
     const validateUrls = typeof raw?.validateUrls === "boolean" ? raw.validateUrls : false;
+    const merchantFeedId = typeof raw?.merchantFeedId === "string" ? raw.merchantFeedId.trim() : "";
 
     if (!url) {
       return NextResponse.json(
         { error: "url is required and must be a non-empty string" },
-        { status: 400 }
+        { status: 400 },
       );
+    }
+
+    let merchantId: string | undefined;
+    if (merchantFeedId) {
+      const feed = await (prisma as any).merchantFeed.findUnique({
+        where: { id: merchantFeedId },
+        select: { merchantId: true },
+      });
+      if (feed) {
+        merchantId = feed.merchantId;
+      } else {
+        console.warn(`[admin/import-from-url] MerchantFeed not found: ${merchantFeedId}`);
+      }
     }
 
     console.log("[admin/import-from-url] Starting import from URL:", url);
@@ -55,7 +64,7 @@ export async function POST(req: NextRequest) {
       console.error("[admin/import-from-url] Fetch error:", err);
       return NextResponse.json(
         { error: "Failed to fetch CSV from the provided URL" },
-        { status: 502 }
+        { status: 502 },
       );
     }
 
@@ -63,13 +72,13 @@ export async function POST(req: NextRequest) {
       console.error(
         "[admin/import-from-url] Non-200 response:",
         response.status,
-        response.statusText
+        response.statusText,
       );
       return NextResponse.json(
         {
           error: `Failed to download CSV: HTTP ${response.status} ${response.statusText}`,
         },
-        { status: 502 }
+        { status: 502 },
       );
     }
 
@@ -78,23 +87,24 @@ export async function POST(req: NextRequest) {
     if (!csvText.trim()) {
       return NextResponse.json(
         { error: "CSV downloaded from URL is empty" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     try {
-      const normalized = googleSheetAdapter.normalize(csvText);
-      const summary = await importNormalizedListings(normalized, {
-        source: "sheet",
-        defaultCountryCode: "RO",
-        startRowNumber: 2,
+      googleSheetAdapter.normalize(csvText);
+      const job = await ingestionQueue.add("url_import", {
+        csv: csvText,
         validateUrls,
+        merchantId,
+        merchantFeedId: merchantFeedId || undefined,
       });
+      const jobResult = await job.waitUntilFinished(ingestionQueueEvents);
       console.log("[admin/import-from-url] Import completed:", {
         url,
-        summary,
+        result: jobResult,
       });
-      return NextResponse.json({ summary }, { status: 200 });
+      return NextResponse.json({ summary: (jobResult as any).summary }, { status: 200 });
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Failed to process CSV";
@@ -108,14 +118,14 @@ export async function POST(req: NextRequest) {
       console.error("[admin/import-from-url] Import error:", err);
       return NextResponse.json(
         { error: message },
-        { status: isBadInput ? 400 : 500 }
+        { status: isBadInput ? 400 : 500 },
       );
     }
   } catch (error) {
     console.error("[admin/import-from-url] POST error:", error);
     return NextResponse.json(
       { error: "Failed to import from URL" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -19,28 +19,33 @@
 
 import { BaseAffiliateAdapter } from './base';
 import type { NormalizedListing } from './types';
-import { parseProfitshareCsv, parseAvailability } from './profitshare';
+import { parseProfitshareCsv } from './profitshare';
 import { normalizeCsvRow } from '@/lib/canonical';
 
 export class ProfitshareAdapter extends BaseAffiliateAdapter {
   id = 'profitshare';
   name = 'Profitshare.ro';
 
-  /**
-   * Normalize Profitshare CSV content into NormalizedListing[].
-   * Each listing is tagged with the appropriate store and network information.
-   */
-  normalize(raw: string): NormalizedListing[] {
+  normalizeWithMeta(raw: string) {
     const { rows, skippedMissingFields, totalDataRows, headerError } = parseProfitshareCsv(raw);
-
     if (headerError) {
-      console.error(`[ProfitshareAdapter] Header error: ${headerError}`);
-      return [];
+      return {
+        normalized: [] as NormalizedListing[],
+        totalRows: totalDataRows,
+        skippedRows: skippedMissingFields,
+        skippedMissingFields,
+        headerError,
+      };
     }
 
     if (rows.length === 0) {
       console.log(`[ProfitshareAdapter] No valid rows found. Skipped ${skippedMissingFields} of ${totalDataRows} rows.`);
-      return [];
+      return {
+        normalized: [] as NormalizedListing[],
+        totalRows: totalDataRows,
+        skippedRows: skippedMissingFields,
+        skippedMissingFields,
+      };
     }
 
     console.log(`[ProfitshareAdapter] Processing ${rows.length} valid rows (skipped ${skippedMissingFields} of ${totalDataRows})`);
@@ -52,17 +57,22 @@ export class ProfitshareAdapter extends BaseAffiliateAdapter {
       const rowNumber = i + 2; // +2 because row 1 is header, and we're 1-indexed
 
       try {
-        const norm = normalizeCsvRow(row as any, 'profitshare');
+        const rowWithStore = {
+          ...row,
+          storeName:
+            row.storeName ||
+            this.extractStoreName(row.productUrl || row.affiliateUrl) ||
+            'Unknown',
+        };
+
+        const norm = normalizeCsvRow(rowWithStore as any, 'profitshare');
         if (!norm.ok) {
           console.error(`[ProfitshareAdapter] Normalization failed row ${rowNumber}: ${norm.error}`);
           continue;
         }
 
         const c = norm.canonical;
-
-        // If brand missing, use adapter heuristic
         const brand = c.brand ?? this.extractBrand(c.productName, c.category ?? undefined);
-
         const storeId = this.extractStoreId(c.listing.storeName);
 
         const normalizedListing: NormalizedListing = {
@@ -92,7 +102,23 @@ export class ProfitshareAdapter extends BaseAffiliateAdapter {
     }
 
     console.log(`[ProfitshareAdapter] Successfully normalized ${normalized.length} listings`);
-    return normalized;
+    return {
+      normalized,
+      totalRows: totalDataRows,
+      skippedRows: skippedMissingFields,
+      skippedMissingFields,
+    };
+  }
+
+  /**
+   * Normalize Profitshare CSV content into NormalizedListing[].
+   */
+  normalize(raw: string): NormalizedListing[] {
+    const result = this.normalizeWithMeta(raw);
+    if (result.headerError) {
+      throw new Error(result.headerError);
+    }
+    return result.normalized;
   }
 
   /**
@@ -109,6 +135,16 @@ export class ProfitshareAdapter extends BaseAffiliateAdapter {
       .replace(/\s+/g, '_')
       .replace(/_+/g, '_')
       .trim() || 'unknown';
+  }
+
+  private extractStoreName(url?: string): string | undefined {
+    if (!url) return undefined;
+    try {
+      const parsed = new URL(url);
+      return parsed.hostname.replace(/^www\./, '');
+    } catch {
+      return undefined;
+    }
   }
 
   /**

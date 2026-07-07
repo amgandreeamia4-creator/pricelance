@@ -44,11 +44,7 @@ export default function ImportCsvClient() {
   async function fetchFeeds() {
     setIsLoadingFeeds(true);
     try {
-      const res = await fetch("/api/admin/merchant-feeds", {
-        headers: {
-          "x-admin-token": process.env.NEXT_PUBLIC_ADMIN_TOKEN || "",
-        },
-      });
+      const res = await fetch("/api/admin/merchant-feeds");
       const data = await res.json();
       if (data.ok) {
         setAvailableFeeds(data.feeds);
@@ -98,10 +94,6 @@ export default function ImportCsvClient() {
       const res = await fetch("/api/admin/import-csv", {
         method: "POST",
         body: formData,
-        headers: {
-          // IMPORTANT: this must match validateAdminToken()
-          "x-admin-token": process.env.NEXT_PUBLIC_ADMIN_TOKEN || "",
-        },
       });
 
       console.log("[ImportCsvClient] Fetch response received:", res);

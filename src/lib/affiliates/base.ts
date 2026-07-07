@@ -5,6 +5,13 @@ export abstract class BaseAffiliateAdapter implements AffiliateAdapter {
   abstract name: string;
 
   abstract normalize(raw: string): NormalizedListing[];
+  abstract normalizeWithMeta(raw: string): {
+    normalized: NormalizedListing[];
+    totalRows: number;
+    skippedRows: number;
+    skippedMissingFields?: number;
+    headerError?: string;
+  };
 }
 
 export function parseBooleanLike(value: unknown): boolean | undefined {

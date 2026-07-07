@@ -4,6 +4,7 @@
 import { prisma } from "@/lib/db";
 import { getSearchAnalyticsSummary } from "@/lib/searchAnalytics";
 import { CANONICAL_CATEGORIES, CATEGORY_LABELS } from "@/config/categories";
+import IngestionMonitorPanel from "./IngestionMonitorPanel";
 
 export const dynamic = "force-dynamic";
 
@@ -385,10 +386,12 @@ export default async function SystemCheckPage() {
         <header>
           <h1 className="text-2xl font-semibold tracking-tight">System Check</h1>
           <p className="mt-1 text-sm text-slate-400">
-            Quick view of catalog, database, search, freshness, and coverage
-            health.
+            Quick view of catalog, database, search, freshness, coverage, and
+            ingestion health.
           </p>
         </header>
+
+        <IngestionMonitorPanel />
 
         {/* Top cards: DB / Catalog / Search */}
         <section className="grid gap-6 md:grid-cols-3">
