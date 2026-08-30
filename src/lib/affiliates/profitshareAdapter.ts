@@ -28,6 +28,7 @@ export class ProfitshareAdapter extends BaseAffiliateAdapter {
 
   normalizeWithMeta(raw: string) {
     const { rows, skippedMissingFields, totalDataRows, headerError } = parseProfitshareCsv(raw);
+
     if (headerError) {
       return {
         normalized: [] as NormalizedListing[],
@@ -37,18 +38,6 @@ export class ProfitshareAdapter extends BaseAffiliateAdapter {
         headerError,
       };
     }
-
-    if (rows.length === 0) {
-      console.log(`[ProfitshareAdapter] No valid rows found. Skipped ${skippedMissingFields} of ${totalDataRows} rows.`);
-      return {
-        normalized: [] as NormalizedListing[],
-        totalRows: totalDataRows,
-        skippedRows: skippedMissingFields,
-        skippedMissingFields,
-      };
-    }
-
-    console.log(`[ProfitshareAdapter] Processing ${rows.length} valid rows (skipped ${skippedMissingFields} of ${totalDataRows})`);
 
     const normalized: NormalizedListing[] = [];
 
@@ -101,7 +90,6 @@ export class ProfitshareAdapter extends BaseAffiliateAdapter {
       }
     }
 
-    console.log(`[ProfitshareAdapter] Successfully normalized ${normalized.length} listings`);
     return {
       normalized,
       totalRows: totalDataRows,

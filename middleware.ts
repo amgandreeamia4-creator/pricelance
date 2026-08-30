@@ -2,8 +2,8 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-const BASIC_AUTH_USER = process.env.ADMIN_BASIC_USER;
-const BASIC_AUTH_PASS = process.env.ADMIN_BASIC_PASS;
+const BASIC_AUTH_USER = process.env.ADMIN_USER;
+const BASIC_AUTH_PASS = process.env.ADMIN_PASSWORD;
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN;
 
 export function middleware(req: NextRequest) {
@@ -19,7 +19,7 @@ export function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  const isAdminPage = pathname.startsWith("/admin");
+  const isAdminPage = pathname.startsWith("/admin") || pathname.startsWith("/api/admin");
 
   // Only guard admin pages
   if (!isAdminPage) {
@@ -85,5 +85,5 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*"],
+  matcher: ["/admin/:path*", "/api/admin/:path*"],
 };

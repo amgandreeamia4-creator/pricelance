@@ -30,12 +30,12 @@ The deployment environment should include the full set of runtime configuration 
 
 | Variable | Purpose |
 |---|---|
-| DATABASE_URL | PostgreSQL connection string for Prisma |
-| ADMIN_USER | Admin username for protected admin flows |
-| ADMIN_PASSWORD | Admin password for protected admin flows |
-| ADMIN_TOKEN | Server-side token used by admin and internal routes |
-| INTERNAL_API_KEY | Required by protected internal APIs |
+| DATABASE_URL | PostgreSQL connection string for Prisma in the buyer-owned deployment environment |
+| ADMIN_TOKEN | Server-side token used by admin routes via `x-admin-token` |
+| INTERNAL_API_KEY | Server-side key used by internal APIs via `x-internal-key` |
 | NEXT_PUBLIC_APP_BASE_URL | Public application base URL used by server-side flows |
+
+The current owner’s live PostgreSQL/Supabase environment should not be treated as the permanent buyer deployment. The buyer should create or use their own managed PostgreSQL/Supabase instance and configure `DATABASE_URL` before production use.
 
 ### Optional values
 
@@ -47,7 +47,7 @@ The deployment environment should include the full set of runtime configuration 
 | BANGGOOD_API_KEY / BANGGOOD_API_SECRET | Optional affiliate ingestion credentials |
 | REDIS_URL or REDIS_HOST / REDIS_PORT | Queue and worker connectivity |
 
-The repository currently uses NEXT_PUBLIC_APP_BASE_URL in shared configuration, while some admin-related flows also inspect NEXT_PUBLIC_BASE_URL. Confirm which base URL variable is expected by your deployment target before rollout.
+The current codebase uses `NEXT_PUBLIC_APP_BASE_URL` in the runtime configuration and app setup. Use that variable consistently in the deployment environment; do not rely on any client-exposed secrets or alternate base-URL variables for actual auth or deployment configuration.
 
 The deployment should not rely on local-only .env.local values. Every production setting should be injected through the platform environment.
 
@@ -115,12 +115,13 @@ The build should succeed before promotion to production. The deployment pipeline
 Before deployment, confirm the following:
 
 - The application builds successfully
-- DATABASE_URL points to the production database
-- Prisma migrations have been applied
-- Required secrets are set in the deployment environment
+- `DATABASE_URL` points to the buyer-owned production database
+- Prisma migrations have been applied in that environment
+- Required server-side secrets are set in the deployment environment
 - The public base URL is correct
 - Redis is configured if worker-based ingestion is required
 - The deployment platform has the correct Node.js runtime version
+- The current seller database and secrets are not being reused as the permanent production deployment
 
 ## 9. Verification after deployment
 
@@ -130,8 +131,8 @@ After the application is deployed, verify the main user path and the operational
 
 - Open the main application and confirm the home page loads
 - Run a search and confirm results are returned if data is present
-- Confirm admin routes are accessible only with the expected credentials
-- Confirm internal endpoints are protected by the configured secret
+- Confirm admin routes are accessible only with the expected `x-admin-token` value
+- Confirm internal endpoints are protected by the configured `x-internal-key`
 
 ### Operational verification
 

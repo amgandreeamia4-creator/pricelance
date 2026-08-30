@@ -1,11 +1,9 @@
 ﻿import 'server-only';
 
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
 import { validateAdminToken } from "@/lib/adminAuth";
 import { isValidProvider } from "@/config/affiliateIngestion";
-import { ingestionQueue, ingestionQueueEvents } from "@/lib/ingestionQueue";
-import { profitshareAdapter, twoPerformantAdapter } from "@/lib/ingestion/adapters";
+import { processCsvImport } from "@/lib/ingestion/csvProcessor";
 
 export const dynamic = "force-dynamic";
 
@@ -15,27 +13,25 @@ function buildImportErrorResponse(message: string, status = 400) {
   return NextResponse.json({ ok: false, error: message }, { status });
 }
 
-async function resolveMerchantContext(
-  merchantFeedId: string | null,
-) {
-  if (!merchantFeedId) {
-    return { merchantId: undefined, merchantFeedId: undefined };
-  }
+function buildCsvValidationErrorResponse(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error);
+  const match = message.match(/^Missing required columns:\s*(.+)$/i);
 
-  const feed = await (prisma as any).merchantFeed.findUnique({
-    where: { id: merchantFeedId },
-    select: { merchantId: true },
-  });
+  if (!match) return null;
 
-  if (!feed) {
-    console.warn(`[import-csv] MerchantFeed not found: ${merchantFeedId}`);
-    return { merchantId: undefined, merchantFeedId: undefined };
-  }
+  const missingColumns = match[1]
+    .split(",")
+    .map((column) => column.trim())
+    .filter(Boolean);
 
-  return {
-    merchantId: feed.merchantId,
-    merchantFeedId,
-  };
+  return NextResponse.json(
+    {
+      ok: false,
+      error: "Your CSV is missing required columns. Download the template CSV and try again.",
+      missingColumns,
+    },
+    { status: 400 },
+  );
 }
 
 function buildImportResponse(
@@ -87,10 +83,8 @@ export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData();
     const file = formData.get("file");
-    const providerParam = (formData.get("provider") as string | null) ?? "profitshare";
-    const provider = isValidProvider(providerParam) ? providerParam : "profitshare";
-    const merchantFeedId = (formData.get("merchantFeedId") as string | null) || null;
-    const merchantContext = await resolveMerchantContext(merchantFeedId);
+    const providerParam = (formData.get("provider") as string | null) ?? "generic";
+    const provider = isValidProvider(providerParam) ? providerParam : "generic";
     const providerMessage = null;
 
     if (!file || !(file instanceof File)) {
@@ -106,112 +100,24 @@ export async function POST(req: NextRequest) {
       return buildImportErrorResponse("CSV file is empty", 400);
     }
 
-    let normalizedRows = [] as any[];
-    let totalRows = 0;
-    let skippedRows = 0;
-    let skippedMissingFields = 0;
-    let headerError: string | undefined;
-
-    if (provider === "2performant") {
-      const result = twoPerformantAdapter.normalizeWithMeta(content);
-      headerError = result.headerError;
-      if (headerError) {
-        return buildImportErrorResponse(headerError, 400);
-      }
-
-      normalizedRows = result.normalized;
-      totalRows = result.totalRows;
-      skippedRows = result.skippedRows;
-      skippedMissingFields = result.skippedMissingFields ?? 0;
-
-      if (normalizedRows.length === 0) {
-        return NextResponse.json(
-          {
-            ok: false,
-            totalRows,
-            processedRows: 0,
-            skippedRows,
-            skipped: skippedMissingFields,
-            createdProducts: 0,
-            updatedProducts: 0,
-            createdListings: 0,
-            updatedListings: 0,
-            skippedMissingFields,
-            skippedMissingExternalId: 0,
-            failedRows: skippedRows,
-            errors: [],
-            debugErrors: [],
-            truncated: false,
-            message: "No valid 2Performant rows were found in the CSV.",
-            capped: false,
-            maxRowsPerImport: MAX_IMPORT_ROWS,
-            provider,
-          },
-          { status: 400 },
-        );
-      }
-    } else {
-      const result = profitshareAdapter.normalizeWithMeta(content);
-      headerError = result.headerError;
-      if (headerError) {
-        return buildImportErrorResponse(headerError, 400);
-      }
-
-      normalizedRows = result.normalized;
-      totalRows = result.totalRows;
-      skippedRows = result.skippedRows;
-      skippedMissingFields = result.skippedMissingFields ?? 0;
-
-      if (normalizedRows.length === 0) {
-        return NextResponse.json(
-          {
-            ok: true,
-            totalRows,
-            processedRows: 0,
-            skippedRows,
-            skipped: skippedMissingFields,
-            createdProducts: 0,
-            updatedProducts: 0,
-            createdListings: 0,
-            updatedListings: 0,
-            skippedMissingFields,
-            skippedMissingExternalId: 0,
-            failedRows: 0,
-            errors: [],
-            debugErrors: [],
-            truncated: false,
-            message: null,
-            capped: false,
-            maxRowsPerImport: MAX_IMPORT_ROWS,
-            provider,
-          },
-          { status: 200 },
-        );
-      }
-    }
-
-    const cappedRows = normalizedRows.slice(0, MAX_IMPORT_ROWS);
-    const capped = normalizedRows.length > MAX_IMPORT_ROWS;
-
-    const job = await ingestionQueue.add("csv_import", {
+    const result = await processCsvImport({
       provider,
       csv: content,
-      merchantFeedId,
-      merchantId: merchantContext.merchantId,
     });
 
-    const jobResult = await job.waitUntilFinished(ingestionQueueEvents);
-
     return buildImportResponse(
-      (jobResult as any).summary,
-      (jobResult as any).totalRows ?? totalRows,
+      result.summary,
+      result.totalRows ?? 0,
       provider,
-      (jobResult as any).skippedRows ?? skippedRows,
-      (jobResult as any).capped ?? capped,
-      (jobResult as any).message ?? providerMessage,
+      result.skippedRows ?? 0,
+      result.capped ?? false,
+      result.message ?? providerMessage,
     );
   } catch (error) {
     console.error("[admin/import-csv] POST error:", error);
+    const validationError = buildCsvValidationErrorResponse(error);
+    if (validationError) return validationError;
+
     return NextResponse.json(
       { ok: false, error: "Failed to process CSV import" },
       { status: 500 },

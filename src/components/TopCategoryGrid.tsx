@@ -10,14 +10,14 @@ type TopCategory = {
 };
 
 const TOP_CATEGORIES: TopCategory[] = [
-  { id: "laptops", label: "Laptopuri", query: "laptop" },
-  { id: "phones", label: "Telefoane", query: "telefon" },
-  { id: "monitors", label: "Monitoare", query: "monitor" },
-  { id: "audio", label: "Căști & Audio", query: "casti" },
-  { id: "kb-mouse", label: "Tastaturi & Mouse", query: "tastatura" },
+  { id: "laptops", label: "Laptops", query: "laptop" },
+  { id: "phones", label: "Phones", query: "telefon" },
+  { id: "monitors", label: "Monitors", query: "monitor" },
+  { id: "audio", label: "Headphones & Audio", query: "casti" },
+  { id: "kb-mouse", label: "Keyboards & Mice", query: "tastatura" },
   { id: "tv-display", label: "TV & Display", query: "tv" },
-  { id: "tablets", label: "Tablete", query: "tableta" },
-  { id: "smartwatch", label: "Smartwatch", query: "smartwatch" },
+  { id: "tablets", label: "Tablets", query: "tableta" },
+  { id: "smartwatch", label: "Smartwatches", query: "smartwatch" },
 ];
 
 type TopCategoryGridProps = {
@@ -34,7 +34,7 @@ export default function TopCategoryGrid({ onCategoryClick }: TopCategoryGridProp
 
   return (
     <section className="mt-4 mb-4">
-      <div className="max-w-5xl mx-auto grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+      <div className="max-w-5xl mx-auto grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
         {TOP_CATEGORIES.map((cat) => (
           <button
             key={cat.id}

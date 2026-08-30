@@ -10,13 +10,16 @@ type AdminAuthError =
  * values are ignored to prevent exposing secrets to the browser.
  */
 export function validateAdminToken(headerToken: string | null): AdminAuthError | null {
-  const expected = process.env.ADMIN_TOKEN || "";
+  const configuredTokens = new Set<string>([
+    process.env.ADMIN_TOKEN,
+    process.env.ADMIN_TOKEN_ROTATION,
+  ].filter((value): value is string => Boolean(value && value.trim())));
 
-  if (!expected) {
+  if (configuredTokens.size === 0) {
     return { error: "Missing admin token", status: 500 };
   }
 
-  if (!headerToken || headerToken !== expected) {
+  if (!headerToken || !configuredTokens.has(headerToken)) {
     return { error: "Invalid admin token", status: 401 };
   }
 

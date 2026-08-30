@@ -1,8 +1,7 @@
 import { Job, Worker } from "bullmq";
-import { processCsvImport } from "@/lib/ingestion/csvProcessor";
 import { profitshareAdapter, fakeAffiliateAdapter, googleSheetAdapter, fetchBanggoodListings } from "@/lib/ingestion/adapters";
 import { importNormalizedListings } from "@/lib/ingestion/importService";
-import type { CsvImportJobData, AffiliateImportJobData, UrlImportJobData } from "@/lib/ingestionQueue";
+import type { AffiliateImportJobData, UrlImportJobData } from "@/lib/ingestionQueue";
 
 const MAX_IMPORT_ROWS = 300;
 
@@ -35,7 +34,7 @@ const connection = redisUrl
       password: process.env.REDIS_PASSWORD || undefined,
     };
 
-type JobPayload = CsvImportJobData | AffiliateImportJobData | UrlImportJobData;
+type JobPayload = AffiliateImportJobData | UrlImportJobData;
 
 async function processAffiliateImport(data: AffiliateImportJobData): Promise<WorkerResult> {
   const { provider, csv, listings, merchantFeedId, merchantId, affiliateProgram, network, categoryId, page, pageSize } = data;
@@ -107,8 +106,6 @@ const worker = new Worker<JobPayload, WorkerResult>(
   "ingestionQueue",
   async (job: Job<JobPayload, WorkerResult>) => {
       switch (job.name) {
-        case "csv_import":
-          return processCsvImport(job.data as CsvImportJobData);
         case "affiliate_import":
           return processAffiliateImport(job.data as AffiliateImportJobData);
         case "url_import":

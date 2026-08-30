@@ -223,7 +223,7 @@ export default function ProductSummary({
             return sortedListings.length > 0 ? (
               <div className="mt-4 border-t border-slate-200 pt-3 dark:border-slate-800">
                 <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                  Oferte pentru acest produs
+                  Offers for this product
                 </h4>
 
                 <div className="flex flex-col gap-2">
@@ -253,7 +253,7 @@ export default function ProductSummary({
                           }}
                           className="rounded-full bg-blue-500 px-3 py-1 text-[11px] font-semibold text-white shadow-sm hover:bg-blue-600"
                         >
-                          spre magazin »
+                          Go to store »
                         </button>
                       </div>
                     );
@@ -262,7 +262,7 @@ export default function ProductSummary({
 
                 {sortedListings.length > 5 && (
                   <div className="mt-2 text-[11px] text-slate-500 dark:text-slate-400">
-                    + {sortedListings.length - 5} oferte suplimentare
+                    + {sortedListings.length - 5} more offers
                   </div>
                 )}
               </div>

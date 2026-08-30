@@ -19,8 +19,8 @@ export async function generateMetadata(
 
   if (!category) {
     return {
-      title: "Categorie necunoscută | PriceLance",
-      description: "Categoria căutată nu există pe PriceLance.",
+      title: "Unknown category | PriceLance",
+      description: "The requested category could not be found on PriceLance.",
     };
   }
 
@@ -51,7 +51,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
         </div>
       </header>
 
-      <section aria-label={`Produse din categoria ${category.nameRo}`}>
+      <section aria-label={`Products in the ${category.nameRo} category`}>
         <CategoryProductGrid categoryKey={category.categoryKey} />
       </section>
     </main>

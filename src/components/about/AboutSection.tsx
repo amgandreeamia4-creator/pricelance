@@ -126,7 +126,7 @@ export function AboutSection({
               steadily expanding its coverage. New products, categories, and
               stores are added over time, guided by real searches and feedback.
               The goal is simple: make tech price comparison more transparent and
-              useful, starting from Romania and then extending deeper into the EU.
+              useful for shoppers across more regions and product categories.
             </p>
           </div>
         </section>

@@ -6,19 +6,24 @@ import Script from "next/script";
 import ThemeProvider from "@/components/ThemeProvider";
 import { LanguageProvider } from "@/components/LanguageProvider";
 import MainHeader from "@/components/MainHeader";
-import AcceptCookiesButton from "@/components/AcceptCookiesButton";
+import AcceptCookiesButton, {
+  AnalyticsScriptGate,
+} from "@/components/AcceptCookiesButton";
 
-const GA_MEASUREMENT_ID = "G-6NM0TRYT3T";
+const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID?.trim() || "";
+const ADSENSE_CLIENT_ID = process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID?.trim() || "";
+const GOOGLE_SITE_VERIFICATION = process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION?.trim() || "";
+const PROFITSHARE_ID = process.env.NEXT_PUBLIC_PROFITSHARE_ID?.trim() || "";
 
 export const metadata: Metadata = {
-  title: "PriceLance – Comparare prețuri la electronice în România",
+  title: "PriceLance – Smart Tech Price Comparison",
   description:
-    "Caută și compară prețuri la telefoane, laptopuri, monitoare, căști și alte electronice din magazinele online din România. Găsește cele mai bune oferte rapid, într-un singur loc.",
+    "Search and compare prices for tech products across multiple retailers in one place.",
   metadataBase: new URL("https://pricelance.com"),
   openGraph: {
-    title: "PriceLance – Comparare prețuri la electronice în România",
+    title: "PriceLance – Smart Tech Price Comparison",
     description:
-      "Caută și compară prețuri la telefoane, laptopuri, monitoare, căști și alte electronice din magazinele online din România.",
+      "Search and compare prices for tech products across multiple retailers in one place.",
     url: "https://pricelance.com",
     type: "website",
     siteName: "PriceLance",
@@ -28,12 +33,13 @@ export const metadata: Metadata = {
     follow: true,
   },
   verification: {
-    google: "edNnT14enMS24XUO4qN",
+    google: GOOGLE_SITE_VERIFICATION,
   },
-  // This creates: <meta name="profitshareid" content="...">
-  other: {
-    profitshareid: "ef16e2643bedf2876e19640f297c5e9a",
-  },
+  other: PROFITSHARE_ID
+    ? {
+        profitshareid: PROFITSHARE_ID,
+      }
+    : {},
 };
 
 export default function RootLayout({
@@ -45,34 +51,13 @@ export default function RootLayout({
   const skimlinksSrc = process.env.NEXT_PUBLIC_SKIMLINKS_SCRIPT_SRC;
 
   return (
-    <html lang="ro" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
       <body className="min-h-screen antialiased selection:bg-blue-600/40 selection:text-white">
-        <Script
-          src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
-          strategy="afterInteractive"
-        />
-        <Script
-          id="adsense-global"
-          async
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6846589122417205"
-          crossOrigin="anonymous"
-          strategy="afterInteractive"
-        />
-        <Script id="ga4-init" strategy="afterInteractive">
-          {`
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', '${GA_MEASUREMENT_ID}', {
-              page_path: window.location.pathname,
-            });
-          `}
-        </Script>
-        {process.env.NODE_ENV === "production" && (
+        {ADSENSE_CLIENT_ID && (
           <Script
-            id="adsense-script"
+            id="adsense-global"
             async
-            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID}`}
+            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT_ID}`}
             crossOrigin="anonymous"
             strategy="afterInteractive"
           />
@@ -91,14 +76,25 @@ export default function RootLayout({
               <footer className="w-full border-t border-slate-400/80 dark:border-slate-800 bg-white/80 dark:bg-neutral-950/80">
                 <div className="max-w-5xl mx-auto px-4 py-4 text-[11px] leading-relaxed text-gray-600 dark:text-gray-400 space-y-1 text-center sm:text-left">
                   <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-                    <span>
-                      PriceLance · instrument independent de comparare prețuri
-                    </span>
+                    <span>PriceLance · independent price comparison tool</span>
                     <span className="max-w-xl">
-                      Prețurile și ofertele afișate pot varia. Unele linkuri pot
-                      fi linkuri de afiliere, iar PriceLance poate primi
-                      comisioane fără costuri suplimentare pentru tine.
+                      Prices and offers may vary. Some links may be affiliate
+                      links, and PriceLance may earn commissions at no additional
+                      cost to you.
                     </span>
+                  </div>
+                  <div className="flex flex-wrap items-center justify-center gap-2 text-[10px] text-gray-500 dark:text-gray-500 sm:justify-start">
+                    <a href="/legal/privacy" className="hover:text-blue-600">
+                      Privacy Policy
+                    </a>
+                    <span>·</span>
+                    <a href="/legal/terms" className="hover:text-blue-600">
+                      Terms &amp; Conditions
+                    </a>
+                    <span>·</span>
+                    <a href="/contact" className="hover:text-blue-600">
+                      Contact
+                    </a>
                   </div>
                   <p className="text-[10px] text-gray-500 dark:text-gray-500">
                     &copy; {currentYear} PriceLance.
@@ -109,6 +105,7 @@ export default function RootLayout({
             <AcceptCookiesButton />
           </LanguageProvider>
         </ThemeProvider>
+        <AnalyticsScriptGate measurementId={GA_MEASUREMENT_ID} />
         {skimlinksSrc && (
           <Script src={skimlinksSrc} strategy="afterInteractive" />
         )}

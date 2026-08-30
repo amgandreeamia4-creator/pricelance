@@ -3,11 +3,11 @@ import type { Metadata } from "next";
 import CategoryProductGrid from "@/components/CategoryProductGrid";
 
 const category = {
-  nameRo: "Laptopuri",
-  h1: "Compară prețuri la Laptopuri",
+  nameRo: "Laptops",
+  h1: "Compare laptop prices",
   descriptionParagraphs: [
-    "Găsește cele mai bune oferte la laptopuri din România. Compară prețuri la notebook-uri gaming, business și ultrabookuri de la magazinele de top.",
-    "Vizualizează specificații tehnice, review-uri și alege laptopul potrivit pentru bugetul și nevoile tale. Prețuri actualizate în timp real.",
+    "Find current offers on laptops from leading retailers and compare gaming, business, and ultrabook options in one place.",
+    "Review key specifications and choose the right device for your budget and needs.",
   ],
 };
 
@@ -32,7 +32,7 @@ export default function LaptopsCategoryPage() {
         </div>
       </header>
 
-      <section aria-label={`Produse din categoria ${category.nameRo}`}>
+      <section aria-label={`Products in the ${category.nameRo} category`}>
         <CategoryProductGrid categoryKey="Laptops" />
       </section>
     </main>

@@ -56,13 +56,14 @@ Then open http://localhost:3000.
 
 ### Required environment setup
 
-At minimum, configure:
+At minimum, configure values for your own deployment environment:
 
-- DATABASE_URL
-- ADMIN_USER and ADMIN_PASSWORD
-- ADMIN_TOKEN
-- INTERNAL_API_KEY
-- NEXT_PUBLIC_APP_BASE_URL
+- DATABASE_URL — must point to the buyer-owned PostgreSQL/Supabase instance
+- ADMIN_TOKEN — server-side token used for admin APIs via `x-admin-token`
+- INTERNAL_API_KEY — server-side key used for internal endpoints via `x-internal-key`
+- NEXT_PUBLIC_APP_BASE_URL — public app base URL
+
+The current owner’s live Supabase/Postgres instance is not part of the permanent buyer handoff. The buyer should create or use their own managed PostgreSQL/Supabase environment and configure `DATABASE_URL` for that environment before production use.
 
 Additional provider credentials are optional unless you plan to use those integrations.
 

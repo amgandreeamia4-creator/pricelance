@@ -7,12 +7,12 @@ export type HomeCategory = {
 };
 
 export const HOME_CATEGORIES: HomeCategory[] = [
-  { id: "laptop",     label: "Laptopuri",        searchQuery: "laptop" },
-  { id: "phone",      label: "Telefoane",       searchQuery: "telefon" },
-  { id: "monitor",    label: "Monitoare",       searchQuery: "monitor" },
-  { id: "audio",      label: "Căști & Audio",   searchQuery: "casti" },
-  { id: "peripherals",label: "Tastaturi & Mouse", searchQuery: "tastatura" },
-  { id: "tv",         label: "TV & Display",    searchQuery: "televizor" },
-  { id: "tablet",     label: "Tablete",         searchQuery: "tableta" },
-  { id: "smartwatch", label: "Smartwatch",      searchQuery: "smartwatch" },
+  { id: "laptop", label: "Laptops", searchQuery: "laptop" },
+  { id: "phone", label: "Phones", searchQuery: "telefon" },
+  { id: "monitor", label: "Monitors", searchQuery: "monitor" },
+  { id: "audio", label: "Headphones & Audio", searchQuery: "casti" },
+  { id: "peripherals", label: "Keyboards & Mice", searchQuery: "tastatura" },
+  { id: "tv", label: "TV & Display", searchQuery: "televizor" },
+  { id: "tablet", label: "Tablets", searchQuery: "tableta" },
+  { id: "smartwatch", label: "Smartwatches", searchQuery: "smartwatch" },
 ];

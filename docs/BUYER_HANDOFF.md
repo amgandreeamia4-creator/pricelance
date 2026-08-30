@@ -80,13 +80,15 @@ The deployment should be treated as a multi-service exercise if background inges
 
 The application relies on environment variables for:
 
-- database connection
-- admin protection
-- internal API access
-- base URL configuration
+- database connection via `DATABASE_URL`
+- admin protection via `ADMIN_TOKEN` and `x-admin-token`
+- internal API access via `INTERNAL_API_KEY` and `x-internal-key`
+- base URL configuration via `NEXT_PUBLIC_APP_BASE_URL`
 - provider credentials and feature flags
 
-Because this is a repository prepared for technical handoff, the environment should be reviewed carefully before the buyer assumes the system is fully production-ready.
+This repository is a deployable application package. The current owner’s live Supabase/Postgres environment is not part of the permanent product handoff. The buyer should configure their own managed PostgreSQL/Supabase instance and set `DATABASE_URL` for that environment before production use.
+
+The seller is providing the application structure, schema, setup guidance, and handoff documentation; the buyer is responsible for the infrastructure, credentials, deployment environment, and ongoing operational ownership.
 
 ## 8. Database overview
 
@@ -133,11 +135,12 @@ The repository is functional, but the following limitations should be understood
 
 If the repository is being stabilized after acquisition, the following are sensible first steps:
 
-1. Review environment variable naming and deployment assumptions.
-2. Verify the deployment path for the web app, worker, and scheduler separately.
-3. Confirm the production database migration workflow.
-4. Consolidate any deployment and operations notes into a single operational playbook.
-5. Review secrets rotation and access management before the repository is handed over to a team.
+1. Create or select the buyer-owned PostgreSQL/Supabase environment and set `DATABASE_URL` for it.
+2. Review environment variable naming and deployment assumptions.
+3. Verify the deployment path for the web app, worker, and scheduler separately.
+4. Confirm the production database migration workflow.
+5. Consolidate any deployment and operations notes into a single operational playbook.
+6. Review secrets rotation and access management before the repository is handed over to a team.
 
 ## 13. Recommended roadmap
 
@@ -164,11 +167,11 @@ The application will require ongoing maintenance in the following areas:
 Before handing the repository over to a buyer or operator, the following should be confirmed:
 
 - Repository access is available to the new owner
-- Production environment variables are documented and stored securely
-- Database credentials and access are known to the new owner
+- Production environment variables are documented and stored securely in the buyer-owned environment
+- The buyer-owned PostgreSQL/Supabase database is configured and `DATABASE_URL` is set for that environment
 - Deployment pipeline and runtime responsibilities are defined
 - The current deployment URL and environment names are documented
-- Secrets have been rotated if the repository was previously shared broadly
+- Secret rotation is treated as a buyer-owned operational task for their own environment, not as a requirement to reuse the seller’s live database credentials
 
 ## 16. Credentials and secret rotation guidance
 
@@ -176,20 +179,24 @@ Any buyer taking ownership should treat the repository as containing operational
 
 Recommended actions:
 
-- rotate secrets after transfer if the repository was previously used in a shared or inherited environment
-- ensure server-side secrets are not exposed in client-side configuration
-- review admin credentials and internal tokens before production use
+- configure the buyer-owned PostgreSQL/Supabase environment and set `DATABASE_URL` for that deployment
+- keep server-side secrets out of client-side configuration
+- review `ADMIN_TOKEN` and `INTERNAL_API_KEY` before production use
 - verify that any third-party provider credentials are still authorized for the intended deployment
+- do not assume the current owner’s live database or credentials are part of the permanent handoff
 
 ## 17. What should be delivered to the buyer at handoff
 
 A complete handoff package should include:
 
 - repository access and deployment access
-- the current production environment URL
-- database connection details and backup information
-- deployment instructions and ownership contacts
-- a list of active providers and their credentials
+- the current application documentation set
+- the current schema and migration history
+- deployment instructions for the buyer-owned environment
+- a note that the buyer must provide or configure their own PostgreSQL/Supabase instance and `DATABASE_URL`
+- a list of active providers and their credentials in the buyer’s environment
 - a summary of the current data import workflow
 - a list of known operational issues or limitations
 - the current documentation set and any internal runbooks
+
+The seller is not providing ongoing database administration; the buyer is responsible for their own infrastructure, database ownership, backups, and operational continuity.

@@ -31,6 +31,7 @@ import {
 } from "@/lib/stores/registry";
 import { inferCategorySlugFromIngestion, inferSubcategoryFromText } from "@/lib/categoryInference";
 import { detectBrandFromName } from "@/lib/brandDetector";
+import { validateSafeRemoteUrl } from "@/lib/security/safeRemoteUrl";
 
 type ImportErrorType =
   | "VALIDATION_ERROR"
@@ -157,21 +158,35 @@ function isListingCapable(row: NormalizedListing): boolean {
 
 async function isUrlReachable(url: string, timeoutMs: number): Promise<boolean> {
   try {
+    const safeUrl = await validateSafeRemoteUrl(url, {
+      timeoutMs,
+    });
+
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
     try {
-      let res = await fetch(url, {
+      let res = await fetch(safeUrl.toString(), {
         method: "HEAD",
-        redirect: "follow",
+        redirect: "manual",
         signal: controller.signal,
+        headers: {
+          Accept: "text/csv,text/plain,application/csv,application/vnd.ms-excel,application/octet-stream",
+        },
       });
 
+      if (res.status >= 300 && res.status < 400) {
+        return false;
+      }
+
       if (!res.ok) {
-        res = await fetch(url, {
+        res = await fetch(safeUrl.toString(), {
           method: "GET",
-          redirect: "follow",
+          redirect: "manual",
           signal: controller.signal,
+          headers: {
+            Accept: "text/csv,text/plain,application/csv,application/vnd.ms-excel,application/octet-stream",
+          },
         });
       }
 

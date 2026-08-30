@@ -83,7 +83,7 @@ type SchedulerEntry = {
   id: string;
   name: string;
   schedule: ScheduledIngestionFrequency;
-  jobName: "csv_import" | "affiliate_import" | "url_import";
+  jobName: "affiliate_import" | "url_import";
   jobDataFactory: () => Promise<Record<string, unknown>>;
 };
 
@@ -105,24 +105,6 @@ function normalizeSchedule(value: string | undefined): ScheduledIngestionFrequen
   if (!value) return DEFAULT_FEED_SCHEDULE;
   const normalized = value.trim().toLowerCase();
   return normalized === "hourly" ? "hourly" : "daily";
-}
-
-function buildCsvFeedSchedule(feed: ScheduledCsvFeedConfig): SchedulerEntry {
-  return {
-    id: `csv:${feed.id}`,
-    name: `csv:${feed.name}`,
-    schedule: normalizeSchedule(feed.schedule),
-    jobName: "csv_import",
-    jobDataFactory: async () => {
-      const csv = await fetchRemoteText(feed.url);
-      return {
-        provider: feed.provider,
-        csv,
-        merchantFeedId: feed.merchantFeedId,
-        merchantId: feed.merchantId,
-      };
-    },
-  };
 }
 
 function buildUrlFeedSchedule(feed: ScheduledUrlFeedConfig): SchedulerEntry {
@@ -167,10 +149,6 @@ function buildAffiliateFeedSchedule(feed: ScheduledAffiliateFeedConfig): Schedul
   };
 }
 
-function getScheduledCsvFeeds(): ScheduledCsvFeedConfig[] {
-  return parseJson<ScheduledCsvFeedConfig[]>(process.env.SCHEDULED_CSV_FEEDS, []);
-}
-
 function getScheduledUrlFeeds(): ScheduledUrlFeedConfig[] {
   return parseJson<ScheduledUrlFeedConfig[]>(process.env.SCHEDULED_URL_FEEDS, []);
 }
@@ -181,13 +159,6 @@ function getScheduledAffiliateFeeds(): ScheduledAffiliateFeedConfig[] {
 
 export async function collectScheduledIngestionJobs(): Promise<SchedulerEntry[]> {
   const entries: SchedulerEntry[] = [];
-
-  const csvFeeds = getScheduledCsvFeeds();
-  for (const feed of csvFeeds) {
-    if (feed.id && feed.url && feed.provider) {
-      entries.push(buildCsvFeedSchedule(feed));
-    }
-  }
 
   const urlFeeds = getScheduledUrlFeeds();
   for (const feed of urlFeeds) {

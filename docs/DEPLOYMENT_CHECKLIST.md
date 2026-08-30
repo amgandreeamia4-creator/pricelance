@@ -9,34 +9,27 @@ This checklist is tailored to the PriceLance Next.js 16 (App Router) app backed 
 Set these in your production environment (e.g. Vercel project settings):
 
 - **DATABASE_URL**  
-  PostgreSQL connection string pointing to your Supabase database.  
+  PostgreSQL connection string pointing to the buyer-owned Supabase/Postgres database.  
   Must **not** be a `file:./dev.db` URL. This is what Prisma uses for all DB access.
 
-- **NEXT_PUBLIC_BASE_URL**  
+- **NEXT_PUBLIC_APP_BASE_URL**  
   The full base URL of the deployed app, e.g. `https://your-app.vercel.app` or `https://app.pricelance.com`.  
-  Used by admin pages (like `/admin/search-analytics` and `/admin/system-check`) to call internal APIs from the server.
+  Used by server-side app flows and admin pages when they call internal APIs.
 
-- **ADMIN_SECRET**  
-  Secret string required for admin pages in production, via the `adminKey` query param:  
-  `https://your-app.com/admin/search-analytics?adminKey=ADMIN_SECRET`  
-  `https://your-app.com/admin/system-check?adminKey=ADMIN_SECRET`.
+- **ADMIN_TOKEN**  
+  Server-side token used by admin API routes via the `x-admin-token` header.
 
 - **INTERNAL_API_KEY**  
-  Secret key required for internal and debug APIs that use `checkInternalAuth`, including:
-  - `/api/internal/search-analytics`
-  - `/api/internal/catalog-stats`
-  - `/api/internal/db-health`
-  - `/api/internal/ingest`
-  - `/api/internal/cleanup-demo`
-  - `/api/internal/demo-provider`, `/api/internal/dummyjson-provider`, `/api/internal/static-provider`
-  - `/api/internal/stats`, `/api/internal/run-providers`, `/api/internal/realstore-test`
-  - `/api/debug-admin`
+  Server-side key used by internal and debug APIs via the `x-internal-key` header.
 
-Recommended additional variables (even if not used directly yet):
+Required note for handoff:
+
+- The current owner’s live Supabase/Postgres environment is not part of the permanent product handoff. The buyer should create or use their own PostgreSQL/Supabase environment and configure `DATABASE_URL` for that environment before production use.
+
+Optional additional variables (depending on integrations):
 
 - **SUPABASE_URL**, **SUPABASE_ANON_KEY**  
-  Standard Supabase project URL and anon key.  
-  The app currently talks to Supabase **only** via Prisma + `DATABASE_URL`, but these are useful to keep in sync for future direct `supabase-js` usage.
+  Only if the buyer chooses to use Supabase client-side or additional direct integrations. The application currently talks to Supabase primarily via Prisma + `DATABASE_URL`.
 
 ---
 
@@ -48,8 +41,8 @@ Recommended additional variables (even if not used directly yet):
 
 - **`NODE_ENV=production` is automatic on Vercel.**  
   In production, admin pages and internal APIs behave more strictly:
-  - `/admin/*` pages require a valid `ADMIN_SECRET` + `adminKey` query parameter.
-  - Internal APIs require `INTERNAL_API_KEY` via the `x-internal-key` header.
+  - admin API routes require a valid `ADMIN_TOKEN` in the `x-admin-token` header
+  - internal APIs require `INTERNAL_API_KEY` via the `x-internal-key` header
 
 ---
 
@@ -70,9 +63,9 @@ Recommended additional variables (even if not used directly yet):
   - [ ] Confirm `SearchLog` exists (it will populate automatically after searches in the live app).
 
 - **Environment configuration sanity:**
-  - [ ] `DATABASE_URL` points to the correct Supabase Postgres instance.
-  - [ ] `NEXT_PUBLIC_BASE_URL` matches the URL where the app will be served.
-  - [ ] `ADMIN_SECRET` is set and known to the ops/admin team.
+- [ ] `DATABASE_URL` points to the buyer-owned Supabase/Postgres instance.
+- [ ] `NEXT_PUBLIC_APP_BASE_URL` matches the URL where the app will be served.
+- [ ] `ADMIN_TOKEN` is set and known to the ops/admin team.
   - [ ] `INTERNAL_API_KEY` is set and stored safely (used by scripts or tooling that call internal APIs).
 
 ---
@@ -112,11 +105,11 @@ In the right-hand assistant panel:
 
 ### 4.4 Analytics & admin surfaces
 
-- [ ] Visit `/admin/search-analytics?adminKey=YOUR_ADMIN_SECRET`:
-  - Confirm the page loads (no access-denied errors with the correct key).
+- [ ] Visit admin pages with the correct `x-admin-token` value in the server-side flow, or with the appropriate admin route access pattern used by the deployment.
+  - Confirm the page loads (no access-denied errors with the correct token).
   - Check that total searches and top queries look plausible.
 
-- [ ] Visit `/admin/system-check?adminKey=YOUR_ADMIN_SECRET`:
+- [ ] Visit the admin system-check route with the correct admin token configuration:
   - Confirm the **Database** card shows `Connected` and non-zero counts.
   - Confirm the **Catalog** card shows non-zero product counts.
   - Confirm the **Search (last 7 days)** card shows non-zero counters after you’ve used the app.

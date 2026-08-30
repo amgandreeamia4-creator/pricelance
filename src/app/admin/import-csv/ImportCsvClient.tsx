@@ -1,18 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { AFFILIATE_INGEST_PROVIDERS, type AffiliateIngestProviderId } from '@/config/affiliateIngestion.client';
-
-// SIMPLE TEST: This should appear when the component loads
-console.log("[ImportCsvClient] Component loaded!");
-
-type MerchantFeed = {
-  id: string;
-  name: string;
-  merchant: {
-    storeName: string;
-  };
-};
 
 type ImportStatus = "idle" | "uploading" | "success" | "partial-success" | "failed";
 
@@ -24,10 +13,8 @@ type ImportState = {
 
 export default function ImportCsvClient() {
   const [file, setFile] = useState<File | null>(null);
-  const [provider, setProvider] = useState<AffiliateIngestProviderId>('profitshare');
-  const [merchantFeedId, setMerchantFeedId] = useState<string>("");
-  const [availableFeeds, setAvailableFeeds] = useState<MerchantFeed[]>([]);
-  const [isLoadingFeeds, setIsLoadingFeeds] = useState(false);
+  const [provider, setProvider] = useState<AffiliateIngestProviderId>('generic');
+  const [legacyIntegrationsOpen, setLegacyIntegrationsOpen] = useState(false);
   
   const [state, setState] = useState<ImportState>({
     status: "idle",
@@ -37,32 +24,12 @@ export default function ImportCsvClient() {
 
   const [errorsCollapsed, setErrorsCollapsed] = useState(true);
 
-  useEffect(() => {
-    fetchFeeds();
-  }, []);
-
-  async function fetchFeeds() {
-    setIsLoadingFeeds(true);
-    try {
-      const res = await fetch("/api/admin/merchant-feeds");
-      const data = await res.json();
-      if (data.ok) {
-        setAvailableFeeds(data.feeds);
-      }
-    } catch (err) {
-      console.error("Failed to fetch merchant feeds:", err);
-    } finally {
-      setIsLoadingFeeds(false);
-    }
-  }
-
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
     console.log("[ImportCsvClient] handleSubmit called!");
     console.log("[ImportCsvClient] File:", file);
     console.log("[ImportCsvClient] Provider:", provider);
-    console.log("[ImportCsvClient] Merchant Feed ID:", merchantFeedId);
 
     if (!file) {
       setState({
@@ -76,9 +43,6 @@ export default function ImportCsvClient() {
     const formData = new FormData();
     formData.append("file", file);
     formData.append("provider", provider);
-    if (merchantFeedId) {
-      formData.append("merchantFeedId", merchantFeedId);
-    }
 
     console.log("[ImportCsvClient] FormData created:", Object.fromEntries(formData.entries()));
 
@@ -110,7 +74,6 @@ export default function ImportCsvClient() {
       const okFlag = Boolean(json?.ok);
 
       const isSuccess = okFlag === true && failedRows === 0;
-      const isPartial = okFlag === false || failedRows > 0;
 
       const nextStatus: ImportStatus = isSuccess
         ? "success"
@@ -118,7 +81,7 @@ export default function ImportCsvClient() {
         ? "partial-success"
         : "failed";
 
-      let nextMessage = json?.message || "";
+      let nextMessage = json?.message || json?.error || "";
       if (nextStatus === "success") nextMessage = "Import completed successfully.";
       if (nextStatus === "partial-success") nextMessage = "Import completed with errors.";
       if (nextStatus === "failed") nextMessage = "Import failed — no listings were created.";
@@ -179,12 +142,28 @@ export default function ImportCsvClient() {
               Selected: {file.name} ({Math.round(file.size / 1024)} KB)
             </p>
           )}
+          <div className="mt-3 flex flex-wrap gap-3 text-xs">
+            <a
+              href="/sample_products.csv"
+              download
+              className="font-medium text-[var(--pl-primary)] underline underline-offset-2"
+            >
+              Download Sample CSV
+            </a>
+            <a
+              href="/empty_products_template.csv"
+              download
+              className="font-medium text-[var(--pl-primary)] underline underline-offset-2"
+            >
+              Download Empty Template
+            </a>
+          </div>
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-1">Source</label>
-          <div className="space-y-1 mb-4">
-            {AFFILIATE_INGEST_PROVIDERS.map((p) => (
+          <label className="block text-sm font-medium mb-1">Import type</label>
+          <div className="space-y-1">
+            {AFFILIATE_INGEST_PROVIDERS.filter((p) => p.id === 'generic').map((p) => (
               <label key={p.id} className="flex items-center gap-2">
                 <input
                   type="radio"
@@ -200,28 +179,39 @@ export default function ImportCsvClient() {
               </label>
             ))}
           </div>
-        </div>
-
-        <div>
-          <label className="block text-xs font-semibold uppercase tracking-[0.15em] text-[var(--pl-text-subtle)] mb-2">
-            Merchant Feed (Optional)
-          </label>
-          <select
-            value={merchantFeedId}
-            onChange={(e) => setMerchantFeedId(e.target.value)}
-            disabled={isLoadingFeeds}
-            className="w-full rounded-xl border border-[var(--pl-card-border)] bg-[var(--pl-bg)] px-3 py-2 text-sm text-[var(--pl-text)] focus:border-[var(--pl-primary)] focus:outline-none"
-          >
-            <option value="">No merchant feed (standard import)</option>
-            {availableFeeds.map((f) => (
-              <option key={f.id} value={f.id}>
-                {f.merchant.storeName} — {f.name}
-              </option>
-            ))}
-          </select>
-          <p className="mt-1 text-[10px] text-slate-500">
-            If selected, imported listings will be linked to this merchant and feed.
-          </p>
+          <div className="mt-4 border-t border-[var(--pl-card-border)] pt-3">
+            <button
+              type="button"
+              onClick={() => setLegacyIntegrationsOpen((open) => !open)}
+              aria-expanded={legacyIntegrationsOpen}
+              className="flex items-center gap-2 text-sm font-medium text-[var(--pl-text)]"
+            >
+              <span aria-hidden="true">{legacyIntegrationsOpen ? '▾' : '▸'}</span>
+              Legacy Integrations
+            </button>
+            <p className="mt-1 text-xs text-[var(--pl-text-subtle)]">
+              Use these only for existing Profitshare or 2Performant feed formats.
+            </p>
+            {legacyIntegrationsOpen && (
+              <div className="mt-3 space-y-1">
+                {AFFILIATE_INGEST_PROVIDERS.filter((p) => p.id !== 'generic').map((p) => (
+                  <label key={p.id} className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      name="provider"
+                      value={p.id}
+                      checked={provider === p.id}
+                      onChange={() => setProvider(p.id)}
+                    />
+                    <span>{p.label}</span>
+                    {p.description && (
+                      <span className="text-xs text-gray-500">â€” {p.description}</span>
+                    )}
+                  </label>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         <button
@@ -236,15 +226,34 @@ export default function ImportCsvClient() {
       {/* Summary + Errors */}
       {state.rawResponse && (
         <div className="mt-4 space-y-3">
-          <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm">
-            <strong>Import summary</strong>
-            <div className="mt-2 text-xs text-slate-700 space-y-1">
-              <div>Total rows: {state.rawResponse.totalRows ?? "-"}</div>
-              <div>Processed: {state.rawResponse.processedRows ?? "-"}</div>
-              <div>Created listings: {state.rawResponse.createdListings ?? 0}</div>
-              <div>Failed rows: {state.rawResponse.failedRows ?? 0}</div>
+          {Array.isArray(state.rawResponse.missingColumns) && state.rawResponse.missingColumns.length > 0 ? (
+            <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+              <strong>Your CSV is missing these required columns:</strong>
+              <ul className="mt-2 list-disc space-y-1 pl-5 text-xs">
+                {state.rawResponse.missingColumns.map((column: string) => (
+                  <li key={column}>{column}</li>
+                ))}
+              </ul>
+              <a
+                href="/empty_products_template.csv"
+                download
+                className="mt-3 inline-block text-xs font-medium underline underline-offset-2"
+              >
+                Download the template CSV and try again.
+              </a>
             </div>
-          </div>
+          ) : (
+            <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm">
+              <strong>Imported</strong>
+              <div className="mt-2 space-y-1 text-xs text-slate-700">
+                <div>✓ Products created: {state.rawResponse.createdProducts ?? 0}</div>
+                <div>✓ Products updated: {state.rawResponse.updatedProducts ?? 0}</div>
+                <div>✓ Listings created: {state.rawResponse.createdListings ?? 0}</div>
+                <div>✓ Listings updated: {state.rawResponse.updatedListings ?? 0}</div>
+                <div>✓ Rows skipped: {state.rawResponse.skippedRows ?? state.rawResponse.skipped ?? 0}</div>
+              </div>
+            </div>
+          )}
 
           {/* Errors panel (first 10 only) */}
           {Array.isArray(state.rawResponse.errors) && state.rawResponse.errors.length > 0 && (
@@ -274,11 +283,6 @@ export default function ImportCsvClient() {
               )}
             </div>
           )}
-
-          {/* Raw JSON dump for deeper debugging */}
-          <pre className="mt-2 max-h-64 overflow-auto rounded-xl bg-slate-900/95 p-3 text-[11px] text-slate-100">
-{JSON.stringify(state.rawResponse, null, 2)}
-          </pre>
         </div>
       )}
     </div>

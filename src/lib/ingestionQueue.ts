@@ -68,13 +68,6 @@ export const ingestionQueueEvents = isBuildPhase
   ? createNoopQueue<QueueEvents>("ingestionQueueEvents")
   : new QueueEvents("ingestionQueue", connection);
 
-export type CsvImportJobData = {
-  provider: "profitshare" | "2performant";
-  csv: string;
-  merchantFeedId?: string;
-  merchantId?: string;
-};
-
 export type AffiliateImportJobData = {
   provider: "profitshare" | "fake" | "banggood";
   csv?: string;
@@ -95,7 +88,7 @@ export type UrlImportJobData = {
   merchantId?: string;
 };
 
-export type IngestionJobType = "csv_import" | "affiliate_import" | "url_import";
+export type IngestionJobType = "affiliate_import" | "url_import";
 
 export type IngestionJobResult = {
   summary: unknown;

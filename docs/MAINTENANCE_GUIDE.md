@@ -23,7 +23,7 @@ These checks should take only a few minutes.
     - Links open the correct store product pages.
 
 - **2. Check `/admin/system-check`**
-  - [ ] Visit `/admin/system-check?adminKey=YOUR_ADMIN_SECRET`.
+  - [ ] Visit the admin system-check route using the current admin token configuration.
   - [ ] Confirm:
     - **Database** card shows `Connected` and non-zero counts.
     - **Catalog** card shows non-zero product and listing counts.
@@ -31,7 +31,7 @@ These checks should take only a few minutes.
   - [ ] If any section shows an error message (e.g. failed to load DB health), create a ticket or investigate immediately.
 
 - **3. Review search coverage**
-  - [ ] Visit `/admin/search-analytics?adminKey=YOUR_ADMIN_SECRET`.
+  - [ ] Visit the admin search analytics route using the current admin token configuration.
   - [ ] Look at:
     - New **zero-result queries** that appear more than once.
     - Top queries with suspiciously low average result counts.
@@ -71,12 +71,12 @@ Every quarter, spend a bit more time reviewing configuration, data, and roadmap 
 - **1. Secrets and environment variables**
   - [ ] Review all critical env vars:
     - `DATABASE_URL`
-    - `NEXT_PUBLIC_BASE_URL`
-    - `ADMIN_SECRET`
+    - `NEXT_PUBLIC_APP_BASE_URL`
+    - `ADMIN_TOKEN`
     - `INTERNAL_API_KEY`
     - Supabase-related vars such as `SUPABASE_URL` / `SUPABASE_ANON_KEY` (if configured)
-  - [ ] Confirm they still point to the intended Supabase project and domains.
-  - [ ] Consider rotating `INTERNAL_API_KEY` and, if appropriate, `ADMIN_SECRET`, following your secret-management policies.
+  - [ ] Confirm they still point to the intended Postgres/Supabase project and domains.
+  - [ ] Consider rotating `INTERNAL_API_KEY` and, if appropriate, `ADMIN_TOKEN`, following your secret-management policies.
 
 - **2. Structural health checks**
   - [ ] Hit internal health endpoints (with the correct `x-internal-key`):

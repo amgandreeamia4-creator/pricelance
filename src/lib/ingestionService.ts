@@ -1,4 +1,4 @@
-import { ingestionQueue } from "@/lib/ingestionQueue";
+import { processCsvImport } from "@/lib/ingestion/csvProcessor";
 
 export async function importProductsFromCSV({
   csv,
@@ -7,12 +7,11 @@ export async function importProductsFromCSV({
   csv: any;
   merchantId?: string;
 }) {
-  const job = await ingestionQueue.add("csv_import", {
+  return processCsvImport({
+    provider: "generic",
     csv,
-    merchantId: merchantId || null,
+    merchantId: merchantId || undefined,
   });
-
-  return { jobId: job.id };
 }
 
 export default importProductsFromCSV;

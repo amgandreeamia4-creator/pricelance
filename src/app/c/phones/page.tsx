@@ -3,11 +3,11 @@ import type { Metadata } from "next";
 import CategoryProductGrid from "@/components/CategoryProductGrid";
 
 const category = {
-  nameRo: "Telefoane",
-  h1: "Compară prețuri la Telefoane",
+  nameRo: "Phones",
+  h1: "Compare phone prices",
   descriptionParagraphs: [
-    "Descoperă cele mai noi smartphone-uri la prețuri competitive. Compară oferte la iPhone, Samsung, Xiaomi și alte branduri populare din România.",
-    "Alege telefonul perfect pentru tine cu ajutorul comparațiilor detaliate de prețuri și specificații. Oferte la telefoane noi și recondiționate.",
+    "Explore the latest smartphones and compare offers from major retailers in one place.",
+    "Use detailed price and specification comparisons to find the right device for your needs.",
   ],
 };
 
@@ -32,7 +32,7 @@ export default function PhonesCategoryPage() {
         </div>
       </header>
 
-      <section aria-label={`Produse din categoria ${category.nameRo}`}>
+      <section aria-label={`Products in the ${category.nameRo} category`}>
         <CategoryProductGrid categoryKey="Phones" />
       </section>
     </main>

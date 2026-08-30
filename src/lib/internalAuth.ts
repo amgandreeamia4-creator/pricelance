@@ -10,10 +10,13 @@ import { NextRequest, NextResponse } from "next/server";
  *   if (authError) return authError;
  */
 export function checkInternalAuth(req: NextRequest): NextResponse | null {
-  const expectedKey = process.env.INTERNAL_API_KEY;
+  const configuredKeys = new Set<string>([
+    process.env.INTERNAL_API_KEY,
+    process.env.INTERNAL_API_KEY_ROTATION,
+  ].filter((value): value is string => Boolean(value && value.trim())));
 
   // If no key is configured, fail CLOSED in production, but allow in dev
-  if (!expectedKey) {
+  if (configuredKeys.size === 0) {
     if (process.env.NODE_ENV === "production") {
       return NextResponse.json(
         { ok: false, error: "Internal API is not configured." },
@@ -26,7 +29,7 @@ export function checkInternalAuth(req: NextRequest): NextResponse | null {
 
   const headerKey = req.headers.get("x-internal-key");
 
-  if (!headerKey || headerKey !== expectedKey) {
+  if (!headerKey || !configuredKeys.has(headerKey)) {
     return NextResponse.json(
       { ok: false, error: "Unauthorized internal API call." },
       { status: 401 }

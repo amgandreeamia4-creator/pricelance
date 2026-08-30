@@ -42,22 +42,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    let merchantId: string | undefined;
-    if (merchantFeedId) {
-      const feed = await (prisma as any).merchantFeed.findUnique({
-        where: { id: merchantFeedId },
-        select: { merchantId: true },
-      });
-
-      if (!feed) {
-        return NextResponse.json(
-          { ok: false, message: "Merchant feed not found" },
-          { status: 400 },
-        );
-      }
-
-      merchantId = feed.merchantId;
-    }
+    const merchantId: string | undefined = undefined;
 
     const job = await ingestionQueue.add("affiliate_import", {
       provider: "banggood",

@@ -1,39 +1,94 @@
 "use client";
 
+import Script from "next/script";
 import { useEffect, useState } from "react";
 
-const STORAGE_KEY = "pricelance:cookie-consent";
+export const STORAGE_KEY = "pricelance:cookie-consent";
+
+export function getCookieConsentState(): "accepted" | "dismissed" | null {
+  if (typeof window === "undefined") return null;
+
+  try {
+    const stored = window.localStorage.getItem(STORAGE_KEY);
+    if (stored === "accepted" || stored === "dismissed") {
+      return stored;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+export function AnalyticsScriptGate({ measurementId }: { measurementId: string }) {
+  const [hasConsent, setHasConsent] = useState(false);
+
+  useEffect(() => {
+    setHasConsent(getCookieConsentState() === "accepted");
+  }, []);
+
+  if (!measurementId || !hasConsent) {
+    return null;
+  }
+
+  return (
+    <>
+      <Script
+        src={`https://www.googletagmanager.com/gtag/js?id=${measurementId}`}
+        strategy="afterInteractive"
+      />
+      <Script id="ga4-init" strategy="afterInteractive">
+        {`
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+          gtag('config', '${measurementId}', {
+            page_path: window.location.pathname,
+          });
+        `}
+      </Script>
+    </>
+  );
+}
 
 export default function AcceptCookiesButton() {
-  const [isMounted, setIsMounted] = useState(false);
-  const [isVisible, setIsVisible] = useState(false);
+  const [isVisible, setIsVisible] = useState(true);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    const stored = window.localStorage.getItem(STORAGE_KEY);
+    try {
+      const stored = window.localStorage.getItem(STORAGE_KEY);
+      const shouldShow = stored !== "accepted" && stored !== "dismissed";
 
-    // Show only if user hasn't accepted yet
-    if (!stored) {
+      setIsVisible(shouldShow);
+    } catch {
       setIsVisible(true);
     }
-
-    setIsMounted(true);
   }, []);
 
   const handleAccept = () => {
     if (typeof window !== "undefined") {
-      window.localStorage.setItem(STORAGE_KEY, "accepted");
+      try {
+        window.localStorage.setItem(STORAGE_KEY, "accepted");
+      } catch {
+        // Ignore storage failures and keep the banner hidden for this session.
+      }
     }
     setIsVisible(false);
   };
 
-  // Close without storing anything → it will show again on next reload
   const handleClose = () => {
+    if (typeof window !== "undefined") {
+      try {
+        window.localStorage.setItem(STORAGE_KEY, "dismissed");
+      } catch {
+        // Ignore storage failures and keep the banner hidden for this session.
+      }
+    }
     setIsVisible(false);
   };
 
-  if (!isMounted || !isVisible) {
+  if (!isVisible) {
     return null;
   }
 

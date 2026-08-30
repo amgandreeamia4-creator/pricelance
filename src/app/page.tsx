@@ -21,6 +21,7 @@ import ProductSummary from "@/components/ProductSummary";
 import { useLanguage } from "@/components/LanguageProvider";
 import { fetchEbayItems, type EbayItem } from "@/lib/ebayFeed";
 import type { CategorySlug } from "@/config/categories";
+import { resolveSearchQuery } from "@/lib/searchRequest";
 
 type CategoryPill = {
   key: CategorySlug;
@@ -150,9 +151,9 @@ export default function Page() {
   const [savedSearches] = useState([
     "laptop",
     "monitor",
-    "telefon",
-    "casti",
-    "tastatura",
+    "phone",
+    "headphones",
+    "keyboard",
     "mouse",
   ]);
 
@@ -617,8 +618,13 @@ export default function Page() {
     }
   }
 
-  function handleSearchSubmit() {
-    executeSearch({ query, categorySlug: activeCategory });
+  function handleSearchSubmit(inputOverride?: string) {
+    const nextQuery = resolveSearchQuery({
+      currentQuery: query,
+      inputValue: inputOverride ?? query,
+    });
+
+    executeSearch({ query: nextQuery, categorySlug: activeCategory });
   }
 
   const handleUseMyLocation = () => {
@@ -787,14 +793,13 @@ export default function Page() {
           {/* Desktop-only header ad slot: show only when we have search results */}
           {products.length > 0 && (
             <div className="hidden md:flex justify-end mt-2 md:mt-4">
-              <GoogleAdSlot
-                slot={
-                  process.env.NEXT_PUBLIC_ADSENSE_HEADER_SLOT_ID ??
-                  "demo-header-slot"
-                }
-                format="horizontal"
-                style={{ width: "100%", minHeight: 90 }}
-              />
+              {process.env.NEXT_PUBLIC_ADSENSE_HEADER_SLOT_ID?.trim() ? (
+                <GoogleAdSlot
+                  slot={process.env.NEXT_PUBLIC_ADSENSE_HEADER_SLOT_ID.trim()}
+                  format="horizontal"
+                  style={{ width: "100%", minHeight: 90 }}
+                />
+              ) : null}
             </div>
           )}
 
@@ -802,8 +807,7 @@ export default function Page() {
           <div className="text-center mt-1 md:mt-2">
             <p className="text-center text-xs text-slate-500 mt-2">
               {/* Canonical coverage note - imported from config/aboutContent.ts */}
-              Coverage is growing over time, starting with Romanian and European
-              stores.
+              Coverage is growing over time, with new retailers and categories added regularly.
             </p>
           </div>
         </div>
@@ -846,19 +850,26 @@ export default function Page() {
       </div>
 
       {/* SEARCH BAR */}
-      <div className="w-full px-6 mt-1 md:mt-2">
+      <div className="w-full px-6 mt-3 md:mt-2">
         <div className="mx-auto w-full max-w-5xl">
           <form
             onSubmit={(e) => {
               e.preventDefault();
-              handleSearchSubmit();
+              const formInput = e.currentTarget.querySelector(
+                'input[type="text"]',
+              ) as HTMLInputElement | null;
+              handleSearchSubmit(formInput?.value ?? query);
             }}
           >
             <input
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSearchSubmit()}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  handleSearchSubmit((e.currentTarget as HTMLInputElement).value);
+                }
+              }}
               placeholder='Search products (e.g. "laptop gaming", "monitor 27", "iPhone 15")'
               className="w-full px-5 py-3 rounded-2xl bg-[var(--pl-card)] border border-[var(--pl-card-border)] text-[12px] text-[var(--pl-text)] placeholder:text-[var(--pl-text-subtle)] focus:outline-none focus:border-blue-500 focus:shadow-[0_0_15px_var(--pl-primary-glow)] transition-all"
             />
@@ -866,21 +877,16 @@ export default function Page() {
               Search
             </button>
           </form>
-          {process.env.NODE_ENV !== "production" && (
-            <p className="mt-2 text-[10px] text-[var(--pl-text-subtle)]">
-              Debug: no enrichment data for last search.
-            </p>
-          )}
         </div>
       </div>
 
       {/* THREE-COLUMN LAYOUT */}
-      <div className="mx-auto w-full max-w-6xl px-3 sm:px-4 lg:px-6 xl:px-8 mt-4 sm:mt-6 pb-4 sm:pb-6">
+      <div className="mx-auto w-full max-w-6xl px-3 sm:px-4 lg:px-6 xl:px-8 mt-6 sm:mt-8 md:mt-6 pb-4 sm:pb-6">
         <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-[260px,minmax(0,1fr),320px] items-start">
           {/* LEFT COLUMN - Mobile order 6 (secondary sections) */}
           <div className="flex flex-col gap-4 order-6 lg:order-1">
             {/* LOCATION */}
-            <div className={`${cardStyle} p-3 sm:p-4`}>
+            <div className={`${cardStyle} p-4 sm:p-5`}>
               <h3 className="text-xs font-semibold text-slate-900 tracking-wide">
                 YOUR LOCATION
               </h3>

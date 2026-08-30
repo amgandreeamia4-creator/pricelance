@@ -353,6 +353,20 @@ export function parseProfitshareCsv(content: string): {
     const gtin = getCell(rawRow, headerMap, "gtin") || undefined;
     const availability = getCell(rawRow, headerMap, "availability") || undefined;
 
+    if (rows.length === 0) {
+      console.log("========== FIRST PARSED ROW ==========");
+      console.dir(
+        {
+          name,
+          productUrl,
+          affiliateUrl,
+          price,
+          currency,
+        },
+        { depth: null }
+      );
+    }
+
     rows.push({
       name,
       productUrl,

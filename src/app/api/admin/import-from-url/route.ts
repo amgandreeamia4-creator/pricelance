@@ -6,6 +6,7 @@ import { prisma } from "@/lib/db";
 import { googleSheetAdapter } from "@/lib/ingestion/adapters";
 import { ingestionQueue, ingestionQueueEvents } from "@/lib/ingestionQueue";
 import { validateAdminToken } from "@/lib/adminAuth";
+import { SafeRemoteUrlError, safeFetchRemoteText } from "@/lib/security/safeRemoteUrl";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -42,47 +43,24 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    let merchantId: string | undefined;
-    if (merchantFeedId) {
-      const feed = await (prisma as any).merchantFeed.findUnique({
-        where: { id: merchantFeedId },
-        select: { merchantId: true },
-      });
-      if (feed) {
-        merchantId = feed.merchantId;
-      } else {
-        console.warn(`[admin/import-from-url] MerchantFeed not found: ${merchantFeedId}`);
-      }
-    }
+    const merchantId: string | undefined = undefined;
 
     console.log("[admin/import-from-url] Starting import from URL:", url);
 
-    let response: Response;
+    let csvText: string;
     try {
-      response = await fetch(url);
+      csvText = await safeFetchRemoteText(url);
     } catch (err) {
-      console.error("[admin/import-from-url] Fetch error:", err);
+      const message = err instanceof SafeRemoteUrlError
+        ? err.message
+        : "Remote CSV is not available or is invalid.";
+
+      console.error("[admin/import-from-url] Fetch error:", message);
       return NextResponse.json(
-        { error: "Failed to fetch CSV from the provided URL" },
-        { status: 502 },
+        { error: message },
+        { status: err instanceof SafeRemoteUrlError ? 400 : 502 },
       );
     }
-
-    if (!response.ok) {
-      console.error(
-        "[admin/import-from-url] Non-200 response:",
-        response.status,
-        response.statusText,
-      );
-      return NextResponse.json(
-        {
-          error: `Failed to download CSV: HTTP ${response.status} ${response.statusText}`,
-        },
-        { status: 502 },
-      );
-    }
-
-    const csvText = await response.text();
 
     if (!csvText.trim()) {
       return NextResponse.json(
@@ -96,8 +74,8 @@ export async function POST(req: NextRequest) {
       const job = await ingestionQueue.add("url_import", {
         csv: csvText,
         validateUrls,
-        merchantId,
-        merchantFeedId: merchantFeedId || undefined,
+        merchantId: undefined,
+        merchantFeedId: undefined,
       });
       const jobResult = await job.waitUntilFinished(ingestionQueueEvents);
       console.log("[admin/import-from-url] Import completed:", {

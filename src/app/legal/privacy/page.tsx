@@ -91,11 +91,11 @@ export default function PrivacyPage() {
         <ul className="list-disc list-inside text-sm text-gray-800 dark:text-gray-100 space-y-1 mb-2">
           <li>Remember your preferences (such as theme or location settings).</li>
           <li>Store your list of favorite products locally.</li>
-          <li>Collect anonymous analytics data.</li>
+          <li>Only enable analytics after you explicitly accept cookies.</li>
         </ul>
         <p className="text-sm text-gray-800 dark:text-gray-100">
-          You can control or disable cookies through your browser settings, but
-          some features may not work as expected if you do so.
+          If you do not accept cookies, analytics scripts are not initialized.
+          You can still control or disable cookies through your browser settings.
         </p>
       </section>
 
@@ -103,8 +103,9 @@ export default function PrivacyPage() {
       <section className="mb-6">
         <h2 className="text-xl font-semibold mb-2">Third-Party Services</h2>
         <p className="text-sm text-gray-800 dark:text-gray-100 mb-2">
-          We may use third-party services for analytics, hosting, or other
-          operational purposes. These services may collect data according to
+          We may use third-party analytics only after you explicitly accept
+          cookies. Until then, analytics scripts are not initialized. Other
+          services may still be used for hosting or operational purposes under
           their own privacy policies.
         </p>
         <p className="text-sm text-gray-800 dark:text-gray-100">

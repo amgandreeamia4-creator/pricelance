@@ -1,4 +1,4 @@
-export type AffiliateIngestProviderId = 'profitshare' | '2performant';
+export type AffiliateIngestProviderId = 'generic' | 'profitshare' | '2performant';
 
 export type AffiliateIngestProvider = {
   id: AffiliateIngestProviderId;
@@ -7,6 +7,11 @@ export type AffiliateIngestProvider = {
 };
 
 export const AFFILIATE_INGEST_PROVIDERS: AffiliateIngestProvider[] = [
+  {
+    id: 'generic',
+    label: 'Generic CSV (Recommended)',
+    description: 'Import any standard merchant, supplier or affiliate CSV feed',
+  },
   {
     id: 'profitshare',
     label: 'Profitshare CSV',
@@ -17,5 +22,4 @@ export const AFFILIATE_INGEST_PROVIDERS: AffiliateIngestProvider[] = [
     label: '2Performant CSV',
     description: '2Performant affiliate network feed',
   },
-  // NOTE: in the future, we can add { id: 'generic', label: 'Generic CSV', ... } without touching UI or route names
 ];

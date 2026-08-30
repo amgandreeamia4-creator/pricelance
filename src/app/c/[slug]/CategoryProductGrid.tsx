@@ -49,7 +49,7 @@ export default function CategoryProductGrid({ categoryKey }: CategoryProductGrid
         );
 
         if (!res.ok) {
-          throw new Error(`Eroare la încărcarea produselor: ${res.status}`);
+          throw new Error(`Failed to load products: ${res.status}`);
         }
 
         const data = await res.json();
@@ -60,7 +60,7 @@ export default function CategoryProductGrid({ categoryKey }: CategoryProductGrid
         setProducts(productsArray);
       } catch (err) {
         console.error('Error fetching category products:', err);
-        setError('Nu am putut încărca produsele. Te rugăm să încerci din nou mai târziu.');
+        setError('We could not load the products. Please try again later.');
       } finally {
         setIsLoading(false);
       }
@@ -75,7 +75,7 @@ export default function CategoryProductGrid({ categoryKey }: CategoryProductGrid
       <div className="flex items-center justify-center py-12">
         <div className="text-center">
           <div className="mb-4 h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-blue-600 mx-auto"></div>
-          <p className="text-gray-600 dark:text-gray-400">Încărcăm produsele...</p>
+          <p className="text-gray-600 dark:text-gray-400">Loading products...</p>
         </div>
       </div>
     );
@@ -98,7 +98,7 @@ export default function CategoryProductGrid({ categoryKey }: CategoryProductGrid
       <div className="flex items-center justify-center py-12">
         <div className="text-center">
           <p className="text-gray-600 dark:text-gray-400">
-            Nu avem produse în această categorie momentan.
+            There are no products in this category right now.
           </p>
         </div>
       </div>
@@ -164,7 +164,7 @@ export default function CategoryProductGrid({ categoryKey }: CategoryProductGrid
                         />
                       </svg>
                     </div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">Fără imagine</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">No image</p>
                   </div>
                 </div>
               )}
@@ -187,12 +187,12 @@ export default function CategoryProductGrid({ categoryKey }: CategoryProductGrid
                     {lowestPrice.toFixed(2)} {currency}
                   </p>
                   <span className="text-xs text-gray-500 dark:text-gray-400">
-                    {product.listings?.length} oferte
+                    {product.listings?.length} offers
                   </span>
                 </div>
               ) : (
                 <p className="text-sm text-gray-500 dark:text-gray-400">
-                  Preț indisponibil
+                  Price unavailable
                 </p>
               )}
             </div>
