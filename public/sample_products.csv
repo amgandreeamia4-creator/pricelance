@@ -1,0 +1,6 @@
+product_title,brand,category,store_id,store_name,listing_url,price,currency,gtin,delivery_days,fast_delivery,in_stock,country_code
+Apple iPhone 16 128GB,Apple,Smartphones,techworld-us,TechWorld US,https://www.techworld.example/products/apple-iphone-16-128gb,799.00,USD,0195949820134,2,true,true,US
+Sony WH-1000XM5 Wireless Headphones,Sony,Audio,bright-electronics,Bright Electronics,https://www.brightelectronics.example/products/sony-wh-1000xm5,349.99,USD,0027242918168,3,true,true,US
+Samsung 55 Inch QN90D Neo QLED TV,Samsung,Televisions,homevision-ca,HomeVision Canada,https://www.homevision.example/products/samsung-qn90d-55,1499.99,CAD,0880726978104,5,false,true,CA
+Dell XPS 13 Laptop,Dell,Laptops,office-direct-uk,Office Direct UK,https://www.officedirect.example/products/dell-xps-13,1199.00,GBP,0539718470235,4,false,true,GB
+Nespresso Vertuo Pop Coffee Machine,Nespresso,Kitchen Appliances,kitchen-market-au,Kitchen Market AU,https://www.kitchenmarket.example/products/nespresso-vertuo-pop,219.00,AUD,0761333078470,6,false,true,AU
