@@ -455,8 +455,7 @@ export default function ProductList({
               <>Showing {products.length} results.</>
           ) : (
               <>
-                Showing first {MAX_VISIBLE_PRODUCTS} of {products.length} results. More
-                result views coming soon.
+                Showing first {MAX_VISIBLE_PRODUCTS} of {products.length} results.
               </>
           )}
         </div>
