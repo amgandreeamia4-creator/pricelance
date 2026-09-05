@@ -33,7 +33,11 @@ PriceLance separates the system into four layers:
 - Search and browse APIs for frontend consumption.
 - Admin tools for CSV import, system checks, and ingestion monitoring.
 
-## Quick start
+**Note on provider integrations:** The repository contains implementations for several source integrations. Not all provider integrations are active by default or production-ready in every deployment. Providers have different implementation states (some are demo, some are optional, some may be dormant). Before activating any external provider or affiliate integration, review `docs/DEPLOYMENT.md` and `docs/BUYER_HANDOFF.md` to understand credential requirements, activation status, and legal/commercial considerations for your intended use.
+
+## Quick start (local development)
+
+The following instructions set up PriceLance for local development and testing. For production deployment, see `docs/DEPLOYMENT.md`.
 
 ### Prerequisites
 
@@ -48,11 +52,13 @@ PriceLance separates the system into four layers:
 npm install
 cp .env.example .env.local
 npx prisma migrate dev --name init
-npm run db:seed
+npm run db:seed        # Optional: seeds demo/test data for local development
 npm run dev
 ```
 
 Then open http://localhost:3000.
+
+For production database initialization, see `docs/DEPLOYMENT.md`.
 
 ### Required environment setup
 
@@ -88,15 +94,15 @@ The repository now includes a consolidated documentation pack for onboarding, ar
 - [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) — production deployment, environment management, and operational guidance
 - [docs/BUYER_HANDOFF.md](docs/BUYER_HANDOFF.md) — buyer-facing overview for ownership transfer
 - [docs/DEPLOYMENT_CHECKLIST.md](docs/DEPLOYMENT_CHECKLIST.md) — deployment and production verification checklist
-- [docs/maintenance.md](docs/maintenance.md) — routine maintenance guidance
+- [docs/MAINTENANCE_GUIDE.md](docs/MAINTENANCE_GUIDE.md) — ongoing maintenance guidance
 
 ## Current project status
 
 The repository includes a functional local development workflow, import tooling, a Prisma-backed data model, and several provider integrations. The documentation in this pack is intended to make the project understandable and operational for a technical buyer without tracing the implementation directly.
 
-## License
+## License and rights
 
-No license file is included in the repository yet. Add an explicit license before public distribution or commercial handoff.
+No open-source license is currently included in the repository. Licensing and intellectual property rights should be addressed separately as part of the acquisition transaction and the buyer's intended use of the software.
 
 ---
 
