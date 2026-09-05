@@ -1,202 +1,257 @@
 # Buyer Handoff Guide
+This document is written for a technical buyer or operator evaluating PriceLance as an engineering asset. It provides a factual overview of the repository, its current capabilities, deployment requirements, and ownership expectations.
 
-This document is written for a technical buyer or operator who is evaluating PriceLance as an engineering asset. It is intended to provide a factual overview of the repository, its current capabilities, and the operational expectations that come with taking ownership of it. For the implementation overview, see [README.md](../README.md). For local setup, see [docs/ONBOARDING.md](ONBOARDING.md). For production deployment, see [docs/DEPLOYMENT.md](DEPLOYMENT.md).
+For the implementation overview, see [README.md](../README.md).
+For local setup, see [docs/ONBOARDING.md](ONBOARDING.md).
+For production deployment, see [docs/DEPLOYMENT.md](DEPLOYMENT.md).
 
 ## 1. Project overview
+PriceLance is a Next.js application for product catalog management, listing ingestion, price comparison, price-history storage, search, and operational administration.
 
-PriceLance is a Next.js application for ingesting product data, normalizing listings, storing price-history information, and serving search and admin experiences. The repository is structured around an ingestion-first architecture rather than a purely presentational frontend.
+The repository is structured around a database-first architecture with separate product and store-listing records. It is designed to support curated catalog data as well as controlled ingestion from external sources.
 
 The repository includes:
 
 - a Next.js web application
 - Prisma-based persistence with PostgreSQL
-- import workflows for CSV and feed-based sources
+- product, listing, and price-history models
+- CSV and feed-based import workflows
 - provider abstractions for source integrations
-- admin surfaces for operational tasks
-- background ingestion support through queue-based processing
+- admin and internal operational surfaces
+- optional background ingestion support through Redis/BullMQ
 
 ## 2. Current feature set
+The current implementation includes:
 
-The current implementation includes the following capabilities:
+- product search and category browsing
+- canonical product and store-listing records
+- multiple offers per product
+- price-history storage and related UI
+- product detail and merchant-outbound flows
+- CSV/feed import tooling
+- provider configuration and integration abstractions
+- admin operational pages
+- database health and catalog-management tooling
+- responsive public UI for desktop and mobile layouts
 
-- Product and listing ingestion from multiple source patterns
-- Product search and browse flows
-- Price-history storage and related UI surfaces
-- Admin and internal routes for operational workflows
-- Import tooling for CSV-based and affiliate-style data
-- A provider configuration layer for enabling or disabling integrations
-
-The repository should be treated as a functional engineering platform rather than a finished consumer product with fully polished operations around every workflow. The documentation below distinguishes between implemented capabilities, optional integrations, and future work.
+The application should be understood as a functional engineering product prepared for transfer to a new owner. Some integrations are optional or dormant and should not be assumed to be active simply because their implementation remains in the repository.
 
 ## 3. Repository contents
+The repository is organized around the following areas:
 
-The repository is organized around the following high-level areas:
-
-- src/app — application routes, pages, and API handlers
-- src/components — reusable UI components
-- src/lib — services, auth logic, provider adapters, and ingestion implementation
-- src/config — configuration and environment-driven feature flags
-- prisma — schema and seed logic
-- scripts — maintenance and ingestion scripts
-- tests and fixtures — sample data and regression helpers
-- docs — operational and buyer-facing documentation
+- `src/app` — application routes, pages, and API handlers
+- `src/components` — reusable UI components
+- `src/lib` — services, authentication, provider adapters, and ingestion logic
+- `src/config` — configuration and environment-driven behavior
+- `prisma` — database schema, migrations, and seed logic
+- `scripts` — maintenance and ingestion scripts
+- `tests` and `fixtures` — test and sample-data support
+- `docs` — technical, operational, and buyer-facing documentation
 
 ## 4. Technologies used
 
 | Area | Technology |
 |---|---|
-| Web framework | Next.js |
+| Web framework | Next.js 16 |
 | Language | TypeScript |
+| UI | React + Tailwind CSS |
 | Data layer | Prisma + PostgreSQL |
-| Background jobs | BullMQ and Redis |
+| Database platform | PostgreSQL / Supabase-compatible |
+| Background jobs | BullMQ + Redis |
 | Testing | Vitest |
 | Linting | ESLint |
+| Deployment | Vercel-compatible Next.js deployment |
 
 ## 5. Documentation map
+The main documentation entry points are:
 
-The repository includes the following documentation entry points:
+- `README.md` — project overview and quick start
+- `docs/ONBOARDING.md` — local setup and first-run process
+- `docs/ARCHITECTURE.md` — architecture and repository structure
+- `docs/DEPLOYMENT.md` — production deployment guidance
+- `docs/DEPLOYMENT_CHECKLIST.md` — deployment readiness checklist
+- `docs/MAINTENANCE_GUIDE.md` — ongoing maintenance guidance
+- `docs/BUYER_HANDOFF.md` — ownership and transfer guidance
+- `docs/WHY_PRICELANCE.md` — product and project rationale
 
-- README.md — high-level overview and quick start
-- docs/ONBOARDING.md — local setup and first-run process
-- docs/ARCHITECTURE.md — architecture and repository map
-- docs/DEPLOYMENT.md — deployment and operational setup
-- docs/maintenance.md — maintenance runbook
-- docs/DEPLOYMENT_CHECKLIST.md — deployment readiness checklist
-
-A new owner should start with the README and then move through onboarding, architecture, and deployment documentation.
+A new owner should normally start with `README.md`, then review onboarding, architecture, deployment, and this buyer handoff document.
 
 ## 6. Deployment overview
-
 PriceLance requires:
 
-- a PostgreSQL database
-- a runtime environment for the Next.js app
-- Redis if queue-based ingestion is used
-- environment variables for auth, base URL, and provider configuration
+- a PostgreSQL-compatible database
+- a runtime environment for the Next.js application
+- appropriate production environment variables
+- Redis and queue infrastructure only when background ingestion workflows are enabled
 
-The deployment should be treated as a multi-service exercise if background ingestion is required. The web application and the worker processes should not be assumed to be the same runtime concern.
+The web application and optional worker processes should be treated as separate runtime concerns when queue-based ingestion is used.
+
+The buyer should deploy PriceLance using buyer-owned infrastructure and credentials.
 
 ## 7. Environment overview
+The application uses environment variables for:
 
-The application relies on environment variables for:
+- database connectivity via `DATABASE_URL`
+- admin protection via `ADMIN_TOKEN`
+- internal API authentication via `INTERNAL_API_KEY`
+- application URL configuration via `NEXT_PUBLIC_APP_BASE_URL`
+- production admin credentials via `ADMIN_USER` and `ADMIN_PASSWORD`
+- optional provider, email, analytics, advertising, Redis, and scheduled-ingestion configuration
 
-- database connection via `DATABASE_URL`
-- admin protection via `ADMIN_TOKEN` and `x-admin-token`
-- internal API access via `INTERNAL_API_KEY` and `x-internal-key`
-- base URL configuration via `NEXT_PUBLIC_APP_BASE_URL`
-- provider credentials and feature flags
+The repository includes `.env.example` as the configuration template.
 
-This repository is a deployable application package. The current owner’s live Supabase/Postgres environment is not part of the permanent product handoff. The buyer should configure their own managed PostgreSQL/Supabase instance and set `DATABASE_URL` for that environment before production use.
+The seller's live Supabase/PostgreSQL environment and credentials are not part of the permanent product handoff. The buyer should create or select a buyer-owned PostgreSQL/Supabase environment and configure `DATABASE_URL` for that deployment.
 
-The seller is providing the application structure, schema, setup guidance, and handoff documentation; the buyer is responsible for the infrastructure, credentials, deployment environment, and ongoing operational ownership.
+The seller is providing the application code, database schema, migrations, configuration template, setup guidance, and documentation. The buyer is responsible for infrastructure, credentials, deployment, backups, and ongoing operational ownership.
 
 ## 8. Database overview
+The Prisma schema defines the principal persistence entities used by the application, including:
 
-The Prisma schema defines the main persistence entities used by the system:
+- `Product`
+- `Listing`
+- `ProductPriceHistory`
+- `Merchant`
+- `MerchantFeedRun`
+- `SearchLog`
+- `SavedSearch`
 
-- Product
-- Listing
-- ProductPriceHistory
-- Merchant
-- MerchantFeedRun
-- SearchLog
-- SavedSearch
+The data model is centered on canonical product records with store-specific listing records. This structure supports comparison across merchants while allowing individual offers and price-history records to remain associated with their source listings.
 
-The database design is centered on canonical product records plus store-specific listing records. This is a practical model for price comparison and feed ingestion workflows.
+The repository contains the Prisma migration history required to recreate the database schema in a new PostgreSQL environment.
 
 ## 9. Admin overview
+The repository contains internal/admin surfaces for tasks such as:
 
-The repository contains admin and internal operational surfaces for:
+- catalog management
+- data importing
+- system and database checks
+- category management
+- ingestion-related operations
+- search and catalog analysis
 
-- importing data
-- reviewing system health
-- viewing ingestion-related state
-- monitoring data and search activity
+These pages are intended as operational tooling rather than a generalized enterprise administration platform.
 
-These surfaces are important for day-to-day operation, but they should be treated as internal tools rather than fully polished business-facing admin software.
+Production admin access should be protected with buyer-owned credentials and secrets.
 
-## 10. Provider overview
+## 10. Provider and ingestion overview
+Provider abstractions allow PriceLance to support multiple source patterns without coupling the entire application to a single provider.
 
-The provider abstraction is a key part of the architecture. It allows the system to ingest from multiple source patterns without forcing every ingestion path through a single, hard-coded implementation.
+The repository contains implementation and configuration for several ingestion patterns, including curated/static catalog data and optional external-source integrations.
 
-The repository currently contains provider-related configuration and integration points for several source patterns, including static catalog data, demo providers, and external product-search style integrations. A new owner should review the provider layer directly before adding new sources.
+Important distinction:
 
-## 11. Known limitations
+- **Implemented** means the relevant code exists in the repository.
+- **Configured** means the deployment has the necessary settings or credentials.
+- **Active** means the integration is currently enabled and intended for production use.
 
-The repository is functional, but the following limitations should be understood by a buyer:
+These states are not interchangeable.
 
-- Some documentation remains operational rather than fully polished
-- Provider integrations may be optional and environment-dependent
-- Background ingestion depends on Redis and queue processing infrastructure
-- The admin subsystem is functional but should be treated as an operational tool rather than a fully generalized management platform
-- Some operational workflows require manual verification and monitoring
+The buyer should review provider configuration and activate only the sources appropriate for their own deployment, commercial relationships, credentials, and legal/operational requirements.
 
-## 12. Recommended first improvements
+## 11. Known limitations and operational considerations
+The repository is functional, but a buyer should understand the following:
 
-If the repository is being stabilized after acquisition, the following are sensible first steps:
+- some provider integrations are optional or dormant
+- external provider availability and credentials are environment-dependent
+- background ingestion requires additional Redis/queue infrastructure
+- import workflows may require source-specific validation and monitoring
+- admin tooling is operational rather than a fully generalized management suite
+- production infrastructure, monitoring, backups, and credentials remain the buyer's responsibility
 
-1. Create or select the buyer-owned PostgreSQL/Supabase environment and set `DATABASE_URL` for it.
-2. Review environment variable naming and deployment assumptions.
-3. Verify the deployment path for the web app, worker, and scheduler separately.
-4. Confirm the production database migration workflow.
-5. Consolidate any deployment and operations notes into a single operational playbook.
-6. Review secrets rotation and access management before the repository is handed over to a team.
+These are normal ownership considerations for an extensible engineering product and should be evaluated according to the buyer's intended deployment model.
 
-## 13. Recommended roadmap
+## 12. Recommended first steps after acquisition
+A sensible post-acquisition sequence is:
 
-A reasonable roadmap for ownership could include:
+1. Create or select the buyer-owned PostgreSQL/Supabase environment.
+2. Configure `DATABASE_URL` and the required application secrets.
+3. Review `.env.example` and production configuration.
+4. Run the documented database migration/setup process.
+5. Deploy the web application in the buyer-owned environment.
+6. Verify the public search, category, product-detail, and merchant-outbound flows.
+7. Review admin access and internal API credentials.
+8. Decide which optional ingestion/provider integrations should be enabled.
+9. Configure monitoring, backups, and operational ownership.
+10. Rotate or replace any credentials associated with services the buyer chooses to use.
 
-- secure and standardize environment configuration
-- formalize production deployment and monitoring
-- improve import reliability and observability
-- expand provider coverage in a controlled way
-- strengthen admin and internal tooling for day-to-day operations
+## 13. Suggested future roadmap
+Potential future development areas include:
+
+- expanding merchant/provider coverage
+- improving ingestion reliability and observability
+- adding additional catalog automation
+- strengthening analytics and administration
+- improving production monitoring
+- expanding regional or EU coverage
+- adding additional monetization integrations
+
+These are opportunities for the new owner rather than prerequisites for the current application package.
 
 ## 14. Maintenance expectations
-
-The application will require ongoing maintenance in the following areas:
+Ongoing maintenance may include:
 
 - database health and migrations
-- ingestion reliability and provider credential rotation
-- operational monitoring for the web app and workers
-- periodic review of import quality and search relevance
-- security review of admin and internal access paths
+- provider/API credential management
+- ingestion monitoring and troubleshooting
+- import-quality review
+- search relevance and catalog-quality review
+- production monitoring
+- security updates and dependency maintenance
+- backups and recovery procedures
 
-## 15. Suggested transfer checklist
+The repository includes `docs/MAINTENANCE_GUIDE.md` for operational guidance.
 
-Before handing the repository over to a buyer or operator, the following should be confirmed:
+## 15. Transfer checklist
+Before completing the handoff, confirm that:
 
-- Repository access is available to the new owner
-- Production environment variables are documented and stored securely in the buyer-owned environment
-- The buyer-owned PostgreSQL/Supabase database is configured and `DATABASE_URL` is set for that environment
-- Deployment pipeline and runtime responsibilities are defined
-- The current deployment URL and environment names are documented
-- Secret rotation is treated as a buyer-owned operational task for their own environment, not as a requirement to reuse the seller’s live database credentials
+- repository ownership/access has been transferred
+- the buyer has access to the required deployment environment
+- the buyer has created or selected their own PostgreSQL/Supabase environment
+- `DATABASE_URL` is configured for the buyer-owned database
+- production admin credentials have been configured by the buyer
+- deployment responsibilities are understood
+- optional providers have been reviewed
+- third-party credentials are owned or controlled by the buyer
+- backups and monitoring are configured in the buyer's environment
 
-## 16. Credentials and secret rotation guidance
+The seller does not provide ongoing database administration or infrastructure management after transfer unless separately agreed as part of the transaction.
 
-Any buyer taking ownership should treat the repository as containing operationally sensitive values until they have verified the environment.
+## 16. Credentials and secret handling
+The buyer should treat all production credentials as buyer-owned operational secrets.
 
-Recommended actions:
+Recommended practices include:
 
-- configure the buyer-owned PostgreSQL/Supabase environment and set `DATABASE_URL` for that deployment
-- keep server-side secrets out of client-side configuration
-- review `ADMIN_TOKEN` and `INTERNAL_API_KEY` before production use
-- verify that any third-party provider credentials are still authorized for the intended deployment
-- do not assume the current owner’s live database or credentials are part of the permanent handoff
+- keep secrets out of source control
+- use the `.env.example` template rather than copying seller credentials
+- configure `ADMIN_TOKEN` and `INTERNAL_API_KEY` with buyer-generated values
+- configure production admin credentials in the buyer's environment
+- use buyer-owned database credentials
+- review third-party provider credentials before enabling integrations
+- store production secrets in the deployment platform's secret-management system
+- maintain independent backups of the buyer-owned database
 
-## 17. What should be delivered to the buyer at handoff
+The seller's live database credentials are not intended to become part of the buyer's permanent environment.
 
-A complete handoff package should include:
+## 17. What is included in the handoff
+The application handoff consists of the PriceLance source repository and its associated technical documentation, including:
 
-- repository access and deployment access
-- the current application documentation set
-- the current schema and migration history
-- deployment instructions for the buyer-owned environment
-- a note that the buyer must provide or configure their own PostgreSQL/Supabase instance and `DATABASE_URL`
-- a list of active providers and their credentials in the buyer’s environment
-- a summary of the current data import workflow
-- a list of known operational issues or limitations
-- the current documentation set and any internal runbooks
+- application source code
+- Prisma schema and migration history
+- configuration template
+- setup and deployment documentation
+- operational and maintenance documentation
+- test and development support included in the repository
+- provider/integration abstractions present in the codebase
 
-The seller is not providing ongoing database administration; the buyer is responsible for their own infrastructure, database ownership, backups, and operational continuity.
+The buyer is responsible for supplying or creating their own:
+
+- PostgreSQL/Supabase infrastructure
+- deployment environment
+- domain and DNS configuration
+- production secrets
+- third-party provider accounts and credentials
+- Redis/queue infrastructure if required
+- analytics, advertising, email, or affiliate accounts they choose to activate
+- production backups and monitoring
+
+PriceLance is transferred as an engineering product. The seller does not retain responsibility for the buyer's infrastructure, database administration, credentials, or ongoing operational continuity after the transaction.
