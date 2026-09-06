@@ -45,7 +45,6 @@ const PRIMARY_CATEGORIES: CategoryPill[] = [
   { key: "gifts-lifestyle", label: "Gifts & Lifestyle" },
   { key: "books-media", label: "Books & Media" },
   { key: "toys-games", label: "Toys & Games" },
-  { key: "kitchen", label: "Kitchen" },
 ];
 
 const MOBILE_PRIMARY_CATEGORIES: CategoryPill[] = [
