@@ -11,7 +11,7 @@ This page is the main navigation entry point for the PriceLance documentation se
 - [docs/BUYER_HANDOFF.md](BUYER_HANDOFF.md) — technical handoff overview for a buyer or operator
 - [docs/WHY_PRICELANCE.md](WHY_PRICELANCE.md) — engineering rationale behind the current architecture
 - [docs/DEPLOYMENT_CHECKLIST.md](DEPLOYMENT_CHECKLIST.md) — production readiness checklist
-- [docs/maintenance.md](maintenance.md) — routine maintenance runbook
+- [docs/MAINTENANCE_GUIDE.md](MAINTENANCE_GUIDE.md) — routine maintenance runbook
 
 ## Recommended reading order
 
