@@ -100,7 +100,7 @@ In the right-hand assistant panel:
       Confirm the answer aligns with the visibly cheapest product in the current results.
 - [ ] Ask: `"Which is best value?"`  
       Confirm the answer references real products and mentions store/price information.
-- [ ] Ask: `"Show me options under 3000 RON"` (or another numeric budget).  
+- [ ] Ask: `"Show me options under a reasonable budget"` (or another numeric budget).
       Confirm the assistant filters down to items that make sense given the price levels.
 
 ### 4.4 Analytics & admin surfaces

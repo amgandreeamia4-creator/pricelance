@@ -91,7 +91,7 @@ Every quarter, spend a bit more time reviewing configuration, data, and roadmap 
   - [ ] Manually test the assistant with fresh queries using current catalog data:
     - `"Cheapest option here?"`
     - `"Which is the best value for money?"`
-    - `"Show me laptops under 3000 RON"`
+    - `"Show me laptops under a reasonable budget"`
   - [ ] Check if new categories, products, or stores that were added in the last quarter are well-reflected in assistant answers.
   - [ ] Capture any recurring gaps (e.g. certain stores or brands not preferred correctly) as tickets for ranking/tuning work.
 
