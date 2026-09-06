@@ -31,21 +31,21 @@ cp .env.example .env.local
 
 At a minimum, set the following in .env.local:
 
-- DATABASE_URL — PostgreSQL connection string
+- DATABASE_URL — PostgreSQL connection string for your local buyer/developer-owned database
 - ADMIN_USER and ADMIN_PASSWORD — admin credentials for protected admin routes
 - ADMIN_TOKEN — server-side token used by admin and internal APIs
 - INTERNAL_API_KEY — required by internal routes
 - NEXT_PUBLIC_APP_BASE_URL — the local base URL, typically http://localhost:3000
 
-Optional values are used for specific providers and integrations, such as RapidAPI, eBay, or Banggood-style affiliate flows. The repository currently references NEXT_PUBLIC_APP_BASE_URL in shared configuration and NEXT_PUBLIC_BASE_URL in some admin-related flows; confirm the expected variable in your deployment target before rollout.
+Optional values are used for specific providers and integrations, such as RapidAPI, eBay, or Banggood-style affiliate flows. **These integrations may be optional, demo-only, dormant, or disabled depending on your deployment.** For clarity on which provider integrations are currently implemented and active, see [docs/BUYER_HANDOFF.md](BUYER_HANDOFF.md) and [docs/DEPLOYMENT.md](DEPLOYMENT.md).
 
 > Keep secrets out of source control. The repository should treat .env.local as local-only configuration.
 
 ## 4. Prepare the database
 
-Create a PostgreSQL database and point DATABASE_URL to it.
+Create a **buyer/developer-owned PostgreSQL database** for local evaluation. This database is for your local development and testing only, not a connection to the seller's live production environment.
 
-Then run:
+Point `DATABASE_URL` to your local PostgreSQL database, then run:
 
 ```bash
 npx prisma migrate dev --name init
@@ -53,15 +53,19 @@ npx prisma migrate dev --name init
 
 If you prefer a schema push for local experimentation, Prisma can also be used that way. For a cleaner initial setup, migrations are the recommended path.
 
-## 5. Seed sample data
+> **Production deployments:** For production migration and deployment procedures, see [docs/DEPLOYMENT.md](DEPLOYMENT.md).
 
-The repository includes a seed script for initial sample data:
+## 5. Seed sample data (optional)
+
+The repository includes an optional seed script for initial sample data:
 
 ```bash
 npm run db:seed
 ```
 
-This populates the database with starter records so the app has data to display and search.
+This populates the database with starter records so the app has data to display and search. Seed data is **intended for local evaluation and development only**. Do not blindly run seed scripts against a production database, as they may reset or corrupt production data.
+
+> **Production note:** Do not run seed scripts against your production database. See [docs/DEPLOYMENT.md](DEPLOYMENT.md) for production database guidance.
 
 ## 6. Start the application
 
@@ -99,11 +103,13 @@ A practical first test is to import one of the sample CSV fixtures via the admin
 
 If you are testing provider-specific ingestion, ensure the relevant provider credentials and feature flags are enabled in .env.local.
 
-## 9. Run the ingestion worker and scheduler
+## 9. Run the ingestion worker and scheduler (optional)
 
-If you plan to evaluate scheduled ingestion or queue-based imports, you will also need Redis running and the worker process started.
+If you plan to evaluate **queue-based or scheduled ingestion**, you will also need Redis running and the worker process started. These components are optional and required only when you want to test background ingestion functionality.
 
-Typical local setup:
+For basic local browsing, searching, and seeding, Redis and the worker are not required.
+
+Typical local setup if you need ingestion:
 
 ```bash
 # Start Redis if available on your machine
@@ -133,9 +139,10 @@ Symptoms:
 - Admin pages report missing data
 
 Checks:
-- Run npm run db:seed
+- **If you skipped seed data:** Run `npx prisma db:seed` to populate sample records (optional development data)
+- **If you expect imported data:** Confirm that you have executed imports through the admin UI or ingestion worker
 - Confirm the database migration completed successfully
-- Confirm imports were executed successfully
+- Confirm the imports were executed successfully
 
 ### Admin routes are blocked
 
