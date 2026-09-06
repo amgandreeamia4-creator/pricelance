@@ -63,6 +63,8 @@ Key pieces:
 
 Providers are selected at runtime based on configuration and are intended to be added or changed without rewriting the ingestion pipeline itself. The provider layer is responsible for translating source-specific payloads into the internal listing model.
 
+**Provider implementation states:** The codebase includes implementations for various providers (such as RapidAPI-style search, eBay, Banggood, and affiliate integrations). However, individual provider implementations can have different states depending on deployment configuration: active, optional, demo-only, dormant, or disabled. The presence of provider code does not mean that provider is currently active in production. For clarity on which providers are currently implemented, enabled, and active in the codebase, see [docs/BUYER_HANDOFF.md](BUYER_HANDOFF.md) and [docs/DEPLOYMENT.md](DEPLOYMENT.md).
+
 ## 6. Ingestion pipeline overview
 
 The ingestion pipeline is the core operational workflow of the system.
@@ -79,13 +81,15 @@ The central import service is the place where ingestion paths should converge. T
 
 ## 7. Scheduler, queue, and worker
 
-PriceLance uses a scheduled ingestion pattern built around a queue and background worker.
+PriceLance uses a scheduled ingestion pattern built around a queue and background worker. **These components are optional and used only when queue-based or scheduled ingestion is enabled.**
 
 - Scheduler — defines recurring ingestion jobs based on environment-driven configuration
 - Queue — stores job payloads for asynchronous processing
 - Worker — executes jobs such as CSV imports, URL imports, and affiliate imports
 
 This design allows ingestion to be run asynchronously rather than strictly inline in a request handler. It is also the right place to add retry, pacing, and operational visibility later.
+
+The basic web application and database-backed browsing/search functionality do not require the background ingestion stack. The scheduler, queue, and worker are only necessary when the buyer enables queue-based or scheduled ingestion workflows.
 
 ## 8. Database model overview
 
