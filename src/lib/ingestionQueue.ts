@@ -3,6 +3,14 @@ import { Queue, QueueEvents } from "bullmq";
 const isBuildPhase = process.env.NEXT_PHASE === "phase-production-build";
 
 const redisUrl = process.env.REDIS_URL?.trim();
+
+// Check if Redis is explicitly configured at runtime
+const isRedisConfigured = Boolean(
+  redisUrl ||
+  process.env.REDIS_HOST ||
+  process.env.REDIS_PORT
+);
+
 const connection = redisUrl
   ? { connection: { url: redisUrl } }
   : {
@@ -61,10 +69,10 @@ function createNoopQueue<T extends object>(name: string): T {
   });
 }
 
-export const ingestionQueue = isBuildPhase
+export const ingestionQueue = isBuildPhase || !isRedisConfigured
   ? createNoopQueue<Queue>("ingestionQueue")
   : new Queue("ingestionQueue", queueOptions);
-export const ingestionQueueEvents = isBuildPhase
+export const ingestionQueueEvents = isBuildPhase || !isRedisConfigured
   ? createNoopQueue<QueueEvents>("ingestionQueueEvents")
   : new QueueEvents("ingestionQueue", connection);
 
