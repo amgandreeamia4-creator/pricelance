@@ -344,7 +344,7 @@ export async function GET(req: NextRequest) {
     // Requiring true was wiping out valid offers on the homepage.
     const listingWhere: any = {};
 
-    if (store) {
+    if (store && store !== "all") {
       listingWhere.storeId = store;
     }
 
